@@ -750,6 +750,69 @@ exports.saveOverhead = async (req, res) => {
   }
 };
 
+exports.saveOverheadValue = async (req, res) => {
+  const { site_id, desc_id, value, overhead_type } = req.body;
+
+  if (!site_id || !desc_id || !value || !overhead_type) {
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
+  }
+
+  try {
+    // Find or create the po_budget entry
+    let [poBudget] = await db.query(
+      `SELECT id FROM po_budget WHERE site_id = ? AND desc_id = ?`,
+      [site_id, desc_id]
+    );
+
+    if (!poBudget.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No budget found for the selected site and work description",
+      });
+    }
+
+    const po_budget_id = poBudget[0].id;
+
+    // Find the overhead ID based on the overhead_type
+    const [overhead] = await db.query(
+      `SELECT id FROM overhead WHERE expense_name = ?`,
+      [overhead_type]
+    );
+
+    if (!overhead.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Overhead type '${overhead_type}' not found`,
+      });
+    }
+
+    const overhead_id = overhead[0].id;
+
+    // Save or update the overhead value in actual_budget
+    await db.query(
+      `INSERT INTO actual_budget (po_budget_id, overhead_id, splitted_budget)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE splitted_budget = ?`,
+      [po_budget_id, overhead_id, value, value]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `${overhead_type} overhead saved successfully`,
+    });
+  } catch (error) {
+    console.error(`Error saving ${overhead_type} overhead:`, error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to save ${overhead_type} overhead`,
+      error: error.message,
+    });
+  }
+};
+
 // Save or update actual budget entries (updated to allocate only once, no updates)
 exports.saveActualBudget = async (req, res) => {
   const { po_budget_id, actual_budget_entries } = req.body;
@@ -996,22 +1059,116 @@ exports.getContractors = async (req, res) => {
 };
 
 // Save labour data
+// exports.addLabour = async (req, res) => {
+//   const {
+//     full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
+//     current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
+//     status_id, esic_number, pf_number, contractor_id, approved_salary
+//   } = req.body;
+
+//   // Validate required fields
+//   if (!full_name || !date_of_birth || !date_of_joining || !company || !branch || !mobile ||
+//       !company_email || !current_address || !permanent_address || !gender_id || !dept_id ||
+//       !emp_type_id || !designation_id || !status_id) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Missing required fields"
+//     });
+//   }
+
+//   try {
+//     // Insert into labour table
+//     const [result] = await db.query(
+//       `INSERT INTO labour (
+//         full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
+//         current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
+//         status_id, esic_number, pf_number, contractor_id, approved_salary, created_at
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+//       [
+//         full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
+//         current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
+//         status_id, esic_number || null, pf_number || null, contractor_id || null,
+//         approved_salary || null
+//       ]
+//     );
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Labour added successfully",
+//       data: { id: result.insertId, ...req.body }
+//     });
+//   } catch (error) {
+//     console.error("Error adding labour:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to add labour",
+//       error: error.message
+//     });
+//   }
+// };
+
+
 exports.addLabour = async (req, res) => {
   const {
     full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
     current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
-    status_id, esic_number, pf_number, contractor_id, approved_salary
+    status_id, esic_number, pf_number, contractor_id, approved_salary, created_by
   } = req.body;
 
   // Validate required fields
   if (!full_name || !date_of_birth || !date_of_joining || !company || !branch || !mobile ||
       !company_email || !current_address || !permanent_address || !gender_id || !dept_id ||
-      !emp_type_id || !designation_id || !status_id) {
+      !emp_type_id || !designation_id || !status_id || !created_by) {
     return res.status(400).json({
       success: false,
       message: "Missing required fields"
     });
   }
+
+  // Additional validations (similar to addEmployee)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(date_of_birth) || !dateRegex.test(date_of_joining)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid date format: date_of_birth and date_of_joining must be in YYYY-MM-DD format',
+    });
+  }
+
+  const mobileRegex = /^(?:\+91)?\d{10}$/;
+  if (!mobileRegex.test(mobile)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid mobile number: must be 10 digits, with optional +91 prefix',
+    });
+  }
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(company_email)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid email format',
+    });
+  }
+
+  // Validate created_by
+  if (typeof created_by !== 'string' || created_by.trim() === '') {
+    return res.status(400).json({
+      success: false,
+      message: "Created By is required and must be a non-empty string",
+    });
+  }
+
+  // Verify if created_by exists in the users table
+  const [userExists] = await db.query('SELECT user_id FROM users WHERE user_id = ?', [created_by]);
+  if (!userExists.length) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid Created By: User does not exist",
+    });
+  }
+
+  // Validate foreign keys (add similar checks as in addEmployee if needed)
+  // Assuming similar foreign key validations for gender_id, dept_id, etc.
 
   try {
     // Insert into labour table
@@ -1019,13 +1176,13 @@ exports.addLabour = async (req, res) => {
       `INSERT INTO labour (
         full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
         current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
-        status_id, esic_number, pf_number, contractor_id, approved_salary, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        status_id, esic_number, pf_number, contractor_id, approved_salary, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         full_name, date_of_birth, date_of_joining, company, branch, mobile, company_email,
         current_address, permanent_address, gender_id, dept_id, emp_type_id, designation_id,
         status_id, esic_number || null, pf_number || null, contractor_id || null,
-        approved_salary || null
+        approved_salary || null, created_by
       ]
     );
 
@@ -1036,6 +1193,18 @@ exports.addLabour = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding labour:", error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        success: false,
+        message: 'Duplicate entry (e.g., email already exists)',
+      });
+    }
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid foreign key reference',
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to add labour",
@@ -1043,6 +1212,7 @@ exports.addLabour = async (req, res) => {
     });
   }
 };
+
 
 
 // Fetch all labour employees

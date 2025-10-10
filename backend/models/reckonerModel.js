@@ -313,6 +313,64 @@ exports.getSiteById = async (site_id) => {
   }
 };
 
+// exports.saveReckonerData = async (data) => {
+//   const connection = await db.getConnection();
+//   try {
+//     await connection.beginTransaction();
+
+//     const siteId = data[0]?.site_id;
+//     if (!siteId) throw new Error("Site ID is required");
+
+//     // Delete existing records for this site to prevent duplicates
+//     await connection.query("DELETE FROM po_reckoner WHERE site_id = ?", [
+//       siteId,
+//     ]);
+
+//     // Insert new records and get their IDs
+//     const insertedIds = [];
+//     const query = `
+//         INSERT INTO po_reckoner 
+//         (site_id, category_id, subcategory_id, item_id, desc_id, po_quantity, uom, rate, value)
+//         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+//       `;
+
+//     for (const item of data) {
+//       const [result] = await connection.query(query, [
+//         item.site_id,
+//         item.category_id,
+//         item.subcategory_id,
+//         item.item_id,
+//         item.desc_id,
+//         item.po_quantity,
+//         item.uom,
+//         item.rate,
+//         item.value,
+//       ]);
+//       insertedIds.push(result.insertId); // Store the auto-incremented rec_id
+//     }
+
+//     // Insert into completion_status table
+//     const completionQuery = `
+//         INSERT INTO completion_status 
+//         (rec_id)
+//         VALUES (?)
+//       `;
+
+//     for (const id of insertedIds) {
+//       await connection.query(completionQuery, [id]);
+//     }
+
+//     await connection.commit();
+//     return insertedIds; // Return the inserted IDs for reference
+//   } catch (error) {
+//     await connection.rollback();
+//     throw error;
+//   } finally {
+//     connection.release();
+//   }
+// };
+
+
 exports.saveReckonerData = async (data) => {
   const connection = await db.getConnection();
   try {
@@ -330,8 +388,8 @@ exports.saveReckonerData = async (data) => {
     const insertedIds = [];
     const query = `
         INSERT INTO po_reckoner 
-        (site_id, category_id, subcategory_id, item_id, desc_id, po_quantity, uom, rate, value)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (site_id, category_id, subcategory_id, item_id, desc_id, po_quantity, uom, rate, value, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
     for (const item of data) {
@@ -345,6 +403,7 @@ exports.saveReckonerData = async (data) => {
         item.uom,
         item.rate,
         item.value,
+        item.created_by, // Include created_by
       ]);
       insertedIds.push(result.insertId); // Store the auto-incremented rec_id
     }
@@ -369,6 +428,7 @@ exports.saveReckonerData = async (data) => {
     connection.release();
   }
 };
+
 
 exports.getAllReckonerWithStatus = async () => {
   const connection = await db.getConnection();

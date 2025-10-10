@@ -1,3 +1,4 @@
+// projectModel.js
 const db = require("../config/db");
 
 exports.getLocationId = async (location_name) => {
@@ -47,11 +48,26 @@ exports.insertCompany = async (
   state_id,
   pincode,
   spoc_name,
-  spoc_contact_no
+  spoc_contact_no,
+  created_by,
+  updated_by
 ) => {
   await db.query(
-    "INSERT INTO company (company_id, company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-    [company_id, company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no]
+    "INSERT INTO company (company_id, company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+    [
+      company_id,
+      company_name,
+      address,
+      gst_number,
+      vendor_code,
+      city_id,
+      state_id,
+      pincode,
+      spoc_name,
+      spoc_contact_no,
+      created_by,
+      updated_by
+    ]
   );
 };
 
@@ -74,6 +90,7 @@ exports.addCity = async (city_name) => {
   const [result] = await db.query("INSERT INTO city (city_name) VALUES (?)", [city_name]);
   return result.insertId;
 };
+
 exports.fetchCompanyById = async (company_id) => {
   const [rows] = await db.query(
     `
@@ -85,6 +102,7 @@ exports.fetchCompanyById = async (company_id) => {
   );
   return rows.length ? rows[0] : null;
 };
+
 exports.fetchAllCompanies = async () => {
   const [rows] = await db.query(`
         SELECT 
@@ -122,20 +140,6 @@ exports.fetchProjectsByCompanyId = async (company_id) => {
   return rows;
 };
 
-exports.updateCompany = async (
-  company_id,
-  company_name,
-  address,
-  location_id,
-  spoc_name,
-  spoc_contact_no
-) => {
-  await db.query(
-    "UPDATE company SET company_name = ?, address = ?, location_id = ?, spoc_name = ?, spoc_contact_no = ? WHERE company_id = ?",
-    [company_name, address, location_id, spoc_name, spoc_contact_no, company_id]
-  );
-};
-
 exports.getProjectTypeId = async (project_type) => {
   const [rows] = await db.query(
     "SELECT type_id FROM project_type WHERE LOWER(type_description) = ?",
@@ -167,11 +171,12 @@ exports.insertProject = async (
   project_id,
   project_type_id,
   company_id,
-  project_name
+  project_name,
+  created_by
 ) => {
   await db.query(
-    "INSERT INTO project_details (pd_id, project_type_id, company_id, project_name) VALUES (?, ?, ?, ?)",
-    [project_id, project_type_id, company_id, project_name]
+    "INSERT INTO project_details (pd_id, project_type_id, company_id, project_name, created_by, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+    [project_id, project_type_id, company_id, project_name, created_by]
   );
 };
 
@@ -212,10 +217,12 @@ exports.insertSite = async (
   workforce_id,
   pd_id,
   location_id,
-  reckoner_type_id
+  reckoner_type_id,
+  created_by,
+  updated_by
 ) => {
   await db.query(
-    "INSERT INTO site_details (site_id, site_name, po_number, start_date, end_date, incharge_id, workforce_id, pd_id, location_id, reckoner_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO site_details (site_id, site_name, po_number, start_date, end_date, incharge_id, workforce_id, pd_id, location_id, reckoner_type_id, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
     [
       site_id,
       site_name,
@@ -226,7 +233,9 @@ exports.insertSite = async (
       workforce_id,
       pd_id,
       location_id,
-      reckoner_type_id
+      reckoner_type_id,
+      created_by,
+      updated_by
     ]
   );
 };
@@ -373,20 +382,18 @@ exports.getNextPoNumber = async (reckoner_type_id) => {
     return nextPoNumber;
 };
 
-exports.createProject = async (company_id, project_name) => {
+exports.createProject = async (company_id, project_name, created_by) => {
   try {
     const project_type_id = "PT001"; // Default project_type_id as specified
     const project_id = await exports.generateNewProjectId();
     
-    await exports.insertProject(project_id, project_type_id, company_id, project_name);
+    await exports.insertProject(project_id, project_type_id, company_id, project_name, created_by);
     
     return { project_id, project_name };
   } catch (error) {
     throw new Error("Failed to create project: " + error.message);
   }
 };
-
-
 
 exports.getWorkDescriptionsBySite = async (site_id) => {
   const [rows] = await db.query(
@@ -400,4 +407,178 @@ exports.getWorkDescriptionsBySite = async (site_id) => {
     [site_id]
   );
   return rows;
+};
+
+exports.updateCompany = async (
+    company_id,
+    company_name,
+    address,
+    gst_number,
+    vendor_code,
+    city_id,
+    state_id,
+    pincode,
+    spoc_name,
+    spoc_contact_no,
+    updated_by
+) => {
+    await db.query(
+        "UPDATE company SET company_name = ?, address = ?, gst_number = ?, vendor_code = ?, city_id = ?, state_id = ?, pincode = ?, spoc_name = ?, spoc_contact_no = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE company_id = ?",
+        [
+            company_name,
+            address,
+            gst_number || null,
+            vendor_code || null,
+            city_id ? parseInt(city_id) : null,
+            state_id ? parseInt(state_id) : null,
+            pincode || null,
+            spoc_name,
+            spoc_contact_no,
+            updated_by,
+            company_id
+        ]
+    );
+};
+
+exports.insertCompanyUpdateHistory = async (
+    company_id,
+    company_name,
+    address,
+    spoc_name,
+    spoc_contact_no,
+    gst_number,
+    vendor_code,
+    city_id,
+    state_id,
+    pincode,
+    created_at,
+    updated_by
+) => {
+    await db.query(
+        "INSERT INTO company_updation_history (company_id, company_name, address, spoc_name, spoc_contact_no, gst_number, vendor_code, city_id, state_id, pincode, created_at, updated_by, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        [
+            company_id,
+            company_name,
+            address,
+            spoc_name,
+            spoc_contact_no,
+            gst_number || null,
+            vendor_code || null,
+            city_id ? parseInt(city_id) : null,
+            state_id ? parseInt(state_id) : null,
+            pincode || null,
+            created_at,
+            updated_by
+        ]
+    );
+};
+
+exports.getCompanyById = async (company_id) => {
+    const [rows] = await db.query("SELECT * FROM company WHERE company_id = ?", [company_id]);
+    return rows.length ? rows[0] : null;
+};
+
+exports.insertProjectUpdateHistory = async (
+    pd_id,
+    company_id,
+    project_type_id,
+    project_name,
+    created_by,
+    created_at,
+    updated_by
+) => {
+    await db.query(
+        "INSERT INTO project_updation_history (pd_id, company_id, project_type_id, project_name, created_by, created_at, updated_by, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+        [pd_id, company_id, project_type_id, project_name, created_by, created_at, updated_by]
+    );
+};
+
+exports.insertSiteUpdateHistory = async (
+  site_id,
+  site_name,
+  po_number,
+  start_date,
+  end_date,
+  incharge_id,
+  workforce_id,
+  pd_id,
+  location_id,
+  reckoner_type_id,
+  created_by,
+  created_at,
+  updated_by
+) => {
+  await db.query(
+    "INSERT INTO site_updation_history (site_id, site_name, po_number, start_date, end_date, incharge_id, workforce_id, pd_id, location_id, reckoner_type_id, created_by, created_at, updated_by, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+    [
+      site_id,
+      site_name,
+      po_number,
+      start_date || null,
+      end_date || null,
+      incharge_id || null,
+      workforce_id || null,
+      pd_id,
+      location_id,
+      reckoner_type_id,
+      created_by,
+      created_at,
+      updated_by
+    ]
+  );
+};
+
+exports.getSiteById = async (site_id) => {
+  const [rows] = await db.query(
+    "SELECT * FROM site_details WHERE site_id = ?",
+    [site_id]
+  );
+  return rows.length ? rows[0] : null;
+};
+
+exports.updateSite = async (
+  site_id,
+  site_name,
+  po_number,
+  start_date,
+  end_date,
+  incharge_id,
+  workforce_id,
+  pd_id,
+  location_id,
+  reckoner_type_id,
+  updated_by
+) => {
+  await db.query(
+    "UPDATE site_details SET site_name = ?, po_number = ?, start_date = ?, end_date = ?, incharge_id = ?, workforce_id = ?, pd_id = ?, location_id = ?, reckoner_type_id = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE site_id = ?",
+    [
+      site_name,
+      po_number,
+      start_date || null,
+      end_date || null,
+      incharge_id,
+      workforce_id || null,
+      pd_id,
+      location_id || null,
+      reckoner_type_id,
+      updated_by,
+      site_id
+    ]
+  );
+};
+
+exports.getProjectUpdateHistory = async (pd_id) => {
+    const [rows] = await db.query(
+        "SELECT * FROM project_updation_history WHERE pd_id = ? ORDER BY updated_time DESC",
+        [pd_id]
+    );
+    return rows;
+};
+
+exports.getSiteUpdateHistory = async (site_id) => {
+    const [rows] = await db.query(
+        "SELECT * FROM site_updation_history WHERE site_id = ? ORDER BY updated_time DESC",
+        [site_id]
+    );
+    return rows;
 };

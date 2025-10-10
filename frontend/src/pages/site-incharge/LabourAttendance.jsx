@@ -3,7 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Select from "react-select";
-import { Save } from "lucide-react";
+import { Save, Edit2, X } from "lucide-react";
 import { useParams } from "react-router-dom";
 
 const LabourAttendance = () => {
@@ -14,6 +14,8 @@ const LabourAttendance = () => {
   const [workDescriptions, setWorkDescriptions] = useState([]);
   const [assignedLabours, setAssignedLabours] = useState([]);
   const [shifts, setShifts] = useState({});
+  const [remarks, setRemarks] = useState({});
+  const [editingIds, setEditingIds] = useState(new Set()); // Track editing rows by assignment_id
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [selectedSite, setSelectedSite] = useState(null);
@@ -26,7 +28,7 @@ const LabourAttendance = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/project/companies");
+        const response = await axios.get("http://103.118.158.127/api/project/companies");
         if (Array.isArray(response.data) && response.data.length > 0) {
           setCompanies(response.data);
         } else {
@@ -45,7 +47,7 @@ const LabourAttendance = () => {
     if (selectedCompany) {
       const fetchProjectsAndSites = async () => {
         try {
-          const response = await axios.get("http://localhost:5000/project/projects-with-sites");
+          const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
           if (Array.isArray(response.data) && response.data.length > 0) {
             const filteredProjects = response.data.filter(project => project.company_id === selectedCompany.value);
             setProjects(filteredProjects);
@@ -56,6 +58,8 @@ const LabourAttendance = () => {
             setSelectedWorkDesc(null);
             setAssignedLabours([]);
             setShifts({});
+            setRemarks({});
+            setEditingIds(new Set());
           } else {
             setError("No projects found");
             toast.error("No projects found");
@@ -75,6 +79,8 @@ const LabourAttendance = () => {
       setSelectedWorkDesc(null);
       setAssignedLabours([]);
       setShifts({});
+      setRemarks({});
+      setEditingIds(new Set());
     }
   }, [selectedCompany]);
 
@@ -87,6 +93,8 @@ const LabourAttendance = () => {
       setSelectedWorkDesc(null);
       setAssignedLabours([]);
       setShifts({});
+      setRemarks({});
+      setEditingIds(new Set());
     }
   }, [selectedProject, projects]);
 
@@ -95,7 +103,7 @@ const LabourAttendance = () => {
       const fetchWorkDescriptions = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
+          const response = await axios.get(`http://103.118.158.127/api/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
           setWorkDescriptions(response.data.data || []);
           setError(null);
         } catch (err) {
@@ -114,10 +122,13 @@ const LabourAttendance = () => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `http://localhost:5000/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+            `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
           );
           setAssignedLabours(response.data.data || []);
+          // Reset states on refresh
           setShifts({});
+          setRemarks({});
+          setEditingIds(new Set());
           setError(null);
         } catch (err) {
           toast.error("Failed to fetch labour attendance");
@@ -129,11 +140,109 @@ const LabourAttendance = () => {
     }
   }, [selectedProject, selectedSite, selectedWorkDesc, selectedDate]);
 
-  const handleShiftChange = (id, value) => {
+  const handleShiftChange = (assignmentId, value) => {
     setShifts(prev => ({
       ...prev,
-      [id]: value
+      [assignmentId]: value
     }));
+  };
+
+  const handleRemarksChange = (assignmentId, value) => {
+    setRemarks(prev => ({
+      ...prev,
+      [assignmentId]: value
+    }));
+  };
+
+  const toggleEdit = (assignmentId) => {
+    setEditingIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(assignmentId)) {
+        newSet.delete(assignmentId);
+      } else {
+        newSet.add(assignmentId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleCancelEdit = (assignmentId) => {
+    // Reset values for this row
+    setShifts(prev => {
+      const newShifts = { ...prev };
+      delete newShifts[assignmentId];
+      return newShifts;
+    });
+    setRemarks(prev => {
+      const newRemarks = { ...prev };
+      delete newRemarks[assignmentId];
+      return newRemarks;
+    });
+    toggleEdit(assignmentId);
+  };
+
+  const handleSaveRow = async (labour) => {
+    const parsedShift = parseFloat(shifts[labour.assignment_id] || labour.shift || 0);
+    const currentRemarks = remarks[labour.assignment_id] || labour.remarks || '';
+
+    if (parsedShift <= 0) {
+      toast.error("Shift must be a positive number");
+      return;
+    }
+
+    const attendanceData = [{
+      labour_assignment_id: labour.assignment_id,
+      entry_date: selectedDate,
+      shift: parsedShift,
+      remarks: currentRemarks || null,
+      attendance_id: labour.attendance_id // Include for update
+    }];
+
+    try {
+      setSubmitting(true);
+      if (!encodedUserId) {
+        toast.error("User ID is missing from URL");
+        return;
+      }
+      let user_id;
+      try {
+        user_id = atob(encodedUserId);
+        if (!/^\d+$/.test(user_id)) throw new Error();
+      } catch {
+        toast.error("Invalid User ID in URL");
+        return;
+      }
+
+      const payload = {
+        attendance_data: attendanceData,
+        created_by: parseInt(user_id)
+      };
+      console.log('Sending payload for row save:', payload);
+      const response = await axios.post("http://103.118.158.127/api/site-incharge/save-labour-attendance", payload);
+      toast.success(response.data.message);
+      // Reset for this row
+      setShifts(prev => {
+        const newShifts = { ...prev };
+        delete newShifts[labour.assignment_id];
+        return newShifts;
+      });
+      setRemarks(prev => {
+        const newRemarks = { ...prev };
+        delete newRemarks[labour.assignment_id];
+        return newRemarks;
+      });
+      toggleEdit(labour.assignment_id);
+      // Refresh full list
+      const responseRefresh = await axios.get(
+        `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+      );
+      setAssignedLabours(responseRefresh.data.data || []);
+    } catch (err) {
+      console.error('Error saving row attendance:', err.response?.data);
+      toast.error(err.response?.data?.message || "Failed to save attendance");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSaveAttendance = async () => {
@@ -142,16 +251,26 @@ const LabourAttendance = () => {
       return;
     }
 
-    const attendanceData = assignedLabours
-      .filter(labour => !labour.shift && shifts[labour.id] && parseFloat(shifts[labour.id]) > 0)
-      .map(labour => ({
-        labour_assignment_id: labour.id,
-        entry_date: selectedDate,
-        shift: parseFloat(shifts[labour.id])
-      }));
+    const attendanceData = [];
+
+    assignedLabours.forEach(labour => {
+      if (!labour.attendance_id) { // Only new rows
+        const parsedShift = parseFloat(shifts[labour.assignment_id] || 0);
+        const currentRemarks = remarks[labour.assignment_id] || '';
+
+        if (parsedShift > 0) {
+          attendanceData.push({
+            labour_assignment_id: labour.assignment_id,
+            entry_date: selectedDate,
+            shift: parsedShift,
+            remarks: currentRemarks || null
+          });
+        }
+      }
+    });
 
     if (attendanceData.length === 0) {
-      toast.error("Please enter a positive shift for at least one labour without existing attendance");
+      toast.error("Please enter a positive shift for at least one new labour");
       return;
     }
 
@@ -174,17 +293,19 @@ const LabourAttendance = () => {
         attendance_data: attendanceData,
         created_by: parseInt(user_id)
       };
-      console.log('Sending payload:', payload); // Debug log
-      const response = await axios.post("http://localhost:5000/site-incharge/save-labour-attendance", payload);
+      console.log('Sending payload for new attendance:', payload);
+      const response = await axios.post("http://103.118.158.127/api/site-incharge/save-labour-attendance", payload);
       toast.success(response.data.message);
+      // Reset states for new rows
       setShifts({});
+      setRemarks({});
       // Refresh attendance data
       const responseRefresh = await axios.get(
-        `http://localhost:5000/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+        `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
       );
       setAssignedLabours(responseRefresh.data.data || []);
     } catch (err) {
-      console.error('Error saving labour attendance:', err.response?.data);
+      console.error('Error saving new labour attendance:', err.response?.data);
       toast.error(err.response?.data?.message || "Failed to save labour attendance");
     } finally {
       setSubmitting(false);
@@ -286,24 +407,83 @@ const LabourAttendance = () => {
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-800 mb-2">Assigned Labours</h2>
             <div className="space-y-4">
-              {assignedLabours.map(labour => (
-                <div key={labour.id} className="flex items-center justify-between p-2 border rounded-lg bg-white shadow-sm">
-                  <span className="text-sm text-gray-700">{labour.emp_id} - {labour.full_name}</span>
-                  {labour.shift ? (
-                    <span className="text-sm text-gray-700">{labour.shift}</span>
-                  ) : (
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      value={shifts[labour.id] || ''}
-                      onChange={(e) => handleShiftChange(labour.id, e.target.value)}
-                      placeholder="Shift"
-                      className="w-20 p-1 border rounded-lg text-sm"
-                    />
-                  )}
-                </div>
-              ))}
+              {assignedLabours.map(labour => {
+                const isEditing = editingIds.has(labour.assignment_id);
+                const currentShift = shifts[labour.assignment_id] !== undefined ? shifts[labour.assignment_id] : (labour.shift || '');
+                const currentRemarks = remarks[labour.assignment_id] !== undefined ? remarks[labour.assignment_id] : (labour.remarks || '');
+                const hasAttendance = !!labour.attendance_id;
+                const showEdit = hasAttendance && labour.is_editable && !isEditing;
+
+                return (
+                  <div key={labour.assignment_id} className="flex flex-col p-2 border rounded-lg bg-white shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-700 font-medium">{labour.full_name}</span>
+                      <div className="flex items-center space-x-2">
+                        {showEdit && (
+                          <button
+                            onClick={() => toggleEdit(labour.assignment_id)}
+                            className="text-blue-500 hover:text-blue-700 text-sm flex items-center"
+                          >
+                            <Edit2 size={16} className="mr-1" />
+                            Edit
+                          </button>
+                        )}
+                        {isEditing && (
+                          <>
+                            <button
+                              onClick={() => handleSaveRow(labour)}
+                              disabled={submitting || parseFloat(currentShift) <= 0}
+                              className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 flex items-center disabled:bg-gray-400"
+                            >
+                              <Save size={12} className="mr-1" />
+                              Save
+                            </button>
+                            <button
+                              onClick={() => handleCancelEdit(labour.assignment_id)}
+                              className="px-2 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 flex items-center"
+                            >
+                              <X size={12} className="mr-1" />
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Shift</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          value={currentShift}
+                          onChange={(e) => handleShiftChange(labour.assignment_id, e.target.value)}
+                          placeholder="Shift hours"
+                          className="w-full p-1 border rounded text-sm"
+                          disabled={hasAttendance && !isEditing}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-600">Remarks</label>
+                        <input
+                          type="text"
+                          value={currentRemarks}
+                          onChange={(e) => handleRemarksChange(labour.assignment_id, e.target.value)}
+                          placeholder="Enter remarks"
+                          maxLength={255}
+                          className="w-full p-1 border rounded text-sm"
+                          disabled={hasAttendance && !isEditing}
+                        />
+                      </div>
+                    </div>
+                    {hasAttendance && !isEditing && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Shift: {labour.shift} | Remarks: {labour.remarks || 'N/A'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -314,7 +494,7 @@ const LabourAttendance = () => {
           disabled={submitting}
         >
           <Save size={14} className="mr-2" />
-          Save Attendance
+          Save New Attendance
         </button>
       </div>
 

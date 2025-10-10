@@ -1,28 +1,118 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import Select from "react-select";
 import { Loader2, Package, FileText, X, ChevronDown, ChevronUp } from "lucide-react";
 import DispatchReport from "../../components/DispatchReport";
 
-const DispatchedMaterials = () => {
+// SearchableDropdown component
+const SearchableDropdown = ({ options, selectedValue, onSelect, placeholder, searchKeys, disabled, loading }) => {
+  const selectOptions = useMemo(
+    () =>
+      options.map((option) => ({
+        value: option.id,
+        label: option[searchKeys[0]]?.toString() || "",
+        subLabel: searchKeys[1] ? option[searchKeys[1]]?.toString() || "" : null,
+      })),
+    [options, searchKeys]
+  );
+
+  const selectedOption = useMemo(
+    () => selectOptions.find((opt) => opt.value === selectedValue) || null,
+    [selectOptions, selectedValue]
+  );
+
+  const handleChange = (selected) => {
+    onSelect(selected ? selected.value : "");
+  };
+
+  const customFilter = (option, searchText) => {
+    if (!searchText) return true;
+    return (
+      option.data.label?.toLowerCase().includes(searchText.toLowerCase()) ||
+      option.data.subLabel?.toLowerCase().includes(searchText.toLowerCase())
+    );
+  };
+
+  const CustomOption = ({ innerProps, data }) => (
+    <div
+      {...innerProps}
+      className={`px-4 py-3 text-sm cursor-pointer hover:bg-teal-50 transition-colors ${
+        selectedValue === data.value ? "bg-teal-100 text-teal-800" : "text-gray-700"
+      }`}
+    >
+      <div className="font-medium">{data.label}</div>
+      {data.subLabel && <div className="text-xs text-gray-500">{data.subLabel}</div>}
+    </div>
+  );
+
+  const CustomSingleValue = ({ innerProps, data }) => (
+    <div {...innerProps}>
+      <div className="font-medium text-gray-900 text-sm">{data.label}</div>
+      {data.subLabel && <div className="text-xs text-gray-500">{data.subLabel}</div>}
+    </div>
+  );
+
+  useEffect(() => {
+    if (options.length === 1 && !selectedValue) {
+      onSelect(options[0].id);
+    }
+  }, [options, selectedValue, onSelect]);
+
+  return (
+    <Select
+      options={selectOptions}
+      value={selectedOption}
+      onChange={handleChange}
+      placeholder={placeholder}
+      isDisabled={disabled || loading}
+      isLoading={loading}
+      filterOption={customFilter}
+      components={{ Option: CustomOption, SingleValue: CustomSingleValue }}
+      isClearable
+      className="text-sm"
+      classNamePrefix="select"
+      styles={{
+        control: (provided, state) => ({
+          ...provided,
+          minHeight: "38px",
+          borderColor: state.isFocused ? "#14b8a6" : "#d1d5db",
+          boxShadow: state.isFocused ? "0 0 0 2px rgba(20, 184, 166, 0.2)" : "none",
+          backgroundColor: "white",
+        }),
+        singleValue: (provided) => ({
+          ...provided,
+          margin: 0,
+          padding: 0,
+        }),
+        menu: (provided) => ({
+          ...provided,
+          zIndex: 10,
+        }),
+      }}
+    />
+  );
+};
+
+const SuppliedMaterials = () => {
   const [companies, setCompanies] = useState([]);
-  const [allProjects, setAllProjects] = useState([]);
+  const [allSites, setAllSites] = useState([]);
   const [projects, setProjects] = useState([]);
   const [sites, setSites] = useState([]);
-  const [workDescriptions, setWorkDescriptions] = useState([]);
   const [dispatchGroups, setDispatchGroups] = useState([]);
   const [selectedDispatchIndex, setSelectedDispatchIndex] = useState(-1);
   const [filteredDispatchedMaterials, setFilteredDispatchedMaterials] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedSite, setSelectedSite] = useState("");
-  const [selectedWorkDescription, setSelectedWorkDescription] = useState("");
+  const [nextDcNo, setNextDcNo] = useState("");
+  const [masterDcNo, setMasterDcNo] = useState("");
   const [loading, setLoading] = useState({
     companies: false,
     projects: false,
     sites: false,
-    workDescriptions: false,
     materials: false,
+    masterDcNo: false,
+    dcNo: false,
   });
   const [error, setError] = useState(null);
   const [commonDispatchDetails, setCommonDispatchDetails] = useState({
@@ -30,15 +120,13 @@ const DispatchedMaterials = () => {
     dispatch_date: "",
     order_no: "",
     vendor_code: "",
-    gst_number: "",
-    order_date: "",
     destination: "",
     travel_expense: "",
     vehicle_number: "",
     driver_name: "",
     driver_mobile: "",
     master_dc_no: "",
-    next_dc_no: "", // Added to store the next DC number
+    next_dc_no: "",
   });
   const [showDispatchReport, setShowDispatchReport] = useState(false);
 
@@ -46,8 +134,16 @@ const DispatchedMaterials = () => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://103.118.158.127/api/project/companies");
-      setCompanies(response.data || []);
+      const response = await axios.get("http://103.118.158.127/api/supply/companies");
+      setCompanies(
+        Array.isArray(response.data)
+          ? response.data.map((company) => ({
+              id: company.company_id,
+              company_name: company.company_name,
+              vendor_code: company.vendor_code,
+            }))
+          : []
+      );
     } catch (error) {
       console.error("Error fetching companies:", error);
       setError("Failed to load companies. Please try again.");
@@ -56,72 +152,55 @@ const DispatchedMaterials = () => {
     }
   };
 
-  // Fetch master DC No based on company_id
-  const fetchMasterDcNo = async (company_id) => {
-    if (!company_id) return;
-    try {
-      const response = await axios.get(`http://103.118.158.127/api/material/master-dc-no`, {
-        params: { company_id },
-      });
-      if (response.data.status === "success" && response.data.data) {
-        setCommonDispatchDetails((prev) => ({
-          ...prev,
-          master_dc_no: response.data.data.dc_no || "N/A",
-        }));
-      } else {
-        setCommonDispatchDetails((prev) => ({ ...prev, master_dc_no: "N/A" }));
-      }
-    } catch (error) {
-      console.error("Error fetching master DC No:", error);
-      setError("Failed to load master DC No. Please try again.");
-      setCommonDispatchDetails((prev) => ({ ...prev, master_dc_no: "N/A" }));
-    }
-  };
-
-  // Fetch projects
-  const fetchProjects = async () => {
+  // Fetch sites by company (and derive projects)
+  const fetchSitesByCompany = async () => {
+    if (!selectedCompany) return;
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
-      setAllProjects(response.data || []);
+      const response = await axios.get(`http://103.118.158.127/api/supply/sites-by-company/${selectedCompany}`);
+      const sitesData = Array.isArray(response.data.data) ? response.data.data : [];
+      setAllSites(sitesData);
+
+      // Derive unique projects from sites
+      const uniqueProjects = Array.from(
+        new Map(sitesData.map((site) => [site.pd_id, { id: site.pd_id, project_name: site.project_name }])).values()
+      );
+      setProjects(uniqueProjects);
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      console.error("Error fetching sites/projects:", error);
       setError("Failed to load projects. Please try again.");
+      setProjects([]);
+      setAllSites([]);
     } finally {
       setLoading((prev) => ({ ...prev, projects: false }));
     }
   };
 
-  // Fetch sites based on selected project
-  const fetchSites = async (pd_id) => {
+  // Fetch master DC No based on company_id
+  const fetchMasterDcNo = async (company_id) => {
+    if (!company_id) return;
     try {
-      setLoading((prev) => ({ ...prev, sites: true }));
-      const selectedProj = allProjects.find((project) => project.project_id === pd_id);
-      const projectSites = selectedProj && Array.isArray(selectedProj.sites) ? selectedProj.sites : [];
-      setSites(projectSites);
-    } catch (error) {
-      console.error("Error fetching sites:", error);
-      setError("Failed to load sites. Please try again.");
-      setSites([]);
-    } finally {
-      setLoading((prev) => ({ ...prev, sites: false }));
-    }
-  };
-
-  // Fetch work descriptions based on selected site
-  const fetchWorkDescriptions = async (site_id) => {
-    try {
-      setLoading((prev) => ({ ...prev, workDescriptions: true }));
-      const response = await axios.get("http://103.118.158.127/api/material/work-descriptions", {
-        params: { site_id },
+      setLoading((prev) => ({ ...prev, masterDcNo: true }));
+      const response = await axios.get("http://103.118.158.127/api/supply/master-dc-no", {
+        params: { company_id },
       });
-      setWorkDescriptions(response.data.data || []);
+      if (response.data.status === "success" && response.data.data) {
+        setMasterDcNo(response.data.data.dc_no || "N/A");
+        setCommonDispatchDetails((prev) => ({
+          ...prev,
+          master_dc_no: response.data.data.dc_no || "N/A",
+        }));
+      } else {
+        setMasterDcNo("N/A");
+        setCommonDispatchDetails((prev) => ({ ...prev, master_dc_no: "N/A" }));
+      }
     } catch (error) {
-      console.error("Error fetching work descriptions:", error);
-      setError("Failed to load work descriptions. Please try again.");
-      setWorkDescriptions([]);
+      console.error("Error fetching master DC No:", error);
+      setError("Failed to load master DC No. Please try again.");
+      setMasterDcNo("N/A");
+      setCommonDispatchDetails((prev) => ({ ...prev, master_dc_no: "N/A" }));
     } finally {
-      setLoading((prev) => ({ ...prev, workDescriptions: false }));
+      setLoading((prev) => ({ ...prev, masterDcNo: false }));
     }
   };
 
@@ -129,52 +208,44 @@ const DispatchedMaterials = () => {
   const fetchNextDcNo = async (site_id) => {
     if (!site_id) return;
     try {
-      const response = await axios.get("http://103.118.158.127/api/material/next-dc-no", {
+      setLoading((prev) => ({ ...prev, dcNo: true }));
+      const response = await axios.get("http://103.118.158.127/api/supply/next-supply-dc-no", {
         params: { site_id },
       });
       if (response.data.status === "success" && response.data.data) {
+        const nextDcNoValue = response.data.data.next_dc_no != null ? response.data.data.next_dc_no.toString() : "N/A";
+        setNextDcNo(nextDcNoValue);
         setCommonDispatchDetails((prev) => ({
           ...prev,
-          next_dc_no: response.data.data.next_dc_no != null ? response.data.data.next_dc_no.toString() : "N/A",
+          next_dc_no: nextDcNoValue,
         }));
       } else {
+        setNextDcNo("N/A");
         setCommonDispatchDetails((prev) => ({ ...prev, next_dc_no: "N/A" }));
       }
     } catch (error) {
       console.error("Error fetching next DC No:", error);
       setError("Failed to fetch next DC No. Please try again.");
+      setNextDcNo("N/A");
       setCommonDispatchDetails((prev) => ({ ...prev, next_dc_no: "N/A" }));
+    } finally {
+      setLoading((prev) => ({ ...prev, dcNo: false }));
     }
   };
 
-  // Fetch dispatched materials for selected project, site, and work description
+  // Fetch dispatched materials for selected site
   const fetchDispatchedMaterials = async () => {
-    if (!selectedProject || !selectedSite || !selectedWorkDescription) return;
+    if (!selectedSite) return;
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
       setError(null);
-      const response = await axios.get("http://103.118.158.127/api/material/dispatch-details", {
-        params: { pd_id: selectedProject, site_id: selectedSite, desc_id: selectedWorkDescription },
+      const response = await axios.get("http://103.118.158.127/api/supply/supply-dispatch-details", {
+        params: { site_id: selectedSite },
       });
       const materials = response.data.data || [];
 
-      // Group materials by dc_no and dispatch_date
-      const dispatchGroupsMap = materials.reduce((acc, material) => {
-        const key = `${material.dc_no}-${material.dispatch_date}`;
-        if (!acc[key]) {
-          acc[key] = {
-            dc_no: material.dc_no,
-            dispatch_date: material.dispatch_date,
-            created_at: material.created_at,
-            master_dc_no: material.master_dc_no,
-            materials: [],
-          };
-        }
-        acc[key].materials.push(material);
-        return acc;
-      }, {});
-
-      const groups = Object.values(dispatchGroupsMap).sort(
+      // Sort dispatch groups by dispatch_date
+      const groups = materials.sort(
         (a, b) => new Date(a.dispatch_date) - new Date(b.dispatch_date)
       );
 
@@ -198,10 +269,6 @@ const DispatchedMaterials = () => {
             : "N/A",
           order_no: firstMaterial.order_no || "N/A",
           vendor_code: firstMaterial.vendor_code || "N/A",
-          gst_number: firstMaterial.gst_number || "N/A",
-          order_date: firstMaterial.order_date
-            ? new Date(firstMaterial.order_date).toLocaleDateString("en-US", { dateStyle: "medium" })
-            : "N/A",
           destination: firstTransport.destination || "N/A",
           travel_expense: firstTransport.travel_expense
             ? firstTransport.travel_expense.toLocaleString()
@@ -209,7 +276,8 @@ const DispatchedMaterials = () => {
           vehicle_number: firstTransport.vehicle?.vehicle_number || "N/A",
           driver_name: firstTransport.driver?.driver_name || "N/A",
           driver_mobile: firstTransport.driver?.driver_mobile || "N/A",
-          master_dc_no: firstMaterial.master_dc_no || prev.master_dc_no || "N/A",
+          master_dc_no: prev.master_dc_no || "N/A",
+          next_dc_no: prev.next_dc_no || "N/A",
         }));
       } else {
         setSelectedDispatchIndex(-1);
@@ -220,8 +288,6 @@ const DispatchedMaterials = () => {
           dispatch_date: "",
           order_no: "",
           vendor_code: "",
-          gst_number: "",
-          order_date: "",
           destination: "",
           travel_expense: "",
           vehicle_number: "",
@@ -262,10 +328,6 @@ const DispatchedMaterials = () => {
           : "N/A",
         order_no: firstMaterial.order_no || "N/A",
         vendor_code: firstMaterial.vendor_code || "N/A",
-        gst_number: firstMaterial.gst_number || "N/A",
-        order_date: firstMaterial.order_date
-          ? new Date(firstMaterial.order_date).toLocaleDateString("en-US", { dateStyle: "medium" })
-          : "N/A",
         destination: firstTransport.destination || "N/A",
         travel_expense: firstTransport.travel_expense
           ? firstTransport.travel_expense.toLocaleString()
@@ -273,150 +335,116 @@ const DispatchedMaterials = () => {
         vehicle_number: firstTransport.vehicle?.vehicle_number || "N/A",
         driver_name: firstTransport.driver?.driver_name || "N/A",
         driver_mobile: firstTransport.driver?.driver_mobile || "N/A",
-        master_dc_no: firstMaterial.master_dc_no || prev.master_dc_no || "N/A",
+        master_dc_no: prev.master_dc_no || "N/A",
+        next_dc_no: prev.next_dc_no || "N/A",
       }));
     }
   };
 
   // Handle company selection
   const handleCompanyChange = async (value) => {
-    const company_id = value;
-    setSelectedCompany(company_id);
+    setSelectedCompany(value);
     setSelectedProject("");
     setSelectedSite("");
-    setSelectedWorkDescription("");
-    setSelectedDispatchIndex(-1);
+    setSites([]);
     setDispatchGroups([]);
     setFilteredDispatchedMaterials([]);
-    setSites([]);
-    setWorkDescriptions([]);
+    setSelectedDispatchIndex(-1);
+    setMasterDcNo("");
+    setNextDcNo("");
     setCommonDispatchDetails({
       dc_no: "",
       dispatch_date: "",
       order_no: "",
       vendor_code: "",
-      gst_number: "",
-      order_date: "",
       destination: "",
       travel_expense: "",
       vehicle_number: "",
       driver_name: "",
       driver_mobile: "",
       master_dc_no: "",
-      next_dc_no: "", // Reset next_dc_no
+      next_dc_no: "",
     });
     setError(null);
     setShowDispatchReport(false);
-    if (company_id) {
-      await fetchMasterDcNo(company_id);
+    if (value) {
+      await fetchMasterDcNo(value);
+      await fetchSitesByCompany();
     }
   };
 
   // Handle project selection
   const handleProjectChange = async (value) => {
-    const pd_id = value;
-    setSelectedProject(pd_id);
+    setSelectedProject(value);
     setSelectedSite("");
-    setSelectedWorkDescription("");
-    setSelectedDispatchIndex(-1);
+    setSites([]);
     setDispatchGroups([]);
     setFilteredDispatchedMaterials([]);
-    setWorkDescriptions([]);
+    setSelectedDispatchIndex(-1);
+    setNextDcNo("");
     setCommonDispatchDetails((prev) => ({
       ...prev,
       dc_no: "",
       dispatch_date: "",
       order_no: "",
       vendor_code: "",
-      gst_number: "",
-      order_date: "",
       destination: "",
       travel_expense: "",
       vehicle_number: "",
       driver_name: "",
       driver_mobile: "",
-      next_dc_no: "", // Reset next_dc_no
+      next_dc_no: "",
     }));
     setError(null);
     setShowDispatchReport(false);
-    if (pd_id) {
-      await fetchSites(pd_id);
+    if (value) {
+      const projectSites = allSites.filter((site) => site.pd_id === value);
+      setSites(
+        projectSites.map((site) => ({
+          id: site.site_id,
+          site_name: site.site_name,
+          po_number: site.po_number,
+          supply_code: site.supply_code,
+          location_name: site.location_name,
+        }))
+      );
+      if (projectSites.length === 1) {
+        setSelectedSite(projectSites[0].site_id);
+      }
     }
   };
 
   // Handle site selection
   const handleSiteChange = async (value) => {
-    const site_id = value;
-    setSelectedSite(site_id);
-    setSelectedWorkDescription("");
+    setSelectedSite(value);
     setSelectedDispatchIndex(-1);
     setDispatchGroups([]);
     setFilteredDispatchedMaterials([]);
-    setWorkDescriptions([]);
+    setNextDcNo("");
     setCommonDispatchDetails((prev) => ({
       ...prev,
       dc_no: "",
       dispatch_date: "",
       order_no: "",
       vendor_code: "",
-      gst_number: "",
-      order_date: "",
       destination: "",
       travel_expense: "",
       vehicle_number: "",
       driver_name: "",
       driver_mobile: "",
-      next_dc_no: "", // Reset next_dc_no
+      next_dc_no: "",
     }));
     setError(null);
     setShowDispatchReport(false);
-    if (site_id) {
-      await fetchWorkDescriptions(site_id);
-      await fetchNextDcNo(site_id); // Fetch next DC No when site is selected
-    }
-  };
-
-  // Handle work description selection
-  const handleWorkDescriptionChange = async (value) => {
-    const desc_id = value;
-    setSelectedWorkDescription(desc_id);
-    setSelectedDispatchIndex(-1);
-    setDispatchGroups([]);
-    setFilteredDispatchedMaterials([]);
-    setCommonDispatchDetails((prev) => ({
-      ...prev,
-      dc_no: "",
-      dispatch_date: "",
-      order_no: "",
-      vendor_code: "",
-      gst_number: "",
-      order_date: "",
-      destination: "",
-      travel_expense: "",
-      vehicle_number: "",
-      driver_name: "",
-      driver_mobile: "",
-      next_dc_no: "", // Reset next_dc_no
-    }));
-    setError(null);
-    setShowDispatchReport(false);
-    if (desc_id) {
+    if (value) {
       await fetchDispatchedMaterials();
+      await fetchNextDcNo(value);
     }
   };
 
   // Toggle Dispatch Report visibility
   const handleViewDC = () => {
     setShowDispatchReport(true);
-  };
-
-  // Helper function to format component ratios
-  const formatComponentRatios = (comp_ratio_a, comp_ratio_b, comp_ratio_c) => {
-    const ratios = [comp_ratio_a || 0, comp_ratio_b || 0];
-    if (comp_ratio_c !== null && comp_ratio_c !== undefined) {
-      ratios.push(comp_ratio_c);
-    }
-    return ` (${ratios.join(':')})`;
   };
 
   // Format created_at as "Created At"
@@ -434,155 +462,62 @@ const DispatchedMaterials = () => {
 
   useEffect(() => {
     fetchCompanies();
-    fetchProjects();
   }, []);
 
   useEffect(() => {
     if (selectedCompany) {
-      const filteredProjects = allProjects.filter((project) => project.company_id === selectedCompany);
-      setProjects(filteredProjects);
-      if (filteredProjects.length === 1) {
-        setSelectedProject(filteredProjects[0].project_id);
-      } else {
-        setSelectedProject("");
-        setSites([]);
-        setSelectedSite("");
-        setWorkDescriptions([]);
-        setSelectedWorkDescription("");
-        setDispatchGroups([]);
-        setFilteredDispatchedMaterials([]);
-        setSelectedDispatchIndex(-1);
-      }
+      fetchSitesByCompany();
       fetchMasterDcNo(selectedCompany);
     } else {
       setProjects([]);
-      setSelectedProject("");
       setSites([]);
+      setSelectedProject("");
       setSelectedSite("");
-      setWorkDescriptions([]);
-      setSelectedWorkDescription("");
       setDispatchGroups([]);
       setFilteredDispatchedMaterials([]);
       setSelectedDispatchIndex(-1);
+      setMasterDcNo("");
+      setNextDcNo("");
       setCommonDispatchDetails((prev) => ({ ...prev, master_dc_no: "", next_dc_no: "" }));
     }
-  }, [selectedCompany, allProjects]);
+  }, [selectedCompany]);
 
   useEffect(() => {
     if (selectedProject) {
-      fetchSites(selectedProject);
+      const projectSites = allSites.filter((site) => site.pd_id === selectedProject);
+      setSites(
+        projectSites.map((site) => ({
+          id: site.site_id,
+          site_name: site.site_name,
+          po_number: site.po_number,
+          supply_code: site.supply_code,
+          location_name: site.location_name,
+        }))
+      );
+      if (projectSites.length === 1 && !selectedSite) {
+        setSelectedSite(projectSites[0].site_id);
+      }
     } else {
       setSites([]);
       setSelectedSite("");
-      setWorkDescriptions([]);
-      setSelectedWorkDescription("");
       setDispatchGroups([]);
       setFilteredDispatchedMaterials([]);
       setSelectedDispatchIndex(-1);
+      setNextDcNo("");
     }
-  }, [selectedProject]);
-
-  useEffect(() => {
-    if (selectedProject && sites.length === 1) {
-      setSelectedSite(sites[0].site_id);
-    }
-  }, [sites, selectedProject]);
+  }, [selectedProject, allSites]);
 
   useEffect(() => {
     if (selectedSite) {
-      fetchWorkDescriptions(selectedSite);
+      fetchDispatchedMaterials();
+      fetchNextDcNo(selectedSite);
     } else {
-      setWorkDescriptions([]);
-      setSelectedWorkDescription("");
       setDispatchGroups([]);
       setFilteredDispatchedMaterials([]);
       setSelectedDispatchIndex(-1);
+      setNextDcNo("");
     }
   }, [selectedSite]);
-
-  useEffect(() => {
-    if (selectedSite && workDescriptions.length === 1) {
-      setSelectedWorkDescription(workDescriptions[0].desc_id);
-    }
-  }, [workDescriptions, selectedSite]);
-
-  useEffect(() => {
-    if (selectedProject && selectedSite && selectedWorkDescription) {
-      fetchDispatchedMaterials();
-    }
-  }, [selectedProject, selectedSite, selectedWorkDescription]);
-
-  // Custom styles for react-select
-  const customSelectStyles = {
-    control: (provided) => ({
-      ...provided,
-      borderColor: "#e2e8f0",
-      boxShadow: "none",
-      "&:hover": {
-        borderColor: "#38b2ac",
-      },
-      caretColor: "transparent",
-    }),
-    menu: (provided) => ({
-      ...provided,
-      backgroundColor: "#ffffff",
-      border: "1px solid #e2e8f0",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected ? "#e6fffa" : state.isFocused ? "#f0f9ff" : "#ffffff",
-      color: "#1a202c",
-      "&:hover": {
-        backgroundColor: "#f0f9ff",
-      },
-    }),
-    singleValue: (provided) => ({
-      ...provided,
-      color: "#1a202c",
-    }),
-    placeholder: (provided) => ({
-      ...provided,
-      color: "#a0aec0",
-    }),
-    input: (provided) => ({
-      ...provided,
-      caretColor: "transparent",
-    }),
-  };
-
-  // Prepare options for selects
-  const companyOptions = companies.map((company) => ({
-    value: company.company_id,
-    label: company.company_name || "Unknown Company",
-  }));
-  const companyValue = selectedCompany
-    ? companyOptions.find((opt) => opt.value === selectedCompany)
-    : null;
-
-  const projectOptions = projects.map((project) => ({
-    value: project.project_id,
-    label: project.project_name || "Unknown Project",
-  }));
-  const projectValue = selectedProject
-    ? projectOptions.find((opt) => opt.value === selectedProject)
-    : null;
-
-  const siteOptions = sites.map((site) => ({
-    value: site.site_id,
-    label: `${site.site_name || "Unknown Site"} (PO: ${site.po_number || "N/A"})`,
-  }));
-  const siteValue = selectedSite
-    ? siteOptions.find((opt) => opt.value === selectedSite)
-    : null;
-
-  const workDescriptionOptions = workDescriptions.map((desc) => ({
-    value: desc.desc_id,
-    label: desc.desc_name || "Unknown Description",
-  }));
-  const workDescriptionValue = selectedWorkDescription
-    ? workDescriptionOptions.find((opt) => opt.value === selectedWorkDescription)
-    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-100 p-4 sm:p-6 lg:p-8">
@@ -591,79 +526,51 @@ const DispatchedMaterials = () => {
         <div className="mb-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3 flex items-center justify-center gap-2">
             <Package className="h-8 w-8 text-teal-600" aria-hidden="true" />
-            Dispatched Materials
+            Supplied Materials
           </h2>
           <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-            View details of materials dispatched to your project sites
+            View details of materials supplied to your project sites
           </p>
         </div>
 
         {/* Selection Inputs */}
         <div className="mb-6 bg-white p-6 rounded-xl shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Select Company</label>
-              <Select
-                value={companyValue}
-                onChange={(selected) => handleCompanyChange(selected ? selected.value : "")}
-                options={companyOptions}
-                isDisabled={loading.companies}
-                isSearchable={true}
+              <SearchableDropdown
+                options={companies}
+                selectedValue={selectedCompany}
+                onSelect={handleCompanyChange}
                 placeholder="Select Company"
-                className="w-full text-sm"
-                styles={customSelectStyles}
+                searchKeys={["company_name", "vendor_code"]}
+                disabled={loading.companies}
+                loading={loading.companies}
               />
-              {loading.companies && (
-                <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />
-              )}
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Select Cost Center</label>
-              <Select
-                value={projectValue}
-                onChange={(selected) => handleProjectChange(selected ? selected.value : "")}
-                options={projectOptions}
-                isDisabled={loading.projects || !selectedCompany}
-                isSearchable={true}
+              <SearchableDropdown
+                options={projects}
+                selectedValue={selectedProject}
+                onSelect={handleProjectChange}
                 placeholder="Select Cost Center"
-                className="w-full text-sm"
-                styles={customSelectStyles}
+                searchKeys={["project_name"]}
+                disabled={loading.projects || !selectedCompany}
+                loading={loading.projects}
               />
-              {loading.projects && (
-                <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />
-              )}
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Select Site</label>
-              <Select
-                value={siteValue}
-                onChange={(selected) => handleSiteChange(selected ? selected.value : "")}
-                options={siteOptions}
-                isDisabled={!selectedProject || loading.sites}
-                isSearchable={true}
+              <SearchableDropdown
+                options={sites}
+                selectedValue={selectedSite}
+                onSelect={handleSiteChange}
                 placeholder="Select Site"
-                className="w-full text-sm"
-                styles={customSelectStyles}
+                searchKeys={["site_name", "po_number"]}
+                disabled={loading.sites || !selectedProject}
+                loading={loading.sites}
               />
-              {loading.sites && selectedProject && (
-                <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Select Work Description</label>
-              <Select
-                value={workDescriptionValue}
-                onChange={(selected) => handleWorkDescriptionChange(selected ? selected.value : "")}
-                options={workDescriptionOptions}
-                isDisabled={!selectedSite || loading.workDescriptions}
-                isSearchable={true}
-                placeholder="Select Work Description"
-                className="w-full text-sm"
-                styles={customSelectStyles}
-              />
-              {loading.workDescriptions && selectedSite && (
-                <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />
-              )}
             </div>
           </div>
         </div>
@@ -690,19 +597,19 @@ const DispatchedMaterials = () => {
           <div className="flex justify-center items-center py-16">
             <div className="flex flex-col items-center space-y-4">
               <Loader2 className="h-12 w-12 text-teal-600 animate-spin" aria-hidden="true" />
-              <p className="text-gray-600 text-lg font-medium">Loading dispatched materials...</p>
+              <p className="text-gray-600 text-lg font-medium">Loading supplied materials...</p>
             </div>
           </div>
-        ) : !selectedCompany || !selectedProject || !selectedSite || !selectedWorkDescription ? (
+        ) : !selectedCompany || !selectedProject || !selectedSite ? (
           <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-200">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-            <p className="text-gray-600 text-lg font-medium">Please select a company, project, site, and work description.</p>
+            <p className="text-gray-600 text-lg font-medium">Please select a company, cost center, and site.</p>
           </div>
         ) : dispatchGroups.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-200">
             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
-            <p className="text-gray-600 text-lg font-medium">No dispatched materials found for the selected criteria.</p>
-            <p className="text-gray-500 mt-2">Dispatch materials to this project, site, and work description to see them listed here.</p>
+            <p className="text-gray-600 text-lg font-medium">No supplied materials found for the selected criteria.</p>
+            <p className="text-gray-500 mt-2">Dispatch materials to this project and site to see them listed here.</p>
           </div>
         ) : (
           <>
@@ -717,7 +624,7 @@ const DispatchedMaterials = () => {
                     <div className="flex items-center space-x-6">
                       <span>
                         <span className="font-semibold text-blue-700">Master DC No:</span>{" "}
-                        <span className="text-blue-600">{group.master_dc_no || commonDispatchDetails.master_dc_no || "N/A"}</span>
+                        <span className="text-blue-600">{commonDispatchDetails.master_dc_no || "N/A"}</span>
                       </span>
                       <span>
                         <span className="font-semibold text-green-700">PO DC No:</span>{" "}
@@ -775,14 +682,8 @@ const DispatchedMaterials = () => {
                             <p className="text-sm text-gray-900">{commonDispatchDetails.order_no}</p>
                           </div>
                           <div>
-                            <p className="text-xs font-medium text-gray-600">Vendor Code / GSTIN</p>
-                            <p className="text-sm text-gray-900">
-                              {commonDispatchDetails.vendor_code} {commonDispatchDetails.gst_number !== "N/A" ? `/ ${commonDispatchDetails.gst_number}` : ""}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-gray-600">Order Date</p>
-                            <p className="text-sm text-gray-900">{commonDispatchDetails.order_date}</p>
+                            <p className="text-xs font-medium text-gray-600">Vendor Code</p>
+                            <p className="text-sm text-gray-900">{commonDispatchDetails.vendor_code}</p>
                           </div>
                           <div>
                             <p className="text-xs font-medium text-gray-600">Destination</p>
@@ -804,7 +705,6 @@ const DispatchedMaterials = () => {
                             <p className="text-xs font-medium text-gray-600">Driver Mobile</p>
                             <p className="text-sm text-gray-900">{commonDispatchDetails.driver_mobile}</p>
                           </div>
-                         
                         </div>
                       </div>
 
@@ -830,7 +730,7 @@ const DispatchedMaterials = () => {
                                   Dispatched Quantities
                                 </th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">
-                                  Remarks
+                                  Dispatch Cost
                                 </th>
                               </tr>
                             </thead>
@@ -841,14 +741,7 @@ const DispatchedMaterials = () => {
                                   className="hover:bg-teal-50 transition-colors duration-200"
                                 >
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                    <p className="font-medium">
-                                      {dispatch.item_name || "N/A"}
-                                      {formatComponentRatios(
-                                        dispatch.comp_ratio_a,
-                                        dispatch.comp_ratio_b,
-                                        dispatch.comp_ratio_c
-                                      )}
-                                    </p>
+                                    <p className="font-medium">{dispatch.item_name || "N/A"}</p>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                     {formatCreatedAt(dispatch.created_at)}
@@ -860,54 +753,14 @@ const DispatchedMaterials = () => {
                                     </p>
                                   </td>
                                   <td className="px-6 py-4 text-sm text-gray-700">
-                                    <div className="space-y-4">
-                                      {dispatch.comp_a_qty !== null && dispatch.comp_a_qty !== undefined && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">Component A:</label>
-                                          <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                            {dispatch.comp_a_qty}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {dispatch.comp_b_qty !== null && dispatch.comp_b_qty !== undefined && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">Component B:</label>
-                                          <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                            {dispatch.comp_b_qty}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {dispatch.comp_c_qty !== null && dispatch.comp_c_qty !== undefined && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">Component C:</label>
-                                          <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                            {dispatch.comp_c_qty}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
+                                    <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
+                                      {dispatch.dispatch_qty || "0"}
+                                    </span>
                                   </td>
                                   <td className="px-6 py-4 text-sm text-gray-700">
-                                    <div className="space-y-4">
-                                      {dispatch.comp_a_remarks && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">A:</label>
-                                          <span className="text-sm">{dispatch.comp_a_remarks}</span>
-                                        </div>
-                                      )}
-                                      {dispatch.comp_b_remarks && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">B:</label>
-                                          <span className="text-sm">{dispatch.comp_b_remarks}</span>
-                                        </div>
-                                      )}
-                                      {dispatch.comp_c_remarks && (
-                                        <div className="flex items-center gap-4">
-                                          <label className="w-24 text-sm font-medium text-gray-700">C:</label>
-                                          <span className="text-sm">{dispatch.comp_c_remarks}</span>
-                                        </div>
-                                      )}
-                                    </div>
+                                    <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
+                                      {dispatch.dispatch_cost ? dispatch.dispatch_cost.toLocaleString() : "0"}
+                                    </span>
                                   </td>
                                 </tr>
                               ))}
@@ -931,14 +784,7 @@ const DispatchedMaterials = () => {
                             >
                               <div>
                                 <p className="text-sm font-medium text-gray-700">Material Name</p>
-                                <p className="text-sm text-gray-600">
-                                  {dispatch.item_name || "N/A"}
-                                  {formatComponentRatios(
-                                    dispatch.comp_ratio_a,
-                                    dispatch.comp_ratio_b,
-                                    dispatch.comp_ratio_c
-                                  )}
-                                </p>
+                                <p className="text-sm text-gray-600">{dispatch.item_name || "N/A"}</p>
                               </div>
                               <div>
                                 <p className="text-sm font-medium text-gray-700">Created At</p>
@@ -952,56 +798,16 @@ const DispatchedMaterials = () => {
                                 </p>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-gray-700">Dispatched Quantities</p>
-                                <div className="space-y-4 mt-2">
-                                  {dispatch.comp_a_qty !== null && dispatch.comp_a_qty !== undefined && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">Component A:</label>
-                                      <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                        {dispatch.comp_a_qty}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {dispatch.comp_b_qty !== null && dispatch.comp_b_qty !== undefined && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">Component B:</label>
-                                      <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                        {dispatch.comp_b_qty}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {dispatch.comp_c_qty !== null && dispatch.comp_c_qty !== undefined && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">Component C:</label>
-                                      <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
-                                        {dispatch.comp_c_qty}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                                <p className="text-sm font-medium text-gray-700">Dispatched Quantity</p>
+                                <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
+                                  {dispatch.dispatch_qty || "0"}
+                                </span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-gray-700">Remarks</p>
-                                <div className="space-y-4 mt-2">
-                                  {dispatch.comp_a_remarks && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">A:</label>
-                                      <span className="text-sm text-gray-600">{dispatch.comp_a_remarks}</span>
-                                    </div>
-                                  )}
-                                  {dispatch.comp_b_remarks && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">B:</label>
-                                      <span className="text-sm text-gray-600">{dispatch.comp_b_remarks}</span>
-                                    </div>
-                                  )}
-                                  {dispatch.comp_c_remarks && (
-                                    <div className="flex items-center gap-4">
-                                      <label className="w-24 text-sm font-medium text-gray-700">C:</label>
-                                      <span className="text-sm text-gray-600">{dispatch.comp_c_remarks}</span>
-                                    </div>
-                                  )}
-                                </div>
+                                <p className="text-sm font-medium text-gray-700">Dispatch Cost</p>
+                                <span className="text-sm bg-teal-50 px-3 py-1 rounded-md">
+                                  {dispatch.dispatch_cost ? dispatch.dispatch_cost.toLocaleString() : "0"}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -1024,8 +830,21 @@ const DispatchedMaterials = () => {
           </>
         )}
       </div>
+      <style jsx>{`
+        .select__control {
+          border-color: #d1d5db;
+          min-height: 38px;
+        }
+        .select__control--is-focused {
+          border-color: #14b8a6;
+          box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+        }
+        .select__menu {
+          z-index: 10;
+        }
+      `}</style>
     </div>
   );
 };
 
-export default DispatchedMaterials;
+export default SuppliedMaterials;

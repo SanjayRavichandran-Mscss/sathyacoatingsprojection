@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -9,6 +5,62 @@ import { PlusCircle, Trash2, Loader2, CheckCircle, Eye } from "lucide-react";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
 import { useParams } from "react-router-dom";
+
+// Custom function to format date from YYYY-MM-DD to DD-MMMM-YYYY
+const formatDateToDisplay = (dateStr) => {
+  if (!dateStr) return "";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "N/A";
+    const day = String(date.getDate()).padStart(2, "0");
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  } catch {
+    return "N/A";
+  }
+};
+
+// Custom function to format date from DD-MMMM-YYYY to YYYY-MM-DD for input
+const parseDisplayDate = (displayDate) => {
+  if (!displayDate) return "";
+  try {
+    const [day, month, year] = displayDate.split("-");
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const monthIndex = monthNames.indexOf(month);
+    if (monthIndex === -1) return "";
+    return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${day}`;
+  } catch {
+    return "";
+  }
+};
 
 const SupplyMaterialPlanning = () => {
   const { encodedUserId } = useParams();
@@ -21,7 +73,7 @@ const SupplyMaterialPlanning = () => {
     console.error("Error decoding userId:", error);
   }
 
-  const [allProjects, setAllProjects] = useState([]);
+  const [allSites, setAllSites] = useState([]);
   const [projects, setProjects] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [sites, setSites] = useState([]);
@@ -39,6 +91,7 @@ const SupplyMaterialPlanning = () => {
       production_cost: "0.00",
       supply_cost_per_uom: "",
       supply_cost: "0.00",
+      target_date: "",
     },
   ]);
   const [assignedMaterials, setAssignedMaterials] = useState([]);
@@ -61,15 +114,9 @@ const SupplyMaterialPlanning = () => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://localhost:5000/project/companies");
+      const response = await axios.get("http://103.118.158.127/api/supply/companies");
       const fetchedCompanies = Array.isArray(response.data) ? response.data : [];
       setCompanies(fetchedCompanies);
-      if (fetchedCompanies.length === 1) {
-        setSelectedCompany({
-          value: fetchedCompanies[0].company_id,
-          label: fetchedCompanies[0].company_name || "Unknown Company",
-        });
-      }
     } catch (error) {
       console.error("Error fetching companies:", error);
       setError("Failed to load companies. Please try again.");
@@ -78,17 +125,35 @@ const SupplyMaterialPlanning = () => {
     }
   };
 
-  // Fetch projects with sites
-  const fetchProjects = async () => {
+  // Fetch projects and sites
+  const fetchProjectsAndSites = async (companyId) => {
     try {
-      setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("http://localhost:5000/project/projects-with-sites");
-      setAllProjects(Array.isArray(response.data) ? response.data : []);
+      setLoading((prev) => ({ ...prev, projects: true, sites: true }));
+      const response = await axios.get(`http://103.118.158.127/api/supply/sites-by-company/${companyId}`);
+      const sitesData = Array.isArray(response.data.data) ? response.data.data : [];
+      setAllSites(sitesData);
+
+      // Extract unique projects
+      const uniqueProjects = Array.from(
+        new Map(sitesData.map((site) => [site.pd_id, { pd_id: site.pd_id, project_name: site.project_name }])).values()
+      );
+      setProjects(uniqueProjects);
+
+      if (uniqueProjects.length === 1) {
+        setSelectedProject({
+          value: uniqueProjects[0].pd_id,
+          label: uniqueProjects[0].project_name || "Unknown Project",
+        });
+      } else {
+        setSelectedProject(null);
+      }
     } catch (error) {
-      console.error("Error fetching projects:", error);
-      setError("Failed to load projects. Please try again.");
+      console.error("Error fetching projects and sites:", error);
+      setError("Failed to load projects and sites. Please try again.");
+      setProjects([]);
+      setAllSites([]);
     } finally {
-      setLoading((prev) => ({ ...prev, projects: false }));
+      setLoading((prev) => ({ ...prev, projects: false, sites: false }));
     }
   };
 
@@ -96,7 +161,7 @@ const SupplyMaterialPlanning = () => {
   const fetchMaterials = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("http://103.118.158.127/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -111,7 +176,7 @@ const SupplyMaterialPlanning = () => {
   const fetchUoms = async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("http://103.118.158.127/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -126,7 +191,7 @@ const SupplyMaterialPlanning = () => {
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       setModalError(null);
-      const response = await axios.get(`http://localhost:5000/supply/assigned-materials?site_id=${site_id}`);
+      const response = await axios.get(`http://103.118.158.127/api/supply/assigned-materials?site_id=${site_id}`);
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setAssignedMaterials(assignedMaterials);
     } catch (error) {
@@ -140,48 +205,38 @@ const SupplyMaterialPlanning = () => {
 
   useEffect(() => {
     fetchCompanies();
-    fetchProjects();
     fetchMaterials();
     fetchUoms();
   }, []);
 
   useEffect(() => {
     if (selectedCompany?.value) {
-      const filteredProjects = allProjects.filter((p) => p.company_id === selectedCompany.value);
-      setProjects(filteredProjects);
-      if (filteredProjects.length === 1) {
-        setSelectedProject({
-          value: filteredProjects[0].project_id,
-          label: filteredProjects[0].project_name || "Unknown Project",
-        });
-      } else {
-        setSelectedProject(null);
-      }
+      fetchProjectsAndSites(selectedCompany.value);
     } else {
       setProjects([]);
+      setAllSites([]);
       setSelectedProject(null);
+      setSelectedSite(null);
+      setMaterialAssignments([
+        {
+          item_id: "",
+          uom_id: "",
+          quantity: "",
+          production_cost_per_uom: "",
+          production_cost: "0.00",
+          supply_cost_per_uom: "",
+          supply_cost: "0.00",
+          target_date: "",
+        },
+      ]);
+      setAssignedMaterials([]);
+      setError(null);
     }
-    setSelectedSite(null);
-    setSites([]);
-    setMaterialAssignments([
-      {
-        item_id: "",
-        uom_id: "",
-        quantity: "",
-        production_cost_per_uom: "",
-        production_cost: "0.00",
-        supply_cost_per_uom: "",
-        supply_cost: "0.00",
-      },
-    ]);
-    setAssignedMaterials([]);
-    setError(null);
-  }, [selectedCompany, allProjects]);
+  }, [selectedCompany]);
 
   useEffect(() => {
     if (selectedProject?.value) {
-      const selectedProj = allProjects.find((p) => p.project_id === selectedProject.value);
-      const projectSites = selectedProj && Array.isArray(selectedProj.sites) ? selectedProj.sites : [];
+      const projectSites = allSites.filter((site) => site.pd_id === selectedProject.value);
       setSites(projectSites);
       if (projectSites.length === 1) {
         setSelectedSite({
@@ -203,12 +258,13 @@ const SupplyMaterialPlanning = () => {
           production_cost: "0.00",
           supply_cost_per_uom: "",
           supply_cost: "0.00",
+          target_date: "",
         },
       ]);
       setAssignedMaterials([]);
     }
     setError(null);
-  }, [selectedProject, allProjects]);
+  }, [selectedProject, allSites]);
 
   const handleMaterialChange = (matIndex, e) => {
     const { name, value } = e.target;
@@ -217,12 +273,12 @@ const SupplyMaterialPlanning = () => {
     mat[name] = value;
 
     // Auto-calculate totals when quantity or per_uom changes
-    if (name === 'quantity' || name === 'production_cost_per_uom') {
+    if (name === "quantity" || name === "production_cost_per_uom") {
       const qty = parseInt(mat.quantity) || 0;
       const perUom = parseFloat(mat.production_cost_per_uom) || 0;
       mat.production_cost = (qty * perUom).toFixed(2);
     }
-    if (name === 'quantity' || name === 'supply_cost_per_uom') {
+    if (name === "quantity" || name === "supply_cost_per_uom") {
       const qty = parseInt(mat.quantity) || 0;
       const perUom = parseFloat(mat.supply_cost_per_uom) || 0;
       mat.supply_cost = (qty * perUom).toFixed(2);
@@ -234,7 +290,7 @@ const SupplyMaterialPlanning = () => {
   };
 
   const handleItemSelect = (matIndex, selectedOption) => {
-    const value = selectedOption && selectedOption.value !== 'N/A' ? selectedOption.value : '';
+    const value = selectedOption && selectedOption.value !== "N/A" ? selectedOption.value : "";
     const newAssignments = [...materialAssignments];
     newAssignments[matIndex].item_id = value;
     setMaterialAssignments(newAssignments);
@@ -256,6 +312,7 @@ const SupplyMaterialPlanning = () => {
         production_cost: "0.00",
         supply_cost_per_uom: "",
         supply_cost: "0.00",
+        target_date: "",
       },
     ]);
     setError(null);
@@ -272,15 +329,19 @@ const SupplyMaterialPlanning = () => {
   };
 
   const calculateTotalProductionCost = () => {
-    return materialAssignments.reduce((total, mat) => {
-      return total + parseFloat(mat.production_cost || 0);
-    }, 0).toFixed(2);
+    return materialAssignments
+      .reduce((total, mat) => {
+        return total + parseFloat(mat.production_cost || 0);
+      }, 0)
+      .toFixed(2);
   };
 
   const calculateTotalSupplyCost = () => {
-    return materialAssignments.reduce((total, mat) => {
-      return total + parseFloat(mat.supply_cost || 0);
-    }, 0).toFixed(2);
+    return materialAssignments
+      .reduce((total, mat) => {
+        return total + parseFloat(mat.supply_cost || 0);
+      }, 0)
+      .toFixed(2);
   };
 
   const handleAddNewMaterial = async (inputValue, matIndex) => {
@@ -291,11 +352,11 @@ const SupplyMaterialPlanning = () => {
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
-      if (response.data?.status === 'success' && response.data?.data?.item_id) {
+      if (response.data?.status === "success" && response.data?.data?.item_id) {
         await fetchMaterials();
         const newItemId = response.data.data.item_id;
         const newAssignments = [...materialAssignments];
@@ -349,7 +410,7 @@ const SupplyMaterialPlanning = () => {
 
       // Count occurrences of each item_id
       materials.forEach((row) => {
-        if (row.item_id && row.item_id !== 'N/A' && row.item_id.trim() !== '') {
+        if (row.item_id && row.item_id !== "N/A" && row.item_id.trim() !== "") {
           materialCounts[row.item_id] = (materialCounts[row.item_id] || 0) + 1;
         }
       });
@@ -358,13 +419,15 @@ const SupplyMaterialPlanning = () => {
       Object.entries(materialCounts).forEach(([item_id, count]) => {
         if (count >= 3) {
           const materialName = materials.find((mat) => mat.item_id === item_id)?.item_id || item_id;
-          validationErrors.push(`Material ${materialName} is assigned ${count} times. A maximum of two assignments per material is allowed.`);
+          validationErrors.push(
+            `Material ${materialName} is assigned ${count} times. A maximum of two assignments per material is allowed.`
+          );
         }
       });
 
       // Validate other fields
       materials.forEach((row, index) => {
-        if (!row.item_id || row.item_id === 'N/A' || row.item_id.trim() === '') {
+        if (!row.item_id || row.item_id === "N/A" || row.item_id.trim() === "") {
           validationErrors.push(`Row ${index + 1}: Material is required and must be a valid material ID`);
         }
         if (!row.uom_id) {
@@ -385,6 +448,11 @@ const SupplyMaterialPlanning = () => {
         } else if (isNaN(row.supply_cost_per_uom) || parseFloat(row.supply_cost_per_uom) < 0) {
           validationErrors.push(`Row ${index + 1}: Supply Cost per UOM must be a non-negative number`);
         }
+        if (!row.target_date) {
+          validationErrors.push(`Row ${index + 1}: Target Date is required`);
+        } else if (new Date(row.target_date) < new Date().setHours(0, 0, 0, 0)) {
+          validationErrors.push(`Row ${index + 1}: Target Date must be today or in the future`);
+        }
       });
 
       if (validationErrors.length > 0) {
@@ -403,6 +471,7 @@ const SupplyMaterialPlanning = () => {
         supply_cost_per_uom: parseFloat(row.supply_cost_per_uom),
         supply_cost: parseFloat(row.supply_cost),
         created_by: userId ? parseInt(userId) : null,
+        target_date: row.target_date || null,
       }));
 
       if (payload.length === 0) {
@@ -410,7 +479,7 @@ const SupplyMaterialPlanning = () => {
         return;
       }
 
-      await axios.post("http://localhost:5000/supply/assign-material", payload);
+      await axios.post("http://103.118.158.127/api/supply/assign-material", payload);
 
       Swal.fire({
         position: "top-end",
@@ -433,11 +502,13 @@ const SupplyMaterialPlanning = () => {
           production_cost: "0.00",
           supply_cost_per_uom: "",
           supply_cost: "0.00",
+          target_date: "",
         },
       ]);
     } catch (error) {
       console.error("Error submitting material assignments:", error);
-      const errorMessage = error.response?.data?.message || "Failed to assign materials. Please check the data and try again.";
+      const errorMessage =
+        error.response?.data?.message || "Failed to assign materials. Please check the data and try again.";
       const detailedErrors = error.response?.data?.errors ? error.response.data.errors.join("<br />") : errorMessage;
       await Swal.fire({
         icon: "error",
@@ -471,7 +542,7 @@ const SupplyMaterialPlanning = () => {
   }));
 
   const projectOptions = projects.map((project) => ({
-    value: project.project_id,
+    value: project.pd_id,
     label: project.project_name || "Unknown Project",
   }));
 
@@ -480,15 +551,19 @@ const SupplyMaterialPlanning = () => {
     label: `${site.site_name || "Unknown Site"} (PO: ${site.po_number || "N/A"})`,
   }));
 
-  const materialOptions = Array.isArray(materials) ? materials.map((material) => ({
-    value: material.item_id,
-    label: material.item_name,
-  })) : [];
+  const materialOptions = Array.isArray(materials)
+    ? materials.map((material) => ({
+        value: material.item_id,
+        label: material.item_name,
+      }))
+    : [];
 
-  const uomOptions = Array.isArray(uoms) ? uoms.map((uom) => ({
-    value: uom.uom_id,
-    label: uom.uom_name,
-  })) : [];
+  const uomOptions = Array.isArray(uoms)
+    ? uoms.map((uom) => ({
+        value: uom.uom_id,
+        label: uom.uom_name,
+      }))
+    : [];
 
   const CustomCreateLabel = ({ inputValue }) => (
     <div className="flex items-center justify-between px-2 py-1">
@@ -508,12 +583,8 @@ const SupplyMaterialPlanning = () => {
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-100 min-h-screen">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            Supply Material Planning
-          </h2>
-          <p className="text-gray-600 text-lg">
-            Assign supply materials to your project sites efficiently
-          </p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Supply Material Planning</h2>
+          <p className="text-gray-600 text-lg">Assign supply materials to your project sites efficiently</p>
         </div>
 
         {(loading.companies || loading.projects || loading.materials || loading.uoms) ? (
@@ -542,7 +613,7 @@ const SupplyMaterialPlanning = () => {
                   value={selectedCompany}
                   onChange={(option) => setSelectedCompany(option)}
                   isSearchable
-                  isClearable={companyOptions.length > 1}
+                  isClearable
                   isDisabled={loading.companies}
                   className="text-sm"
                   classNamePrefix="select"
@@ -556,7 +627,7 @@ const SupplyMaterialPlanning = () => {
                   value={selectedProject}
                   onChange={(option) => setSelectedProject(option)}
                   isSearchable
-                  isClearable={projectOptions.length > 1}
+                  isClearable
                   isDisabled={!selectedCompany || loading.projects}
                   className="text-sm"
                   classNamePrefix="select"
@@ -571,7 +642,7 @@ const SupplyMaterialPlanning = () => {
                     value={selectedSite}
                     onChange={(option) => setSelectedSite(option)}
                     isSearchable
-                    isClearable={siteOptions.length > 1}
+                    isClearable
                     isDisabled={!selectedProject || loading.sites}
                     className="text-sm"
                     classNamePrefix="select"
@@ -591,9 +662,24 @@ const SupplyMaterialPlanning = () => {
                   {materialAssignments.map((mat, matIndex) => (
                     <div key={matIndex} className="border-b pb-6 mb-6 last:border-b-0 last:mb-0">
                       <div className="space-y-6">
-                        {/* First Block: Material, UOM, Quantity */}
+                        {/* First Block: Target Date, Material, UOM, Quantity */}
                         <div className="grid grid-cols-12 gap-4">
-                          <div className="col-span-8 md:col-span-8 lg:col-span-8">
+                          <div className="col-span-3 md:col-span-3 lg:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Target Date</label>
+                            <input
+                              type="date"
+                              name="target_date"
+                              value={mat.target_date}
+                              onChange={(e) => handleMaterialChange(matIndex, e)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm disabled:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              required
+                              disabled={!isFormEnabled}
+                            />
+                            <div className="text-xs text-gray-500 mt-1">
+                              {mat.target_date ? formatDateToDisplay(mat.target_date) : "Select a date"}
+                            </div>
+                          </div>
+                          <div className="col-span-5 md:col-span-5 lg:col-span-5">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Material #{matIndex + 1}
                             </label>
@@ -604,9 +690,7 @@ const SupplyMaterialPlanning = () => {
                                 setCurrentMatIndex(matIndex);
                                 handleItemSelect(matIndex, opt);
                               }}
-                              formatCreateLabel={(inputValue) => (
-                                <CustomCreateLabel inputValue={inputValue} />
-                              )}
+                              formatCreateLabel={(inputValue) => <CustomCreateLabel inputValue={inputValue} />}
                               isSearchable
                               isClearable
                               isDisabled={!isFormEnabled || addingMaterial}
@@ -616,9 +700,7 @@ const SupplyMaterialPlanning = () => {
                             />
                           </div>
                           <div className="col-span-2 md:col-span-2 lg:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              UOM
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">UOM</label>
                             <Select
                               options={uomOptions}
                               value={uomOptions.find((opt) => opt.value === mat.uom_id) || null}
@@ -636,9 +718,7 @@ const SupplyMaterialPlanning = () => {
                             />
                           </div>
                           <div className="col-span-2 md:col-span-2 lg:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Quantity
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
                             <input
                               type="number"
                               name="quantity"
@@ -671,9 +751,7 @@ const SupplyMaterialPlanning = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Production Cost (₹)
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Production Cost (₹)</label>
                             <input
                               type="number"
                               name="production_cost"
@@ -704,9 +782,7 @@ const SupplyMaterialPlanning = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Supply Cost (₹)
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Supply Cost (₹)</label>
                             <input
                               type="number"
                               name="supply_cost"
@@ -727,11 +803,7 @@ const SupplyMaterialPlanning = () => {
                             ? "text-gray-400 cursor-not-allowed"
                             : "text-red-600 hover:bg-red-50"
                         }`}
-                        title={
-                          materialAssignments.length <= 1
-                            ? "At least one material is required"
-                            : "Remove this entry"
-                        }
+                        title={materialAssignments.length <= 1 ? "At least one material is required" : "Remove this entry"}
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>
@@ -739,7 +811,8 @@ const SupplyMaterialPlanning = () => {
                   ))}
                   <div className="mt-6 flex items-center space-x-4">
                     <div className="text-sm font-medium text-gray-700">
-                      Total Production Cost: ₹{calculateTotalProductionCost()} | Total Supply Cost: ₹{calculateTotalSupplyCost()}
+                      Total Production Cost: ₹{calculateTotalProductionCost()} | Total Supply Cost: ₹
+                      {calculateTotalSupplyCost()}
                     </div>
                     <button
                       type="button"
@@ -821,10 +894,13 @@ const SupplyMaterialPlanning = () => {
                     <table className="min-w-full bg-white border border-gray-200 rounded-md">
                       <thead className="bg-gray-50">
                         <tr>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Target Date</th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Material</th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">UOM</th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Quantity</th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Production Cost per UOM (₹)</th>
+                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">
+                            Production Cost per UOM (₹)
+                          </th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Production Cost (₹)</th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Supply Cost per UOM (₹)</th>
                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Supply Cost (₹)</th>
@@ -833,6 +909,9 @@ const SupplyMaterialPlanning = () => {
                       <tbody>
                         {assignedMaterials.map((mat, index) => (
                           <tr key={index} className="border-t border-gray-200">
+                            <td className="px-4 py-2 text-sm text-gray-600">
+                              {formatDateToDisplay(mat.target_date) || "N/A"}
+                            </td>
                             <td className="px-4 py-2 text-sm text-gray-600">{mat.item_name || mat.item_id}</td>
                             <td className="px-4 py-2 text-sm text-gray-600">{mat.uom_name || "N/A"}</td>
                             <td className="px-4 py-2 text-sm text-gray-600">{mat.quantity}</td>
@@ -846,9 +925,7 @@ const SupplyMaterialPlanning = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-600">
-                    No materials assigned to this site.
-                  </div>
+                  <div className="text-center py-8 text-gray-600">No materials assigned to this site.</div>
                 )}
 
                 <div className="mt-6 flex justify-end">

@@ -1,12 +1,13 @@
+
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const ProtectedRoute = ({ children, role }) => {
+const ProtectedRoute = ({ children }) => {
   const [isAuthorized, setIsAuthorized] = useState(null);
   const navigate = useNavigate();
-  const { encodedUserId } = useParams();
+  const params = useParams();
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -38,10 +39,19 @@ const ProtectedRoute = ({ children, role }) => {
       }
 
       try {
-        const response = await axios.post("http://localhost:5000/auth/verify-token", { token });
+        const response = await axios.post("http://103.118.158.127/api/auth/verify-token", { token });
         const { role: userRole } = response.data;
 
-        if (userRole !== role) {
+        // Check role matches path prefix
+        const prefixToRole = {
+          'superadmin': 'superadmin',
+          'admin': 'admin',
+          'accounts': 'accounts_team',
+          'site-incharge': 'siteincharge'
+        };
+        const rolePrefix = params.rolePrefix || 'site-incharge';
+        const expectedRole = prefixToRole[rolePrefix];
+        if (expectedRole !== userRole) {
           setIsAuthorized(false);
           toast.error("Unauthorized access.", {
             position: "top-right",
@@ -62,15 +72,14 @@ const ProtectedRoute = ({ children, role }) => {
     };
 
     verifyToken();
-  }, [navigate, role]);
+  }, [navigate, params.rolePrefix]);
 
   if (isAuthorized === null) {
     return <div>Loading...</div>;
   }
 
   if (!isAuthorized) {
-    navigate("/");
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   return children;

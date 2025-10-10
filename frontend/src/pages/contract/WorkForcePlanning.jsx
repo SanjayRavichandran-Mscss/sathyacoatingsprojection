@@ -57,8 +57,8 @@ const WorkForcePlanning = () => {
       setLoading(true);
       try {
         const [companyResponse, projectResponse] = await Promise.all([
-          axios.get("http://localhost:5000/project/companies"),
-          axios.get("http://localhost:5000/project/projects-with-sites"),
+          axios.get("http://103.118.158.127/api/project/companies"),
+          axios.get("http://103.118.158.127/api/project/projects-with-sites"),
         ]);
         setCompanies(companyResponse.data || []);
         setProjects(projectResponse.data || []);
@@ -78,8 +78,8 @@ const WorkForcePlanning = () => {
       setLoading(true);
       try {
         const [empResponse, labourResponse] = await Promise.all([
-          axios.get("http://localhost:5000/site-incharge/employees"),
-          axios.get("http://localhost:5000/admin/labour"),
+          axios.get("http://103.118.158.127/api/site-incharge/employees"),
+          axios.get("http://103.118.158.127/api/admin/labour"),
         ]);
         if (isMounted) {
           setEmployees(empResponse.data.data || []);
@@ -130,7 +130,7 @@ const WorkForcePlanning = () => {
       const fetchWorkDescriptions = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
+          const response = await axios.get(`http://103.118.158.127/api/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
           if (isMounted) setWorkDescriptions(response.data.data || []);
         } catch (err) {
           if (isMounted) toast.error("Failed to fetch work descriptions");
@@ -183,7 +183,7 @@ const WorkForcePlanning = () => {
                 site_id: selectedSite.value, emp_id: emp.value, desc_id: selectedWorkDesc.value,
                 created_by: parseInt(user_id),
             }));
-            await axios.post("http://localhost:5000/material/assign-incharge", inchargePayload);
+            await axios.post("http://103.118.158.127/api/material/assign-incharge", inchargePayload);
             toast.success("Site incharges assigned successfully.");
         }
 
@@ -193,7 +193,7 @@ const WorkForcePlanning = () => {
                 labour_ids: selectedLabour.map(l => l.value), from_date: labourFromDate, to_date: labourToDate,
                 created_by: parseInt(user_id),
             };
-            await axios.post("http://localhost:5000/site-incharge/save-labour-assignment", labourPayload);
+            await axios.post("http://103.118.158.127/api/site-incharge/save-labour-assignment", labourPayload);
             toast.success("Labour assigned successfully.");
         }
 

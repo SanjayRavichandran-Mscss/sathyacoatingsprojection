@@ -48,7 +48,7 @@
 //     const fetchProjects = async () => {
 //       try {
 //         setLoading(true);
-//         const response = await axios.get("http://localhost:5000/material/projects");
+//         const response = await axios.get("http://103.118.158.127/api/material/projects");
 //         setProjects(Array.isArray(response.data.data) ? response.data.data : []);
 //       } catch (error) {
 //         console.error("Error fetching projects:", error);
@@ -65,7 +65,7 @@
 //       const fetchSites = async () => {
 //         try {
 //           setLoading(true);
-//           const response = await axios.get(`http://localhost:5000/material/sites/${formData.pd_id}`);
+//           const response = await axios.get(`http://103.118.158.127/api/material/sites/${formData.pd_id}`);
 //           setSites(Array.isArray(response.data.data) ? response.data.data : []);
 //         } catch (error) {
 //           console.error("Error fetching sites:", error);
@@ -88,7 +88,7 @@
 //         try {
 //           setLoading(true);
 //           const response = await axios.post(
-//             "http://localhost:5000/expense/fetch-petty-cash-by-site",
+//             "http://103.118.158.127/api/expense/fetch-petty-cash-by-site",
 //             { site_id: formData.site_id },
 //             {
 //               headers: {
@@ -109,7 +109,7 @@
 
 //           const expensesPromises = records.map((record) =>
 //             axios.post(
-//               "http://localhost:5000/expense/fetch-expenses-by-petty-cash",
+//               "http://103.118.158.127/api/expense/fetch-expenses-by-petty-cash",
 //               { petty_cash_id: record.id },
 //               {
 //                 headers: {
@@ -146,7 +146,7 @@
 
 //       const fetchOverheads = async () => {
 //         try {
-//           const response = await axios.get(`http://localhost:5000/expense/overheads/${formData.site_id}`);
+//           const response = await axios.get(`http://103.118.158.127/api/expense/overheads/${formData.site_id}`);
 //           setOverheads(Array.isArray(response.data.data) ? response.data.data : []);
 //         } catch (error) {
 //           console.error("Error fetching overheads:", error);
@@ -220,7 +220,7 @@
 //       }
 
 //       const response = await axios.post(
-//         "http://localhost:5000/expense/add-siteincharge-expense",
+//         "http://103.118.158.127/api/expense/add-siteincharge-expense",
 //         {
 //           petty_cash_id,
 //           overhead_id: parseInt(overhead_id),
@@ -235,7 +235,7 @@
 //       );
 
 //       const refreshResponse = await axios.post(
-//         "http://localhost:5000/expense/fetch-petty-cash-by-site",
+//         "http://103.118.158.127/api/expense/fetch-petty-cash-by-site",
 //         { site_id: formData.site_id },
 //         {
 //           headers: {
@@ -255,7 +255,7 @@
 //       setPettyCashRecords(records);
 
 //       const expensesResponse = await axios.post(
-//         "http://localhost:5000/expense/fetch-expenses-by-petty-cash",
+//         "http://103.118.158.127/api/expense/fetch-expenses-by-petty-cash",
 //         { petty_cash_id },
 //         {
 //           headers: {
@@ -975,7 +975,7 @@ const AdditionalExpense = () => {
     const fetchCompanies = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/project/companies");
+        const response = await axios.get("http://103.118.158.127/api/project/companies");
         setCompanies(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching companies:", error);
@@ -991,7 +991,7 @@ const AdditionalExpense = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/project/projects-with-sites");
+        const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
         setAllProjects(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -1038,7 +1038,7 @@ const AdditionalExpense = () => {
         try {
           setLoading(true);
           const response = await axios.post(
-            "http://localhost:5000/expense/fetch-petty-cash-by-site",
+            "http://103.118.158.127/api/expense/fetch-petty-cash-by-site",
             { site_id: formData.site_id },
             {
               headers: {
@@ -1059,7 +1059,7 @@ const AdditionalExpense = () => {
 
           const expensesPromises = records.map((record) =>
             axios.post(
-              "http://localhost:5000/expense/fetch-expenses-by-petty-cash",
+              "http://103.118.158.127/api/expense/fetch-expenses-by-petty-cash",
               { petty_cash_id: record.id },
               {
                 headers: {
@@ -1097,7 +1097,7 @@ const AdditionalExpense = () => {
 
       const fetchOverheads = async () => {
         try {
-          const response = await axios.get(`http://localhost:5000/expense/overheads/${formData.site_id}`);
+          const response = await axios.get(`http://103.118.158.127/api/expense/overheads/${formData.site_id}`);
           setOverheads(Array.isArray(response.data.data) ? response.data.data : []);
         } catch (error) {
           console.error("Error fetching overheads:", error);
@@ -1108,7 +1108,7 @@ const AdditionalExpense = () => {
 
       const fetchWorkDescriptions = async () => {
         try {
-          const response = await axios.get("http://localhost:5000/material/work-descriptions", {
+          const response = await axios.get("http://103.118.158.127/api/material/work-descriptions", {
             params: { site_id: formData.site_id },
           });
           const descriptions = Array.isArray(response.data.data) ? response.data.data : [];
@@ -1209,7 +1209,7 @@ const AdditionalExpense = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/expense/add-siteincharge-expense",
+        "http://103.118.158.127/api/expense/add-siteincharge-expense",
         {
           petty_cash_id,
           overhead_id: parseInt(overhead_id),
@@ -1224,7 +1224,7 @@ const AdditionalExpense = () => {
       );
 
       const refreshResponse = await axios.post(
-        "http://localhost:5000/expense/fetch-petty-cash-by-site",
+        "http://103.118.158.127/api/expense/fetch-petty-cash-by-site",
         { site_id: formData.site_id },
         {
           headers: {
@@ -1244,7 +1244,7 @@ const AdditionalExpense = () => {
       setPettyCashRecords(records);
 
       const expensesResponse = await axios.post(
-        "http://localhost:5000/expense/fetch-expenses-by-petty-cash",
+        "http://103.118.158.127/api/expense/fetch-expenses-by-petty-cash",
         { petty_cash_id },
         {
           headers: {

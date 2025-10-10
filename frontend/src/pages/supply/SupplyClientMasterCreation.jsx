@@ -1,11 +1,11 @@
+// SupplyClientMasterCreation.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { Search, Plus, Building2, User, MapPin, Phone, FileText, Calendar, ChevronDown, ChevronUp, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Assuming CompanyCreation is in the correct path
+// Assuming CompanyCreationSupply is in the correct path
 import CompanyCreationSupply from '../../components/CompanyCreationSupply';
-
 
 // Define the color theme based on the reference for a consistent, professional look
 const themeColors = {
@@ -17,7 +17,6 @@ const themeColors = {
   border: '#dee2e6',      // Neutral border color
   lightBorder: '#e9ecef', // Lighter border for internal elements
 };
-
 
 const SupplyClientMasterCreation = () => {
   const [clients, setClients] = useState([]);
@@ -35,7 +34,7 @@ const SupplyClientMasterCreation = () => {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/project/companies');
+      const response = await axios.get('http://103.118.158.127/api/supply/companies');
       const data = Array.isArray(response.data) ? response.data : [];
       // Sort clients by creation date (newest first)
       const sortedData = data.sort((a, b) => {
@@ -47,8 +46,8 @@ const SupplyClientMasterCreation = () => {
       setFilteredClients(sortedData);
       setCurrentPage(1); // Reset to first page
     } catch (error) {
-      console.error("Error fetching clients:", error);
-      setError('Failed to load clients. Please try again.');
+      console.error("Error fetching supply clients:", error);
+      setError('Failed to load supply clients. Please try again.');
       setClients([]);
       setFilteredClients([]);
     } finally {
@@ -77,7 +76,7 @@ const SupplyClientMasterCreation = () => {
     Swal.fire({
       position: 'top-end',
       icon: 'success',
-      title: 'Client created successfully!',
+      title: 'Supply Client created successfully!',
       showConfirmButton: false,
       timer: 2000,
       toast: true,
@@ -154,10 +153,10 @@ const SupplyClientMasterCreation = () => {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: themeColors.textPrimary }}>
-                  Client Master
+                  Supply Client Master
                 </h1>
                 <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>
-                  Manage and organize your client database.
+                  Manage and organize your supply client database.
                 </p>
               </div>
             </div>
@@ -167,7 +166,7 @@ const SupplyClientMasterCreation = () => {
               style={{ backgroundColor: themeColors.primary, ringColor: themeColors.accent }}
             >
               <Plus size={18} className="group-hover:rotate-90 transition-transform duration-200" />
-              Create Client
+              Create Supply Client
             </button>
           </div>
         </div>
@@ -203,7 +202,7 @@ const SupplyClientMasterCreation = () => {
                 <div className="relative">
                     <div className="animate-spin rounded-full h-16 w-16 border-4 border-t-4" style={{ borderColor: themeColors.border, borderTopColor: themeColors.primary }}></div>
                 </div>
-                <p className="mt-4 font-medium" style={{ color: themeColors.textSecondary }}>Loading clients...</p>
+                <p className="mt-4 font-medium" style={{ color: themeColors.textSecondary }}>Loading supply clients...</p>
             </div>
           ) : error ? (
             <div className="m-6 p-6 bg-red-50 border-l-4 border-red-500 rounded-lg">
@@ -220,9 +219,9 @@ const SupplyClientMasterCreation = () => {
               <div className="p-4 bg-gray-100 rounded-2xl mb-4">
                 <Building2 className="w-12 h-12 text-gray-400" />
               </div>
-              <h3 className="font-semibold text-lg mb-2" style={{ color: themeColors.textPrimary }}>No clients found</h3>
+              <h3 className="font-semibold text-lg mb-2" style={{ color: themeColors.textPrimary }}>No supply clients found</h3>
               <p style={{ color: themeColors.textSecondary }}>
-                {searchQuery ? 'Try adjusting your search criteria.' : 'Get started by creating your first client.'}
+                {searchQuery ? 'Try adjusting your search criteria.' : 'Get started by creating your first supply client.'}
               </p>
             </div>
           ) : (

@@ -34,11 +34,14 @@ exports.login = async (req, res) => {
     const rolePaths = {
       superadmin: `/superadmin/${encodedUserId}`,
       admin: `/admin/dashboard/${encodedUserId}`,
+      siteincharge: `/site-incharge/${encodedUserId}`,
       "site incharge": `/site-incharge/${encodedUserId}`,
       accounts_team: `/accounts-team/${encodedUserId}`,
     };
 
-    const redirectPath = rolePaths[user.role_name] || "/dashboard";
+    // Normalize role name for matching (remove spaces and make lowercase)
+    const normalizedRole = user.role_name.replace(/\s+/g, "").toLowerCase();
+    const redirectPath = rolePaths[normalizedRole] || "/dashboard";
 
     res.status(200).json({
       message: "Login successful",

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom"; // Import useParams
 import axios from "axios";
 import { Loader2, X, Save, User, Building, Calendar, Mail, Phone, MapPin, Users, Briefcase, FileText, DollarSign } from "lucide-react";
 import Swal from "sweetalert2";
 
 const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase = true }) => {
+  const { encodedUserId } = useParams(); // Get encodedUserId from URL
+  const [userId, setUserId] = useState(null); // Store decoded userId
   const [formData, setFormData] = useState({
     full_name: "",
     gender_id: "",
@@ -42,12 +45,27 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
     contractors: false
   });
 
+  // Decode userId from encodedUserId
+  useEffect(() => {
+    if (encodedUserId) {
+      try {
+        const decodedId = atob(encodedUserId);
+        setUserId(decodedId);
+      } catch (err) {
+        console.error("Error decoding userId:", err);
+        setErrors((prev) => ({ ...prev, form: "Invalid user ID in URL. Please try again." }));
+      }
+    } else {
+      setErrors((prev) => ({ ...prev, form: "User ID not found in URL. Please try again." }));
+    }
+  }, [encodedUserId]);
+
   useEffect(() => {
     if (isOpen && saveToDatabase) {
       (async () => {
         try {
           setLoading((l) => ({ ...l, genders: true }));
-          const { data } = await axios.get("http://localhost:5000/material/genders");
+          const { data } = await axios.get("http://103.118.158.127/api/material/genders");
           setGenders(data.data || []);
         } catch (error) {
           console.error("Error fetching genders:", error);
@@ -58,7 +76,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, departments: true }));
-          const { data } = await axios.get("http://localhost:5000/material/departments");
+          const { data } = await axios.get("http://103.118.158.127/api/material/departments");
           setDepartments(data.data || []);
         } catch (error) {
           console.error("Error fetching departments:", error);
@@ -69,7 +87,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, employmentTypes: true }));
-          const { data } = await axios.get("http://localhost:5000/material/employment-types");
+          const { data } = await axios.get("http://103.118.158.127/api/material/employment-types");
           setEmploymentTypes(data.data || []);
         } catch (error) {
           console.error("Error fetching employment types:", error);
@@ -80,7 +98,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, designations: true }));
-          const { data } = await axios.get("http://localhost:5000/material/designations");
+          const { data } = await axios.get("http://103.118.158.127/api/material/designations");
           setDesignations(data.data || []);
         } catch (error) {
           console.error("Error fetching designations:", error);
@@ -91,7 +109,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, statuses: true }));
-          const { data } = await axios.get("http://localhost:5000/material/statuses");
+          const { data } = await axios.get("http://103.118.158.127/api/material/statuses");
           setStatuses(data.data || []);
         } catch (error) {
           console.error("Error fetching statuses:", error);
@@ -102,7 +120,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, contractors: true }));
-          const { data } = await axios.get("http://localhost:5000/admin/contractors");
+          const { data } = await axios.get("http://103.118.158.127/api/admin/contractors");
           setContractors(data.data || []);
         } catch (error) {
           console.error("Error fetching contractors:", error);
@@ -157,18 +175,23 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || !userId) {
+      if (!userId) {
+        setErrors((prev) => ({ ...prev, form: "User ID is missing. Please try again." }));
+      }
+      return;
+    }
 
     try {
       setLoading((l) => ({ ...l, form: true }));
       setErrors({});
 
-      let labourData = { ...formData };
+      let labourData = { ...formData, created_by: userId }; // Include created_by
       let designation;
 
       if (saveToDatabase) {
         console.log("Submitting payload to API:", labourData);
-        const response = await axios.post("http://localhost:5000/admin/add-labour", labourData);
+        const response = await axios.post("http://103.118.158.127/api/admin/add-labour", labourData);
         console.log("API response:", response.data);
         labourData = response.data.data;
         designation = designations.find((d) => d.id === parseInt(labourData.designation_id))?.designation || "";

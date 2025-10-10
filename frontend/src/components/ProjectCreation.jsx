@@ -1,9 +1,14 @@
+
+
+
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import { X, FolderPlus, Loader2, Plus, Edit, PlusCircle, Trash2 } from "lucide-react";
 import Swal from "sweetalert2";
 
 const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
+  const { encodedUserId } = useParams(); // Extract encodedUserId from URL (e.g., /master-po/Mg==)
   const [formData, setFormData] = useState({
     project_name: "",
     site_name: "",
@@ -33,6 +38,9 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
   const [isCustomPoNumber, setIsCustomPoNumber] = useState(false);
   const [error, setError] = useState(null);
 
+  // Decode userId from Base64 (e.g., "Mg==" -> "2")
+  const decodedCreatedBy = encodedUserId ? atob(encodedUserId) : null;
+
   // Fetch all initial data
   const fetchData = async () => {
     try {
@@ -45,12 +53,12 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         reckonerTypesResponse,
         employeesResponse,
       ] = await Promise.all([
-        axios.get(`http://localhost:5000/project/companies/${companyId}`),
-        axios.get("http://localhost:5000/project/site-incharges"),
-        axios.get(`http://localhost:5000/project/projects/${companyId}`),
-        axios.get(`http://localhost:5000/project/locations`),
-        axios.get(`http://localhost:5000/project/reckoner-types`),
-        axios.get("http://localhost:5000/material/employees"),
+        axios.get(`http://103.118.158.127/api/project/companies/${companyId}`),
+        axios.get("http://103.118.158.127/api/project/site-incharges"),
+        axios.get(`http://103.118.158.127/api/project/projects/${companyId}`),
+        axios.get(`http://103.118.158.127/api/project/locations`),
+        axios.get(`http://103.118.158.127/api/project/reckoner-types`),
+        axios.get("http://103.118.158.127/api/material/employees"),
       ]);
 
       setCompanyName(companyResponse.data.company_name || "Unknown Company");
@@ -80,7 +88,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         if (!isCustomPoNumber) {
           try {
             const response = await axios.get(
-              `http://localhost:5000/project/next-po-number/${formData.reckoner_type_id}`
+              `http://103.118.158.127/api/project/next-po-number/${formData.reckoner_type_id}`
             );
             setFormData((prev) => ({ ...prev, po_number: response.data.po_number }));
           } catch (error) {
@@ -178,6 +186,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
       if (formData.start_date && formData.end_date && new Date(formData.end_date) < new Date(formData.start_date)) {
         validationErrors.push("Tentative End Date must be after Start Date");
       }
+      if (!decodedCreatedBy) validationErrors.push("Created by user ID is missing from URL");
 
       // Validate incharge assignments if incharge_type is selected
       let inchargeAssignments = [];
@@ -210,7 +219,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         return;
       }
 
-      // Prepare payload, send null for empty end_date
+      // Prepare payload, send null for empty end_date (updated: add created_by)
       const projectData = {
         project_type: "service",
         company_id: companyId,
@@ -224,10 +233,11 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         new_location_name: isNewLocation ? formData.new_location_name : undefined,
         reckoner_type_id: formData.reckoner_type_id,
         incharge_assignments: inchargeAssignments.length > 0 ? inchargeAssignments : undefined,
+        created_by: decodedCreatedBy, // New: Decoded userId
       };
 
       // Submit data
-      const response = await axios.post("http://localhost:5000/project/create-project-site", projectData);
+      const response = await axios.post("http://103.118.158.127/api/project/create-project-site", projectData);
 
       // Reset form and show success
       setFormData({

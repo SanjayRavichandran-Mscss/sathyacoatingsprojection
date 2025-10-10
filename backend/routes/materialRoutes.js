@@ -1,4 +1,3 @@
-
         const express = require("express");
         const router = express.Router();
         const materialController = require("../controllers/materialController");
@@ -51,5 +50,7 @@ router.get('/assigned-materials', materialController.getAssignedMaterials);
 
 router.get("/master-dc-no", materialController.getMasterDcNo);
 router.post("/master-dc-no", materialController.saveMasterDcNo);
+
+
 
         module.exports = router;

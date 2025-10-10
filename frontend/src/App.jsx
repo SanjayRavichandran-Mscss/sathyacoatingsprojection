@@ -25,6 +25,16 @@ import AdditionalExpense from './pages/site-incharge/AdditionalExpense';
 import SupplyClientMasterCreation from './pages/supply/SupplyClientMasterCreation';
 import SupplyMaterialPlanning from './pages/supply/SupplyMaterialPlanning';
 import ProjectProjectionOld from './pages/contract/ProjectProjectionOld';
+import SupplyMasterPoCreation from './pages/supply/SupplyMasterPoCreation';
+import SupplyMaterialDispatch from './pages/supply/SupplyMaterialDispatch';
+import SuppliedMaterials from './pages/supply/SuppliedMaterials';
+import DashboardCards from './pages/contract/Reconciliation/DashboardCards';
+import ExpenseGraph from './pages/contract/Reconciliation/ExpenseGraph';
+import MaterialGraph from './pages/contract/Reconciliation/MaterialGraph';
+import AreaGraph from './pages/contract/Reconciliation/AreaGraph';
+import DailyProgress from './pages/contract/Reconciliation/DailyProgress';
+import SiteInchargeEntries from './pages/contract/SiteInchargeEntries';
+import SiteInchargeHistory from './pages/site-incharge/SiteInchargeHistory';
 
 const Placeholder = ({ title }) => (
   <div className="p-4">
@@ -44,7 +54,7 @@ const App = () => {
         <Route element={<AppLayout />}>
           {/* Dashboard (use a different path than "/" now) */}
           <Route 
-            path="/admin/dashboard/:encodedUserId" 
+            path="/:rolePrefix/dashboard/:encodedUserId" 
             element={
               <ProtectedRoute role="admin">
                 <DashboardMain />
@@ -52,13 +62,13 @@ const App = () => {
             } 
           />
           
-          <Route path="/admin/dashboard/reports/:encodedUserId" element={<ProtectedRoute role="admin"><Placeholder title="Dashboard Reports" /></ProtectedRoute>} />
+          <Route path="/:rolePrefix/dashboard/reports/:encodedUserId" element={<ProtectedRoute role="admin"><Placeholder title="Dashboard Reports" /></ProtectedRoute>} />
 
           {/* Contracts */}
-          <Route path="/admin/contracts/:encodedUserId" element={<ProtectedRoute role="admin"><Placeholder title="Contract Management" /></ProtectedRoute>} />
+          <Route path="/:rolePrefix/contracts/:encodedUserId" element={<ProtectedRoute role="admin"><Placeholder title="Contract Management" /></ProtectedRoute>} />
           
           <Route 
-              path="/admin/contracts/master-client/:encodedUserId" 
+              path="/:rolePrefix/contracts/master-client/:encodedUserId" 
               element={
               <ProtectedRoute role="admin">
                 <ClientMasterCreation />
@@ -67,7 +77,7 @@ const App = () => {
           />
           
           <Route 
-              path="/admin/contracts/master-po/:encodedUserId" 
+              path="/:rolePrefix/contracts/master-po/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   {/* <POMasterCreation /> */}
@@ -77,7 +87,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <ProjectList />
@@ -86,7 +96,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/projections/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/projections/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                  <ProjectProjection />
@@ -95,7 +105,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/project-planning/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/project-planning/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                  <ProjectProjectionOld />
@@ -106,7 +116,7 @@ const App = () => {
           
 
           <Route 
-              path="/admin/contracts/projects/work-force-planning/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/work-force-planning/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <WorkForcePlanning />
@@ -115,7 +125,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/material-planning/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/material-planning/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <MaterialPlanning />
@@ -123,7 +133,7 @@ const App = () => {
               } 
           />
           <Route 
-              path="/admin/contracts/projects/material-dispatch/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/material-dispatch/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <MaterialDispatch />
@@ -132,7 +142,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/employee-details/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/employee-details/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <EmployeeDetails />
@@ -141,7 +151,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/additional-cash/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/additional-cash/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <AdditionalCash />
@@ -150,7 +160,7 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/contracts/projects/dispatched-materials/:encodedUserId" 
+              path="/:rolePrefix/contracts/projects/dispatched-materials/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <DispatchedMaterials />
@@ -158,10 +168,66 @@ const App = () => {
               } 
           />
 
+
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/overall-progress/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <DashboardCards />
+                </ProtectedRoute>
+              } 
+          />
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/daily-progress/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <DailyProgress />
+                </ProtectedRoute>
+              } 
+          />
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/area-completion/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <AreaGraph />
+                </ProtectedRoute>
+              } 
+          />
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/material-consumption/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <MaterialGraph />
+                </ProtectedRoute>
+              } 
+          />
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/expense/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <ExpenseGraph />
+                </ProtectedRoute>
+              } 
+          />
+
+          <Route 
+              path="/:rolePrefix/contracts/reconciliation/site-incharge-entries/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <SiteInchargeEntries />
+                </ProtectedRoute>
+              } 
+          />
+
           {/* Supply */}
           <Route path="/supply" element={<Placeholder title="Supply Management" />} />
 
-          <Route path="/admin/supply/master-client/:encodedUserId" 
+          <Route path="/:rolePrefix/supply/master-client/:encodedUserId" 
               element={
               <ProtectedRoute role="admin">
                 <SupplyClientMasterCreation />
@@ -170,15 +236,15 @@ const App = () => {
           />
 
           <Route 
-              path="/admin/supply/master-po/:encodedUserId" 
+              path="/:rolePrefix/supply/master-po/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
-                    <POMasterMain />
+                    <SupplyMasterPoCreation />
                 </ProtectedRoute>} 
           />
 
           <Route 
-              path="/admin/supply/master-po/:encodedUserId" 
+              path="/:rolePrefix/supply/master-po/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                     <POMasterMain />
@@ -186,7 +252,7 @@ const App = () => {
           />
           
           <Route 
-              path="/admin/supply/material-planning/:encodedUserId"
+              path="/:rolePrefix/supply/material-planning/:encodedUserId"
               element={
                 <ProtectedRoute role="admin">
                   <SupplyMaterialPlanning />
@@ -194,41 +260,47 @@ const App = () => {
               }
           />
           <Route 
-              path="/admin/supply/material-dispatch/:encodedUserId"
+              path="/:rolePrefix/supply/material-dispatch/:encodedUserId"
               element={
                 <ProtectedRoute role="admin">
-                  <Placeholder title="Supply Material Dispatch" />
+                  <SupplyMaterialDispatch />
                 </ProtectedRoute>
               }
           />
 
           <Route 
-              path="/admin/supply/supplied-materials/:encodedUserId"
+              path="/:rolePrefix/supply/supplied-materials/:encodedUserId"
               element={
                 <ProtectedRoute role="admin">
-                  <Placeholder title="Supplied Materials" />
+                  <SuppliedMaterials />
                 </ProtectedRoute>
               }
           />
+
           <Route path="/supply/stock" element={<Placeholder title="Stock" />} />
           <Route path="/supply/vendors" element={<Placeholder title="Vendors" />} />
           <Route path="/supply/po" element={<Placeholder title="Purchase Orders" />} />
 
           {/* Finance */}
-          <Route path="/finance" element={<Placeholder title="Finance Management" />} />
-          <Route path="/finance/invoices" element={<Placeholder title="Invoices" />} />
+          <Route path="/:rolePrefix/finance" element={<Placeholder title="Finance Management" />} />
+          <Route path="/:rolePrefix/finance/invoices" element={<Placeholder title="Invoices" />} />
           <Route path="/finance/payments" element={<Placeholder title="Payments" />} />
           <Route path="/finance/reports" element={<Placeholder title="Finance Reports" />} />
 
           {/* Resources */}
-          <Route path="/resources" element={<Placeholder title="Resource Management" />} />
-          <Route path="/resources/staff" element={<Placeholder title="Staff" />} />
-          <Route path="/resources/assign" element={<Placeholder title="Assign" />} />
-          <Route path="/resources/utilization" element={<Placeholder title="Utilization" />} />
+
+          <Route 
+              path="/:rolePrefix/resource/employee-details/:encodedUserId"
+              element={
+                <ProtectedRoute role="admin">
+                  <EmployeeDetails />
+                </ProtectedRoute>
+              }
+          />
 
           {/* Site Incharges */}
           <Route 
-              path="/site-incharge" 
+              path="/site-incharge/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
                   <Placeholder title="Site Incharges" />
@@ -299,12 +371,21 @@ const App = () => {
               } 
           />
 
+          <Route 
+              path="/site-incharge/siteincharge-history/:encodedUserId" 
+              element={
+                <ProtectedRoute role="admin">
+                  <SiteInchargeHistory />
+                </ProtectedRoute>
+              } 
+          />
+
           
 
           {/* Additional routes can be added here following the same pattern */}
           
           <Route 
-              path="/admin/contracts/projects/dispatched-materials/:encodedUserId"          
+              path="/:rolePrefix/contracts/projects/dispatched-materials/:encodedUserId"          
               element={
                 <ProtectedRoute role="admin">
                   <DispatchedMaterials />

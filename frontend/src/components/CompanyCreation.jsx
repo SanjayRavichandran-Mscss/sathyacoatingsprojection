@@ -2,6 +2,7 @@ import axios from "axios";
 import { X, Building2, Loader2 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
+import { useParams } from "react-router-dom";
 
 const SearchableSelect = ({ options, onSelect, addNew, label, value }) => {
   const [query, setQuery] = useState(value || '');
@@ -77,6 +78,9 @@ const SearchableSelect = ({ options, onSelect, addNew, label, value }) => {
 };
 
 const CompanyCreation = ({ onCompanyCreated, onClose }) => {
+  const { encodedUserId } = useParams(); // Extract encodedUserId from URL
+  const decodedUserId = encodedUserId ? atob(encodedUserId) : ''; // Decode base64-encoded user ID
+
   const [formData, setFormData] = useState({
     company_name: "",
     address: "",
@@ -87,6 +91,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
     pincode: "",
     spoc_name: "",
     spoc_contact_no: "",
+    created_by: decodedUserId, // Set created_by from decoded user ID
   });
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
@@ -96,10 +101,10 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statesRes = await axios.get("http://localhost:5000/project/states");
+        const statesRes = await axios.get("http://103.118.158.127/api/project/states");
         setStates(statesRes.data.data.map(s => ({ id: s.id, name: s.state_name })));
         
-        const citiesRes = await axios.get("http://localhost:5000/project/cities");
+        const citiesRes = await axios.get("http://103.118.158.127/api/project/cities");
         setCities(citiesRes.data.data.map(c => ({ id: c.id, name: c.city_name })));
       } catch (err) {
         setError("Failed to load cities and states.");
@@ -114,7 +119,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
 
   const addNewState = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/project/create-state", { state_name: name });
+      const res = await axios.post("http://103.118.158.127/api/project/create-state", { state_name: name });
       const newId = res.data.id;
       setStates(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -126,7 +131,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
 
   const addNewCity = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/project/create-city", { city_name: name });
+      const res = await axios.post("http://103.118.158.127/api/project/create-city", { city_name: name });
       const newId = res.data.id;
       setCities(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -150,7 +155,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
     setError(null);
 
     try {
-      await axios.post("http://localhost:5000/project/create-company", formData);
+      await axios.post("http://103.118.158.127/api/project/create-company", formData);
       setFormData({
         company_name: "",
         address: "",
@@ -161,6 +166,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
         pincode: "",
         spoc_name: "",
         spoc_contact_no: "",
+        created_by: decodedUserId, // Reset with decoded user ID
       });
       onCompanyCreated();
     } catch (error) {

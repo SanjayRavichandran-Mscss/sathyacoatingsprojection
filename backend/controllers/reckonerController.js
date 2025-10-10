@@ -272,12 +272,78 @@ exports.getSiteById = async (req, res) => {
 };
 
 
+// exports.saveReckonerData = async (req, res) => {
+//   try {
+//     const { poNumber, siteId, categories } = req.body;
+//     if (!poNumber || !siteId || !categories) {
+//       return errorResponse(res, "PO number, site ID, and categories are required", 400);
+//     }
+
+//     const site = await reckonerModel.getSiteById(siteId);
+//     if (!site) {
+//       return errorResponse(res, "Site not found for the given site ID", 404);
+//     }
+
+//     const reckonerData = [];
+//     categories.forEach((category) => {
+//       category.subcategories.forEach((subcategory) => {
+//         subcategory.items.forEach((item) => {
+//           reckonerData.push({
+//             site_id: siteId,
+//             category_id: category.categoryId,
+//             subcategory_id: subcategory.subcategoryId,
+//             item_id: item.itemId,
+//             desc_id: item.descId,
+//             po_quantity: parseFloat(item.poQuantity) || 0,
+//             uom: item.uom || "",
+//             rate: parseFloat(item.rate) || 0,
+//             value: parseFloat(item.value) || 0,
+//           });
+//         });
+//       });
+//     });
+
+//     if (reckonerData.length === 0) {
+//       return errorResponse(res, "No valid items to save", 400);
+//     }
+
+//     const insertedIds = await reckonerModel.saveReckonerData(reckonerData);
+//     successResponse(
+//       res,
+//       {
+//         message: "Reckoner data saved successfully",
+//         insertedRecords: insertedIds.length,
+//       },
+//       "Operation completed successfully"
+//     );
+//   } catch (error) {
+//     errorResponse(res, "Error saving reckoner data", 500, error);
+//   }
+// };
+
+
+
 exports.saveReckonerData = async (req, res) => {
   try {
-    const { poNumber, siteId, categories } = req.body;
-    if (!poNumber || !siteId || !categories) {
-      return errorResponse(res, "PO number, site ID, and categories are required", 400);
+    const { poNumber, siteId, categories, created_by } = req.body;
+
+    // Validate required fields
+    if (!poNumber || !siteId || !categories || !created_by) {
+      return errorResponse(res, "PO number, site ID, categories, and created_by are required", 400);
     }
+
+    // Validate created_by format
+    if (typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
+      return errorResponse(res, "Invalid created_by: must be a non-empty string with maximum length of 30 characters", 400);
+    }
+
+    // Optional: Validate created_by against a reference table (e.g., employee_master)
+    /*
+    const [user] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [created_by]);
+    if (user.length === 0) {
+      return errorResponse(res, `Invalid created_by: ${created_by} does not exist in employee_master`, 400);
+    }
+    */
 
     const site = await reckonerModel.getSiteById(siteId);
     if (!site) {
@@ -298,6 +364,7 @@ exports.saveReckonerData = async (req, res) => {
             uom: item.uom || "",
             rate: parseFloat(item.rate) || 0,
             value: parseFloat(item.value) || 0,
+            created_by: created_by, // Include created_by
           });
         });
       });
@@ -317,10 +384,14 @@ exports.saveReckonerData = async (req, res) => {
       "Operation completed successfully"
     );
   } catch (error) {
+    console.error('Error in saveReckonerData:', {
+      message: error.message,
+      sqlMessage: error.sqlMessage || 'No SQL message available',
+      stack: error.stack
+    });
     errorResponse(res, "Error saving reckoner data", 500, error);
   }
 };
-
 
 exports.getAllReckonerWithStatus = async (req, res) => {
   try {

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const db = require('../config/db');
 
 // Route to get all companies
 router.get('/companies', adminController.getCompanies);
@@ -38,6 +37,7 @@ router.get('/overheads', adminController.getOverheads);
 
 // Route to save overhead
 router.post('/save-overhead', adminController.saveOverhead);
+router.post('/save-overhead-values', adminController.saveOverheadValue);
 
 // Route to save actual budget entries
 router.post('/save-actual-budget', adminController.saveActualBudget);
@@ -59,7 +59,6 @@ router.post("/save-labour-assignment", adminController.saveLabourAssignment);
 
 // Updated route
 router.get('/material-graph/:siteId/:descId', adminController.materialgraph);
-
 
 router.post('/save-labour-overhead', async (req, res) => {
   console.log(`[${new Date().toISOString()}] Endpoint triggered`);
@@ -129,6 +128,5 @@ router.post('/save-labour-overhead', async (req, res) => {
     if (connection) connection.release();
   }
 });
-
 
 module.exports = router;

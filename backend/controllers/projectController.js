@@ -1,16 +1,27 @@
+// projectController.js
 const projectModel = require('../models/projectModel');
 
-// Existing createCompany updated
 exports.createCompany = async (req, res) => {
     try {
-        const { company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no } = req.body;
-        
-        if (!company_name || !address || !spoc_name || !spoc_contact_no) {
-            return res.status(400).json({ error: "Company name, address, SPOC name, and SPOC contact number are required" });
+        const {
+            company_name,
+            address,
+            gst_number,
+            vendor_code,
+            city_id,
+            state_id,
+            pincode,
+            spoc_name,
+            spoc_contact_no,
+            created_by // Assume this comes from the frontend or auth middleware
+        } = req.body;
+
+        if (!company_name || !address || !spoc_name || !spoc_contact_no || !created_by) {
+            return res.status(400).json({ error: "Company name, address, SPOC name, SPOC contact number, and created_by are required" });
         }
 
         const company_id = await projectModel.generateNewCompanyId();
-        
+
         await projectModel.insertCompany(
             company_id,
             company_name,
@@ -21,7 +32,29 @@ exports.createCompany = async (req, res) => {
             state_id ? parseInt(state_id) : null,
             pincode,
             spoc_name,
-            spoc_contact_no
+            spoc_contact_no,
+            created_by,
+            created_by // Initially, created_by and updated_by are the same
+        );
+
+        // Fetch the created_at after insertion
+        const createdCompany = await projectModel.getCompanyById(company_id);
+        const created_at = createdCompany.created_at;
+
+        // Log the creation in company_updation_history
+        await projectModel.insertCompanyUpdateHistory(
+            company_id,
+            company_name,
+            address,
+            spoc_name,
+            spoc_contact_no,
+            gst_number,
+            vendor_code,
+            city_id ? parseInt(city_id) : null,
+            state_id ? parseInt(state_id) : null,
+            pincode,
+            created_at,
+            created_by
         );
 
         res.status(201).json({ message: "Company created successfully", company_id });
@@ -80,7 +113,6 @@ exports.createCity = async (req, res) => {
     }
 };
 
-
 exports.getAllCompanies = async (req, res) => {
     try {
         const companies = await projectModel.fetchAllCompanies();
@@ -123,37 +155,6 @@ exports.getProjectsByCompanyId = async (req, res) => {
         res.status(200).json(projects);
     } catch (error) {
         console.error("Error fetching projects by company ID:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-};
-
-exports.updateCompany = async (req, res) => {
-    try {
-        const { company_id, company_name, address, spoc_name, spoc_contact_no } = req.body;
-
-        // Validate required fields and collect missing ones
-        const missingFields = [];
-        if (!company_id) missingFields.push("company_id");
-        if (!company_name) missingFields.push("company_name");
-        if (!address) missingFields.push("address");
-        if (!spoc_name) missingFields.push("spoc_name");
-        if (!spoc_contact_no) missingFields.push("spoc_contact_no");
-
-        if (missingFields.length > 0) {
-            return res.status(400).json({ error: `Missing required fields: ${missingFields.join(", ")}` });
-        }
-
-        // Check if company exists
-        const company = await projectModel.fetchCompanyById(company_id);
-        if (!company) {
-            return res.status(404).json({ error: "Company not found" });
-        }
-
-        await projectModel.updateCompany(company_id, company_name, address, null, spoc_name, spoc_contact_no);
-
-        res.status(200).json({ message: "Company updated successfully" });
-    } catch (error) {
-        console.error("Error updating company:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
@@ -201,17 +202,18 @@ exports.createProjectWithSite = async (req, res) => {
       location_id,
       new_location_name,
       reckoner_type_id,
-      incharge_assignments // New field for incharge assignments
+      incharge_assignments, // New field for incharge assignments
+      created_by // New: Extract from req.body
     } = req.body;
 
     console.log("Received createProjectWithSite request:", req.body);
 
-    // Validate required fields
+    // Validate required fields (updated to include created_by)
     if (!project_type || !company_id || !project_name || !site_name ||
         !start_date || !incharge_type ||
-        (!location_id && !new_location_name) || !reckoner_type_id) {
+        (!location_id && !new_location_name) || !reckoner_type_id || !created_by) {
       console.error("Validation failed: Missing required fields");
-      return res.status(400).json({ error: "All fields are required, including either location_id or new_location_name and reckoner_type_id" });
+      return res.status(400).json({ error: "All fields are required, including created_by, either location_id or new_location_name, and reckoner_type_id" });
     }
 
     if (project_type !== "service") {
@@ -249,14 +251,14 @@ exports.createProjectWithSite = async (req, res) => {
       return res.status(400).json({ error: "Location ID is required" });
     }
 
-    // Handle project
+    // Handle project (updated: pass created_by)
     let project = await projectModel.getProjectByNameAndType(project_name, project_type_id);
     let project_id;
     if (project) {
       project_id = project.pd_id;
     } else {
       project_id = await projectModel.generateNewProjectId();
-      await projectModel.insertProject(project_id, project_type_id, company_id, project_name);
+      await projectModel.insertProject(project_id, project_type_id, company_id, project_name, created_by);
     }
 
     // Validate incharge type
@@ -288,7 +290,7 @@ exports.createProjectWithSite = async (req, res) => {
       return res.status(400).json({ error: "PO number is required" });
     }
 
-    // Insert into site_details table
+    // Insert into site_details table (updated: pass created_by)
     const site_id = await projectModel.generateNewSiteId();
     await projectModel.insertSite(
       site_id,
@@ -300,7 +302,9 @@ exports.createProjectWithSite = async (req, res) => {
       null, // workforce_id
       project_id,
       finalLocationId,
-      reckoner_type_id
+      reckoner_type_id,
+      created_by,
+      created_by // Initially, created_by and updated_by are the same
     );
 
     // Handle incharge assignments if provided
@@ -351,11 +355,11 @@ exports.createProjectWithSite = async (req, res) => {
         }
 
         // Insert into siteincharge_assign
-        const [result] = await connection.query(
-          'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, emp_id) VALUES (?, ?, ?, ?, ?)',
-          [from_date, to_date, project_id, site_id, emp_id]
-        );
-        insertedIds.push(result.insertId);
+      const [result] = await connection.query(
+  'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, emp_id, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+  [from_date, to_date, project_id, site_id, emp_id, created_by]
+);
+insertedIds.push(result.insertId);
       }
     }
 
@@ -538,10 +542,10 @@ exports.getAllLocations = async (req, res) => {
 
 exports.createProject = async (req, res) => {
     try {
-        const { company_id, project_name } = req.body;
+        const { company_id, project_name, created_by } = req.body;
 
-        if (!company_id || !project_name) {
-            return res.status(400).json({ error: "Company ID and project name are required" });
+        if (!company_id || !project_name || !created_by) {
+            return res.status(400).json({ error: "Company ID, project name, and created_by are required" });
         }
 
         // Verify company exists
@@ -550,7 +554,7 @@ exports.createProject = async (req, res) => {
             return res.status(404).json({ error: "Company not found" });
         }
 
-        const newProject = await projectModel.createProject(company_id, project_name);
+        const newProject = await projectModel.createProject(company_id, project_name, created_by);
 
         res.status(201).json({
             message: "Project created successfully",
@@ -562,10 +566,6 @@ exports.createProject = async (req, res) => {
         res.status(500).json({ error: "Failed to create project", details: error.message });
     }
 };
-
-
-
-
 
 // New function in projectController.js
 exports.getWorkDescriptionsBySite = async (req, res) => {
@@ -583,5 +583,250 @@ exports.getWorkDescriptionsBySite = async (req, res) => {
     } catch (error) {
         console.error("Error fetching work descriptions by site:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+exports.updateCompany = async (req, res) => {
+    try {
+        const {
+            company_id,
+            company_name,
+            address,
+            gst_number,
+            vendor_code,
+            city_id,
+            state_id,
+            pincode,
+            spoc_name,
+            spoc_contact_no,
+            updated_by
+        } = req.body;
+
+        // Validate required fields
+        const missingFields = [];
+        if (!company_id) missingFields.push("company_id");
+        if (!company_name) missingFields.push("company_name");
+        if (!address) missingFields.push("address");
+        if (!spoc_name) missingFields.push("spoc_name");
+        if (!spoc_contact_no) missingFields.push("spoc_contact_no");
+        if (!updated_by) missingFields.push("updated_by");
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({ error: `Missing required fields: ${missingFields.join(", ")}` });
+        }
+
+        // Validate city_id and state_id
+        if (city_id && (isNaN(parseInt(city_id)) || parseInt(city_id) <= 0)) {
+            return res.status(400).json({ error: "city_id must be a valid positive integer" });
+        }
+        if (state_id && (isNaN(parseInt(state_id)) || parseInt(state_id) <= 0)) {
+            return res.status(400).json({ error: "state_id must be a valid positive integer" });
+        }
+
+        // Validate spoc_contact_no (10-digit phone number)
+        if (spoc_contact_no && !/^\d{10}$/.test(spoc_contact_no)) {
+            return res.status(400).json({ error: "spoc_contact_no must be a valid 10-digit phone number" });
+        }
+
+        // Fetch current company data
+        const currentCompany = await projectModel.getCompanyById(company_id);
+        if (!currentCompany) {
+            return res.status(404).json({ error: "Company not found" });
+        }
+
+        // Start a transaction-like operation (using try-catch for simplicity, assuming db supports transactions)
+        try {
+            // Insert previous data into company_updation_history
+            await projectModel.insertCompanyUpdateHistory(
+                currentCompany.company_id,
+                currentCompany.company_name,
+                currentCompany.address,
+                currentCompany.spoc_name,
+                currentCompany.spoc_contact_no,
+                currentCompany.gst_number,
+                currentCompany.vendor_code,
+                currentCompany.city_id,
+                currentCompany.state_id,
+                currentCompany.pincode,
+                currentCompany.created_at,
+                updated_by
+            );
+
+            // Update company details
+            await projectModel.updateCompany(
+                company_id,
+                company_name,
+                address,
+                gst_number,
+                vendor_code,
+                city_id ? parseInt(city_id) : null,
+                state_id ? parseInt(state_id) : null,
+                pincode,
+                spoc_name,
+                spoc_contact_no,
+                updated_by
+            );
+
+            res.status(200).json({ message: "Company updated successfully" });
+        } catch (error) {
+            console.error("Error during company update transaction:", error);
+            return res.status(500).json({ error: "Internal Server Error" });
+        }
+    } catch (error) {
+        console.error("Error updating company:", error);
+        if (error.code === 'ER_WARN_DATA_OUT_OF_RANGE') {
+            return res.status(400).json({ error: "Invalid data type for city_id or state_id; must be valid positive integers" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+exports.updateSite = async (req, res) => {
+    const db = require("../config/db");
+    let connection;
+    try {
+        const {
+            site_name,
+            po_number,
+            start_date,
+            end_date,
+            incharge_id,
+            workforce_id,
+            pd_id,
+            location_id,
+            reckoner_type_id,
+            updated_by
+        } = req.body;
+        const { siteId } = req.params;
+
+        if (!siteId || !site_name || !po_number || !start_date || !incharge_id || !pd_id || !location_id || !reckoner_type_id || !updated_by) {
+            return res.status(400).json({ error: "Site ID, required fields, and updated_by are required" });
+        }
+
+        // Validate numeric fields
+        const reckonerTypeIdNum = Number(reckoner_type_id);
+        if (isNaN(reckonerTypeIdNum)) {
+            return res.status(400).json({ error: "reckoner_type_id must be a valid number" });
+        }
+
+        // Start transaction
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // Fetch current site data
+        const currentSite = await projectModel.getSiteById(siteId);
+        if (!currentSite) {
+            await connection.rollback();
+            return res.status(404).json({ error: "Site not found" });
+        }
+
+        // Insert previous data into site_updation_history (only the original data, no extra updated_by)
+        await projectModel.insertSiteUpdateHistory(
+            currentSite.site_id,
+            currentSite.site_name,
+            currentSite.po_number,
+            currentSite.start_date,
+            currentSite.end_date,
+            currentSite.incharge_id,
+            currentSite.workforce_id,
+            currentSite.pd_id,
+            currentSite.location_id,
+            currentSite.reckoner_type_id,
+            currentSite.created_by,
+            currentSite.created_at,
+            updated_by
+        );
+
+        // Update site_details
+        await projectModel.updateSite(
+            siteId,
+            site_name,
+            po_number,
+            start_date,
+            end_date,
+            incharge_id,
+            workforce_id || null,
+            pd_id,
+            location_id, // Keep as string, no parseInt
+            reckonerTypeIdNum,
+            updated_by
+        );
+
+        await connection.commit();
+
+        res.status(200).json({ message: "Site updated successfully" });
+    } catch (error) {
+        console.error("Error updating site:", error);
+        if (connection) {
+            await connection.rollback();
+        }
+        res.status(500).json({ error: "Internal Server Error", details: error.message });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// Optional: Similar for project update if needed
+exports.updateProject = async (req, res) => {
+    const db = require("../config/db");
+    let connection;
+    try {
+        const {
+            company_id,
+            project_type_id,
+            project_name,
+            updated_by
+        } = req.body;
+        const { pdId } = req.params;
+
+        if (!pdId || !company_id || !project_type_id || !project_name || !updated_by) {
+            return res.status(400).json({ error: "Project ID, required fields, and updated_by are required" });
+        }
+
+        // Start transaction
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // Fetch current project data (assuming getProjectById function exists; add if not)
+        const currentProject = await db.query("SELECT * FROM project_details WHERE pd_id = ?", [pdId]);
+        const projectData = currentProject[0];
+        if (!projectData.length) {
+            await connection.rollback();
+            return res.status(404).json({ error: "Project not found" });
+        }
+        const current = projectData[0];
+
+        // Insert previous data into project_updation_history
+        await projectModel.insertProjectUpdateHistory(
+            current.pd_id,
+            current.company_id,
+            current.project_type_id,
+            current.project_name,
+            current.created_by,
+            current.created_at,
+            updated_by
+        );
+
+        // Update project_details (add updated_by to table if not present)
+        await db.query(
+            "UPDATE project_details SET company_id = ?, project_type_id = ?, project_name = ?, updated_by = ?, updated_at = CURRENT_TIMESTAMP WHERE pd_id = ?",
+            [company_id, project_type_id, project_name, updated_by, pdId]
+        );
+
+        await connection.commit();
+
+        res.status(200).json({ message: "Project updated successfully" });
+    } catch (error) {
+        console.error("Error updating project:", error);
+        if (connection) {
+            await connection.rollback();
+        }
+        res.status(500).json({ error: "Internal Server Error", details: error.message });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 };

@@ -35,7 +35,7 @@ const MaterialPlanning = ({
   const fetchMaterials = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("http://103.118.158.127/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -50,7 +50,7 @@ const MaterialPlanning = ({
   const fetchUoms = async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("http://103.118.158.127/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -65,7 +65,7 @@ const MaterialPlanning = ({
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
+        `http://103.118.158.127/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -234,7 +234,7 @@ const MaterialPlanning = ({
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -369,7 +369,7 @@ const MaterialPlanning = ({
         return;
       }
 
-      await axios.post("http://localhost:5000/material/assign-material", payload);
+      await axios.post("http://103.118.158.127/api/material/assign-material", payload);
 
       Swal.fire({
         position: "top-end",

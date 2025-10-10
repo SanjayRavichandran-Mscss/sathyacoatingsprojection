@@ -276,7 +276,7 @@ exports.fetchEmployees = async (req, res) => {
 //     }
 
 //     const insertedIds = [];
-//     for (const { from_date, to_date, pd_id, site_id, emp_id } of assignments) {
+//     for (const { from_date, to_date, pd_id, site_id, emp_id, desc_id } of assignments) {
 //       if (!from_date || !to_date || !pd_id || !site_id || !emp_id) {
 //         return res.status(400).json({
 //           status: 'error',
@@ -308,9 +308,19 @@ exports.fetchEmployees = async (req, res) => {
 //         });
 //       }
 
+//       if (desc_id) {
+//         const [desc] = await db.query('SELECT desc_id FROM work_descriptions WHERE desc_id = ?', [desc_id]);
+//         if (desc.length === 0) {
+//           return res.status(400).json({
+//             status: 'error',
+//             message: `Invalid desc_id: ${desc_id} does not exist in work_descriptions`
+//           });
+//         }
+//       }
+
 //       const [result] = await db.query(
-//         'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, emp_id) VALUES (?, ?, ?, ?, ?)',
-//         [from_date, to_date, pd_id, site_id, emp_id]
+//         'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, desc_id, emp_id) VALUES (?, ?, ?, ?, ?, ?)',
+//         [from_date, to_date, pd_id, site_id, desc_id || null, emp_id]
 //       );
 //       insertedIds.push(result.insertId);
 //     }
@@ -324,7 +334,7 @@ exports.fetchEmployees = async (req, res) => {
 //     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
 //       return res.status(400).json({
 //         status: 'error',
-//         message: 'Invalid pd_id, site_id, or emp_id: referenced record does not exist'
+//         message: 'Invalid pd_id, site_id, desc_id, or emp_id: referenced record does not exist'
 //       });
 //     }
 //     res.status(500).json({
@@ -334,88 +344,6 @@ exports.fetchEmployees = async (req, res) => {
 //     });
 //   }
 // };
-
-
-exports.assignInchargeToSite = async (req, res) => {
-  try {
-    const assignments = Array.isArray(req.body) ? req.body : [req.body];
-
-    if (assignments.length === 0) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'At least one incharge assignment is required'
-      });
-    }
-
-    const insertedIds = [];
-    for (const { from_date, to_date, pd_id, site_id, emp_id, desc_id } of assignments) {
-      if (!from_date || !to_date || !pd_id || !site_id || !emp_id) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Missing required fields: from_date, to_date, pd_id, site_id, and emp_id are required'
-        });
-      }
-
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(from_date) || !/^\d{4}-\d{2}-\d{2}$/.test(to_date)) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'Invalid date format: from_date and to_date must be in YYYY-MM-DD format'
-        });
-      }
-
-      const fromDate = new Date(from_date);
-      const toDate = new Date(to_date);
-      if (toDate < fromDate) {
-        return res.status(400).json({
-          status: 'error',
-          message: 'to_date must be after from_date'
-        });
-      }
-
-      const [employee] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
-      if (employee.length === 0) {
-        return res.status(400).json({
-          status: 'error',
-          message: `Invalid emp_id: ${emp_id} does not exist in employee_master`
-        });
-      }
-
-      if (desc_id) {
-        const [desc] = await db.query('SELECT desc_id FROM work_descriptions WHERE desc_id = ?', [desc_id]);
-        if (desc.length === 0) {
-          return res.status(400).json({
-            status: 'error',
-            message: `Invalid desc_id: ${desc_id} does not exist in work_descriptions`
-          });
-        }
-      }
-
-      const [result] = await db.query(
-        'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, desc_id, emp_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [from_date, to_date, pd_id, site_id, desc_id || null, emp_id]
-      );
-      insertedIds.push(result.insertId);
-    }
-
-    res.status(201).json({
-      status: 'success',
-      message: 'Incharges assigned to site successfully',
-      data: { insertedIds }
-    });
-  } catch (error) {
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid pd_id, site_id, desc_id, or emp_id: referenced record does not exist'
-      });
-    }
-    res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
-      error: error.message
-    });
-  }
-};
 
 
 
@@ -568,6 +496,287 @@ exports.assignInchargeToSite = async (req, res) => {
 //   }
 // };
 
+exports.assignInchargeToSite = async (req, res) => {
+  try {
+    const assignments = Array.isArray(req.body) ? req.body : [req.body];
+
+    if (assignments.length === 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'At least one incharge assignment is required'
+      });
+    }
+
+    const insertedIds = [];
+    for (const { from_date, to_date, pd_id, site_id, emp_id, desc_id, created_by } of assignments) {
+      // Validate required fields
+      if (!from_date || !to_date || !pd_id || !site_id || !emp_id || !created_by) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Missing required fields: from_date, to_date, pd_id, site_id, emp_id, and created_by are required'
+        });
+      }
+
+      // Validate date formats
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from_date) || !/^\d{4}-\d{2}-\d{2}$/.test(to_date)) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Invalid date format: from_date and to_date must be in YYYY-MM-DD format'
+        });
+      }
+
+      // Validate date logic
+      const fromDate = new Date(from_date);
+      const toDate = new Date(to_date);
+      if (toDate < fromDate) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'to_date must be after from_date'
+        });
+      }
+
+      // Validate emp_id
+      const [employee] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
+      if (employee.length === 0) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Invalid emp_id: ${emp_id} does not exist in employee_master`
+        });
+      }
+
+      // Validate desc_id if provided
+      if (desc_id) {
+        const [desc] = await db.query('SELECT desc_id FROM work_descriptions WHERE desc_id = ?', [desc_id]);
+        if (desc.length === 0) {
+          return res.status(400).json({
+            status: 'error',
+            message: `Invalid desc_id: ${desc_id} does not exist in work_descriptions`
+          });
+        }
+      }
+
+      // Validate created_by format (VARCHAR(30))
+      if (typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Invalid created_by: must be a non-empty string with maximum length of 30 characters'
+        });
+      }
+
+      // Optional: Validate created_by against a reference table (e.g., employee_master or users)
+      // Uncomment and adjust if created_by references a specific table
+      /*
+      const [createdBy] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [created_by]);
+      if (createdBy.length === 0) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Invalid created_by: ${created_by} does not exist in employee_master`
+        });
+      }
+      */
+
+      // Insert into siteincharge_assign
+      const [result] = await db.query(
+        'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, desc_id, emp_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [from_date, to_date, pd_id, site_id, desc_id || null, emp_id, created_by]
+      );
+      insertedIds.push(result.insertId);
+    }
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Incharges assigned to site successfully',
+      data: { insertedIds }
+    });
+  } catch (error) {
+    console.error('Error in assignInchargeToSite:', {
+      message: error.message,
+      sqlMessage: error.sqlMessage || 'No SQL message available',
+      stack: error.stack
+    });
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid pd_id, site_id, desc_id, emp_id, or created_by: referenced record does not exist'
+      });
+    }
+    if (error.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Database schema error: check table structure for siteincharge_assign',
+        error: error.message,
+        sqlMessage: error.sqlMessage || 'No SQL message available'
+      });
+    }
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+      error: error.message,
+      sqlMessage: error.sqlMessage || 'No SQL message available'
+    });
+  }
+};
+
+// exports.addEmployee = async (req, res) => {
+//   try {
+//     const {
+//       emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
+//       company, dept_id, emp_type_id, designation_id, branch,
+//       mobile, company_email, current_address, permanent_address,
+//       esic_number, pf_number, approved_salary // Added new field
+//     } = req.body;
+
+//     // Check for missing required fields
+//     if (
+//       !emp_id || !full_name || !gender_id || !date_of_birth || !date_of_joining ||
+//       !status_id || !company || !dept_id || !emp_type_id || !designation_id ||
+//       !branch || !mobile || !company_email || !current_address || !permanent_address ||
+//       !approved_salary // Added to required check
+//     ) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'All required fields (except ESIC and PF numbers) must be provided',
+//       });
+//     }
+
+//     // Validate date format (YYYY-MM-DD)
+//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+//     if (!dateRegex.test(date_of_birth) || !dateRegex.test(date_of_joining)) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid date format: date_of_birth and date_of_joining must be in YYYY-MM-DD format',
+//       });
+//     }
+
+//     // Validate mobile (allow +91 optional, 10 digits)
+//     const mobileRegex = /^(?:\+91)?\d{10}$/;
+//     if (!mobileRegex.test(mobile)) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid mobile number: must be 10 digits, with optional +91 prefix',
+//       });
+//     }
+
+//     // Validate email
+//     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+//     if (!emailRegex.test(company_email)) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid email format',
+//       });
+//     }
+
+//     // Validate approved_salary (positive number, up to 2 decimal places)
+//     const salaryRegex = /^\d+(\.\d{1,2})?$/;
+//     if (!salaryRegex.test(approved_salary) || parseFloat(approved_salary) <= 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid approved_salary: must be a positive number with up to 2 decimal places',
+//       });
+//     }
+
+//     // Check for duplicates
+//     const [existingEmpId] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
+//     if (existingEmpId.length > 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Employee ID already exists',
+//       });
+//     }
+
+//     const [existingEmail] = await db.query('SELECT company_email FROM employee_master WHERE company_email = ?', [company_email]);
+//     if (existingEmail.length > 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Company email already exists',
+//       });
+//     }
+
+//     // Validate foreign keys
+//     const [gender] = await db.query('SELECT id FROM emp_gender WHERE id = ?', [gender_id]);
+//     if (gender.length === 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid gender_id: gender does not exist',
+//       });
+//     }
+
+//     const [department] = await db.query('SELECT id FROM emp_department WHERE id = ?', [dept_id]);
+//     if (department.length === 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid dept_id: department does not exist',
+//       });
+//     }
+
+//     const [empType] = await db.query('SELECT id FROM employment_type WHERE id = ?', [emp_type_id]);
+//     if (empType.length === 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid emp_type_id: employment type does not exist',
+//       });
+//     }
+
+//     const [designation] = await db.query('SELECT id FROM emp_designation WHERE id = ?', [designation_id]);
+//     if (designation.length === 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid designation_id: designation does not exist',
+//       });
+//     }
+
+//     const [status] = await db.query('SELECT id FROM emp_status WHERE id = ?', [status_id]);
+//     if (status.length === 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid status_id: status does not exist',
+//       });
+//     }
+
+//     // Insert employee
+//     const [result] = await db.query(
+//       `INSERT INTO employee_master (
+//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
+//         company, dept_id, emp_type_id, designation_id, branch,
+//         mobile, company_email, current_address, permanent_address,
+//         esic_number, pf_number, approved_salary
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//       [
+//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
+//         company, dept_id, emp_type_id, designation_id, branch,
+//         mobile, company_email, current_address, permanent_address,
+//         esic_number || null, pf_number || null, parseFloat(approved_salary) // Handle optional fields and convert salary to float
+//       ]
+//     );
+
+//     res.status(201).json({
+//       status: 'success',
+//       message: 'Employee added successfully',
+//       data: { emp_id, full_name, designation_id, status_id, approved_salary },
+//     });
+//   } catch (error) {
+//     console.error('Error adding employee:', error.message, error.stack);
+//     if (error.code === 'ER_DUP_ENTRY') {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Employee ID or email already exists',
+//       });
+//     }
+//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid foreign key: one of gender_id, dept_id, emp_type_id, designation_id, or status_id does not exist',
+//       });
+//     }
+//     res.status(500).json({
+//       status: 'error',
+//       message: 'Failed to add employee due to server error',
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 
 
 exports.addEmployee = async (req, res) => {
@@ -576,7 +785,7 @@ exports.addEmployee = async (req, res) => {
       emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
       company, dept_id, emp_type_id, designation_id, branch,
       mobile, company_email, current_address, permanent_address,
-      esic_number, pf_number, approved_salary // Added new field
+      esic_number, pf_number, approved_salary, created_by // Added created_by
     } = req.body;
 
     // Check for missing required fields
@@ -584,7 +793,7 @@ exports.addEmployee = async (req, res) => {
       !emp_id || !full_name || !gender_id || !date_of_birth || !date_of_joining ||
       !status_id || !company || !dept_id || !emp_type_id || !designation_id ||
       !branch || !mobile || !company_email || !current_address || !permanent_address ||
-      !approved_salary // Added to required check
+      !approved_salary || !created_by // Added to required check
     ) {
       return res.status(400).json({
         status: 'error',
@@ -625,6 +834,23 @@ exports.addEmployee = async (req, res) => {
       return res.status(400).json({
         status: 'error',
         message: 'Invalid approved_salary: must be a positive number with up to 2 decimal places',
+      });
+    }
+
+    // Validate created_by
+    if (typeof created_by !== 'string' || created_by.trim() === '') {
+      return res.status(400).json({
+        status: "error",
+        message: "Created By is required and must be a non-empty string",
+      });
+    }
+
+    // Verify if created_by exists in the users table (assuming a users table exists)
+    const [userExists] = await db.query('SELECT user_id FROM users WHERE user_id = ?', [created_by]);
+    if (!userExists.length) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid Created By: User does not exist",
       });
     }
 
@@ -692,13 +918,13 @@ exports.addEmployee = async (req, res) => {
         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
         company, dept_id, emp_type_id, designation_id, branch,
         mobile, company_email, current_address, permanent_address,
-        esic_number, pf_number, approved_salary
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        esic_number, pf_number, approved_salary, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
         company, dept_id, emp_type_id, designation_id, branch,
         mobile, company_email, current_address, permanent_address,
-        esic_number || null, pf_number || null, parseFloat(approved_salary) // Handle optional fields and convert salary to float
+        esic_number || null, pf_number || null, parseFloat(approved_salary), created_by // Handle optional fields and convert salary to float, add created_by
       ]
     );
 
@@ -728,7 +954,6 @@ exports.addEmployee = async (req, res) => {
     });
   }
 };
-
 
 exports.getAssignedIncharges = async (req, res) => {
   try {
@@ -1067,7 +1292,7 @@ exports.getAssignedMaterials = async (req, res) => {
 //     // Validate each assignment
 //     const validationErrors = [];
 //     assignments.forEach((assignment, index) => {
-//       const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c } = assignment;
+//       const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate } = assignment;
 
 //       if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
 //         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
@@ -1096,6 +1321,9 @@ exports.getAssignedMaterials = async (req, res) => {
 //       if (comp_ratio_c !== null && (!Number.isInteger(comp_ratio_c) || comp_ratio_c < 0)) {
 //         validationErrors.push(`Assignment ${index + 1}: comp_ratio_c must be a non-negative integer or null`);
 //       }
+//       if (rate === undefined || typeof rate !== 'number' || rate < 0 || isNaN(rate)) {
+//         validationErrors.push(`Assignment ${index + 1}: rate is required and must be a non-negative number`);
+//       }
 //     });
 
 //     if (validationErrors.length > 0) {
@@ -1107,10 +1335,17 @@ exports.getAssignedMaterials = async (req, res) => {
 //     }
 
 //     const insertedIds = [];
-//     for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c } of assignments) {
+//     for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate } of assignments) {
+//       const parsed_desc_id = parseInt(desc_id);
+//       if (isNaN(parsed_desc_id)) {
+//         return res.status(400).json({
+//           status: 'error',
+//           message: `Invalid desc_id: must be convertible to integer`,
+//         });
+//       }
 //       const [result] = await db.query(
-//         'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-//         [pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c]
+//         'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+//         [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate]
 //       );
 //       insertedIds.push(result.insertId);
 //     }
@@ -1138,35 +1373,21 @@ exports.getAssignedMaterials = async (req, res) => {
 
 
 exports.assignMaterial = async (req, res) => {
-  let connection;
   try {
     const assignments = Array.isArray(req.body) ? req.body : [req.body];
 
     // Validate each assignment
     const validationErrors = [];
     assignments.forEach((assignment, index) => {
-      const {
-        pd_id,
-        site_id,
-        item_id,
-        uom_id,
-        quantity,
-        desc_id,
-        comp_ratio_a,
-        comp_ratio_b,
-        comp_ratio_c,
-        rate,
-        materialTotalCost,
-        materialBudgetPercentage,
-      } = assignment;
+      const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by } = assignment;
 
-      if (!pd_id || typeof pd_id !== "string" || pd_id.trim() === "") {
+      if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
       }
-      if (!site_id || typeof site_id !== "string" || site_id.trim() === "") {
+      if (!site_id || typeof site_id !== 'string' || site_id.trim() === '') {
         validationErrors.push(`Assignment ${index + 1}: site_id is required and must be a non-empty string`);
       }
-      if (!item_id || typeof item_id !== "string" || item_id.trim() === "" || item_id === "N/A") {
+      if (!item_id || typeof item_id !== 'string' || item_id.trim() === '' || item_id === 'N/A') {
         validationErrors.push(`Assignment ${index + 1}: item_id is required and must be a valid material ID (not 'N/A')`);
       }
       if (!Number.isInteger(uom_id) || uom_id <= 0) {
@@ -1175,7 +1396,7 @@ exports.assignMaterial = async (req, res) => {
       if (!Number.isInteger(quantity) || quantity <= 0) {
         validationErrors.push(`Assignment ${index + 1}: quantity is required and must be a positive integer`);
       }
-      if (!desc_id || typeof desc_id !== "string" || desc_id.trim() === "") {
+      if (!desc_id || typeof desc_id !== 'string' || desc_id.trim() === '') {
         validationErrors.push(`Assignment ${index + 1}: desc_id is required and must be a non-empty string`);
       }
       if (comp_ratio_a !== null && (!Number.isInteger(comp_ratio_a) || comp_ratio_a < 0)) {
@@ -1187,101 +1408,75 @@ exports.assignMaterial = async (req, res) => {
       if (comp_ratio_c !== null && (!Number.isInteger(comp_ratio_c) || comp_ratio_c < 0)) {
         validationErrors.push(`Assignment ${index + 1}: comp_ratio_c must be a non-negative integer or null`);
       }
-      if (rate === undefined || typeof rate !== "number" || rate < 0 || isNaN(rate)) {
+      if (rate === undefined || typeof rate !== 'number' || rate < 0 || isNaN(rate)) {
         validationErrors.push(`Assignment ${index + 1}: rate is required and must be a non-negative number`);
       }
-
+      if (!created_by || typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
+        validationErrors.push(`Assignment ${index + 1}: created_by is required and must be a non-empty string with maximum length of 30 characters`);
+      }
     });
 
     if (validationErrors.length > 0) {
       return res.status(400).json({
-        status: "error",
-        message: "Validation errors",
+        status: 'error',
+        message: 'Validation errors',
         errors: validationErrors,
       });
     }
 
-    // Get materialTotalCost and materialBudgetPercentage from the first assignment (assuming they are the same for all)
-    const { site_id, desc_id, materialTotalCost = 0, materialBudgetPercentage = 0 } = assignments[0];
-
-    // Validate that materialTotalCost and materialBudgetPercentage are provided
-    if (materialTotalCost === undefined || materialBudgetPercentage === undefined) {
-      return res.status(400).json({
-        status: "error",
-        message: "materialTotalCost and materialBudgetPercentage are required",
-      });
+    // Optional: Validate created_by against a reference table (e.g., employee_master)
+    /*
+    for (const assignment of assignments) {
+      const [user] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [assignment.created_by]);
+      if (user.length === 0) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Invalid created_by: ${assignment.created_by} does not exist in employee_master`,
+        });
+      }
     }
+    */
 
-    connection = await db.getConnection();
-    await connection.beginTransaction();
-
-    // Step 1: Get overhead_type_id for material
-    const [overheadRows] = await connection.query('SELECT id FROM overhead WHERE expense_name = ? LIMIT 1', ["materials"]);
-    if (overheadRows.length === 0) {
-      await connection.rollback();
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid overhead type: 'material' not found",
-      });
-    }
-    const overhead_type_id = overheadRows[0].id;
-
-    // Step 2: Insert into material_assign
     const insertedIds = [];
-    for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate } of assignments) {
+    for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by } of assignments) {
       const parsed_desc_id = parseInt(desc_id);
       if (isNaN(parsed_desc_id)) {
-        await connection.rollback();
         return res.status(400).json({
-          status: "error",
+          status: 'error',
           message: `Invalid desc_id: must be convertible to integer`,
         });
       }
-      const [result] = await connection.query(
-        "INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
-        [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate]
+      const [result] = await db.query(
+        'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by]
       );
       insertedIds.push(result.insertId);
     }
 
-    // Step 3: Find last projection_id
-    const [projectionRows] = await connection.query(
-      "SELECT MAX(projection_id) AS lastProjectionId FROM projection_allocated WHERE site_id = ? AND desc_id = ? AND overhead_type_id = ?",
-      [site_id, desc_id, overhead_type_id]
-    );
-    const nextProjectionId = (projectionRows[0]?.lastProjectionId || 0) + 1;
-
-    // Step 4: Insert into projection_allocated
-    await connection.query(
-      "INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage) VALUES (?, ?, ?, ?, ?, ?)",
-      [site_id, desc_id, overhead_type_id, nextProjectionId, materialTotalCost, materialBudgetPercentage]
-    );
-
-    await connection.commit();
     res.status(201).json({
-      status: "success",
-      message: "Materials assigned and projection allocated successfully",
+      status: 'success',
+      message: 'Materials assigned successfully',
       data: { insertedIds },
     });
   } catch (error) {
-    if (connection) await connection.rollback();
-    console.error("Error in assignMaterial:", error);
-    if (error.code === "ER_NO_REFERENCED_ROW_2") {
+    console.error('Error in assignMaterial:', {
+      message: error.message,
+      sqlMessage: error.sqlMessage || 'No SQL message available',
+      stack: error.stack
+    });
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).json({
-        status: "error",
-        message: "Invalid reference: pd_id, site_id, item_id, uom_id, or desc_id does not exist in the database",
+        status: 'error',
+        message: 'Invalid reference: pd_id, site_id, item_id, uom_id, desc_id, or created_by does not exist in the database',
       });
     }
     res.status(500).json({
-      status: "error",
-      message: "Internal server error",
+      status: 'error',
+      message: 'Internal server error',
       error: error.message,
     });
-  } finally {
-    if (connection) connection.release();
   }
 };
-
 
 exports.checkDescAssigned = async (req, res) => {
   try {
@@ -1447,12 +1642,23 @@ exports.getNextDcNo = async function (req, res) {
   }
 };
 
+
+
+
 exports.addMaterialDispatch = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
-    const { assignments, transport } = req.body;
+    const { assignments, transport, created_by } = req.body;
+
+    if (!created_by) {
+      await connection.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "Created By is required",
+      });
+    }
 
     // Validate dispatch assignments (if provided)
     let dispatchInsertedIds = [];
@@ -1548,16 +1754,12 @@ exports.addMaterialDispatch = async (req, res) => {
 
       // Insert dispatch assignments
       dispatchInsertedIds = [];
-      for (const { material_assign_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks } of assignments) {
-        // Fetch desc_id from material_assign
-        const [maRow] = await connection.query('SELECT desc_id FROM material_assign WHERE id = ?', [material_assign_id]);
-        const desc_id = maRow[0].desc_id;
-
+      for (const { material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks } of assignments) {
         const dispatch_qty = (comp_a_qty || 0) + (comp_b_qty || 0) + (comp_c_qty || 0);
 
         const [result] = await connection.query(
-          'INSERT INTO material_dispatch (material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, dispatch_qty, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-          [material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, dispatch_qty, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks]
+          'INSERT INTO material_dispatch (material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, dispatch_qty, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+          [material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, dispatch_qty, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks, created_by]
         );
         dispatchInsertedIds.push({ material_assign_id, dispatch_id: result.insertId });
       }
@@ -1716,7 +1918,6 @@ exports.addMaterialDispatch = async (req, res) => {
     connection.release();
   }
 };
-
 
 
 exports.fetchMaterialAssignmentsWithDispatch = async (req, res) => {
@@ -2203,9 +2404,9 @@ exports.getMasterDcNo = async (req, res) => {
 
 exports.saveMasterDcNo = async (req, res) => {
   try {
-    const { company_id, dc_no } = req.body;
-    if (!company_id || !dc_no) {
-      return res.status(400).json({ status: "error", message: "Company ID and Master DC No are required" });
+    const { company_id, dc_no, created_by } = req.body;
+    if (!company_id || !dc_no || !created_by) {
+      return res.status(400).json({ status: "error", message: "Company ID, Master DC No, and Created By are required" });
     }
 
     const [existing] = await db.query(
@@ -2215,13 +2416,13 @@ exports.saveMasterDcNo = async (req, res) => {
 
     if (existing.length > 0) {
       await db.query(
-        "UPDATE master_dc_no SET dc_no = ? WHERE company_id = ?",
-        [dc_no, company_id]
+        "UPDATE master_dc_no SET dc_no = ?, created_by = ? WHERE company_id = ?",
+        [dc_no, created_by, company_id]
       );
     } else {
       await db.query(
-        "INSERT INTO master_dc_no (company_id, dc_no) VALUES (?, ?)",
-        [company_id, dc_no]
+        "INSERT INTO master_dc_no (company_id, dc_no, created_by) VALUES (?, ?, ?)",
+        [company_id, dc_no, created_by]
       );
     }
 

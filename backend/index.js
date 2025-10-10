@@ -1,8 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-
-
 const db = require("./config/db");
 const projectRoutes = require("./routes/projectRoutes");
 const reckonerRoutes = require("./routes/reckonerRoutes");
@@ -13,6 +11,7 @@ const expenseRoutes = require("./routes/expenseRoutes")
 const SiteInchargeRoutes = require("./routes/SiteInchargeRoutes")
 const adminRoutes = require("./routes/adminRoutes")
 const supplyRoutes = require("./routes/supplyRoutes")
+const notificationRoutes = require("./routes/notificationRoutes")
 
 const app = express();
 
@@ -44,6 +43,7 @@ const startServer = async () => {
         app.use("/site-incharge",SiteInchargeRoutes)
         app.use("/admin",adminRoutes)
         app.use("/supply", supplyRoutes)
+        app.use("/notification", notificationRoutes)
 
         
         app.listen(process.env.PORT || 5000, () => 
