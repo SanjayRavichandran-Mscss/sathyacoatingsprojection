@@ -11,7 +11,6 @@ import POMasterCreation from './pages/contract/POMasterCreation';
 import POMasterMain from './pages/contract/POMasterMain';
 import WorkForcePlanning from './pages/contract/WorkForcePlanning';
 import ProjectProjection from './pages/contract/ProjectProjection';
-import ProjectProjectionOld from './pages/contract/ProjectProjectionOld';
 import AdditionalCash from './pages/contract/AdditionalCash';
 import DashboardMain from './pages/dashboard/DashBoardMain';
 import EmployeeDetails from './pages/contract/EmployeeDetails';
