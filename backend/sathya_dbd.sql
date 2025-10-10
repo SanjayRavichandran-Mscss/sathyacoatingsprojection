@@ -31,12 +31,14 @@ CREATE TABLE `actual_budget` (
   `remarks` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `splitted_budget` decimal(15,2) DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `overhead_id` (`overhead_id`),
   KEY `po_budget_id` (`po_budget_id`),
   CONSTRAINT `actual_budget_ibfk_1` FOREIGN KEY (`overhead_id`) REFERENCES `overhead` (`id`),
   CONSTRAINT `actual_budget_ibfk_2` FOREIGN KEY (`po_budget_id`) REFERENCES `po_budget` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,8 +47,41 @@ CREATE TABLE `actual_budget` (
 
 LOCK TABLES `actual_budget` WRITE;
 /*!40000 ALTER TABLE `actual_budget` DISABLE KEYS */;
-INSERT INTO `actual_budget` VALUES (1,1,1,NULL,NULL,'','2025-09-09 09:27:21',119498.00),(2,2,1,4500.00,114998.00,'','2025-09-09 09:27:21',119498.00),(3,3,1,10000.00,109498.00,NULL,'2025-09-09 10:42:06',119498.00),(4,4,1,12000.00,107498.00,NULL,'2025-09-09 10:42:15',119498.00),(5,5,1,13000.00,106497.75,NULL,'2025-09-09 10:42:24',119497.75),(6,2,2,0.00,0.00,NULL,'2025-09-10 04:38:30',0.00);
+INSERT INTO `actual_budget` VALUES (1,1,1,NULL,NULL,'','2025-10-03 09:47:40',270.00,NULL,'2025-10-03 09:47:40'),(2,2,1,NULL,NULL,'','2025-10-03 09:47:40',270.00,NULL,'2025-10-03 09:47:40'),(3,3,1,88.00,317.00,'','2025-10-03 09:47:40',405.00,'7','2025-10-07 06:26:42'),(4,4,1,NULL,NULL,'','2025-10-03 09:47:40',405.00,NULL,'2025-10-03 09:47:40'),(5,2,2,7500.00,-7500.00,NULL,'2025-10-06 06:34:30',0.00,NULL,'2025-10-06 06:34:30');
 /*!40000 ALTER TABLE `actual_budget` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `actual_budget_edit_history`
+--
+
+DROP TABLE IF EXISTS `actual_budget_edit_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `actual_budget_edit_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `actual_budget_history_id` bigint NOT NULL,
+  `actual_budget_id` int NOT NULL,
+  `actual_value` decimal(15,2) DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `actual_budget_history_id` (`actual_budget_history_id`),
+  CONSTRAINT `actual_budget_edit_history_ibfk_1` FOREIGN KEY (`actual_budget_history_id`) REFERENCES `actual_budget_history` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `actual_budget_edit_history`
+--
+
+LOCK TABLES `actual_budget_edit_history` WRITE;
+/*!40000 ALTER TABLE `actual_budget_edit_history` DISABLE KEYS */;
+INSERT INTO `actual_budget_edit_history` VALUES (1,1,3,50.00,'50 used','2',NULL,'2025-10-03 09:49:28','2025-10-03 09:49:28'),(2,1,3,55.00,'55 used','2','2','2025-10-03 09:49:28','2025-10-03 09:50:14'),(3,1,3,54.00,'54 used','2','2','2025-10-03 09:49:28','2025-10-03 09:50:58'),(4,1,3,100.00,'100 used','2','2','2025-10-03 09:49:28','2025-10-03 09:51:24'),(5,1,3,23.00,'23 litre used','2','2','2025-10-03 09:49:28','2025-10-03 09:58:00'),(6,2,3,10.00,'10 remarks','2',NULL,'2025-10-06 08:33:04','2025-10-06 08:33:04'),(7,3,3,50.00,NULL,'7',NULL,'2025-10-07 06:26:23','2025-10-07 06:26:23');
+/*!40000 ALTER TABLE `actual_budget_edit_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -62,7 +97,10 @@ CREATE TABLE `actual_budget_history` (
   `entry_date` date NOT NULL,
   `actual_value` decimal(15,2) DEFAULT NULL,
   `remarks` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_by` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `actual_budget_id` (`actual_budget_id`),
   CONSTRAINT `actual_budget_history_ibfk_1` FOREIGN KEY (`actual_budget_id`) REFERENCES `actual_budget` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -75,7 +113,7 @@ CREATE TABLE `actual_budget_history` (
 
 LOCK TABLES `actual_budget_history` WRITE;
 /*!40000 ALTER TABLE `actual_budget_history` DISABLE KEYS */;
-INSERT INTO `actual_budget_history` VALUES (1,3,'2025-09-08',10000.00,NULL,'2025-09-09 16:12:06'),(2,4,'2025-09-08',12000.00,NULL,'2025-09-09 16:12:15'),(3,5,'2025-09-08',13000.00,NULL,'2025-09-09 16:12:24');
+INSERT INTO `actual_budget_history` VALUES (1,3,'2025-10-03',23.00,'23 litre used','2','2025-10-03 15:19:28','2','2025-10-03 10:00:57'),(2,3,'2025-10-06',15.00,'15 remarks','2','2025-10-06 14:03:04','2','2025-10-06 08:33:41'),(3,3,'2025-10-07',50.00,'50 rupees spend for paint brush','7','2025-10-07 11:56:23','7','2025-10-07 06:26:42');
 /*!40000 ALTER TABLE `actual_budget_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -123,6 +161,8 @@ CREATE TABLE `company` (
   `pincode` varchar(10) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` varchar(100) DEFAULT NULL,
+  `updated_by` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`company_id`),
   KEY `fk_city` (`city_id`),
   KEY `fk_state` (`state_id`),
@@ -137,8 +177,86 @@ CREATE TABLE `company` (
 
 LOCK TABLES `company` WRITE;
 /*!40000 ALTER TABLE `company` DISABLE KEYS */;
-INSERT INTO `company` VALUES ('CO001','Jay Jay Mills (India) Private Ltd.,','Sipcot Industrial Growth centre, K-32, Perundurai, Tamil Nadu 638052','Gunasekar','914294234015','33AAACJ7915N1ZB','998717',2,1,'638052','2025-08-25 05:02:52','2025-08-25 05:02:52'),('CO002','KGISL','Saravanampatti','Suresh','9484904147','ABC2109345STC23','3456',NULL,1,'641035','2025-09-03 04:41:57','2025-09-03 04:41:57'),('CO003','Test','Test','Anand','8456679112','4984894983TEST','409872',1,1,'641 035','2025-09-10 05:45:53','2025-09-10 05:45:53'),('CO004','KPR Mills','Saravanampatti','test','126035774','ABC2109345STC23','547855',1,1,'641035','2025-09-19 05:32:02','2025-09-19 05:32:02'),('CO005','Test Clinet 05','Saravanampatti','Tester','7412589630','ABC2109345ST435','4545810',1,1,'641035','2025-09-19 05:34:08','2025-09-19 05:34:08'),('CO006','Test Client 06','Saravanampatti','Tester','7896541230','ABC2109345STC10','3234443',1,1,'641035','2025-09-19 05:35:02','2025-09-19 05:35:02'),('CO007','Test Client 07','Saravanampatti','Tester','7896541230','ABC2109345STC41','7456321',1,1,'641035','2025-09-19 05:36:50','2025-09-19 05:36:50'),('CO008','Test Client 08','Saravanampatti','Tester','7896541230','ABC2109645STC23','344532',1,1,'641035','2025-09-19 05:37:28','2025-09-19 05:37:28'),('CO009','Test Client 09','Saravanampatti','Tester','7896541230','ABC2109345STC53','5478534',1,1,'641035','2025-09-19 05:38:24','2025-09-19 05:38:24'),('CO010','Test Client 10','Saravanampatti','Tester','7896541230','ABC210934STC476','45458107',1,1,'641035','2025-09-19 05:39:40','2025-09-19 05:39:40'),('CO011','Test Client 11','Saravanampatti','Tester','7896541230','ABC21095STC657','543671234',1,NULL,'641035','2025-09-19 05:40:53','2025-09-19 05:40:53'),('CO012','Test Client 12','Saravanampatti','Tester','7896541230','ABC29345STC523','4710256',1,1,'641035','2025-09-19 05:52:05','2025-09-19 05:52:05'),('CO013','Test Client 13',' Kgisl Campus, 365, near Thudiyalur Road, Saravanampatti, Coimbatore, Tamil Nadu 641035','Tester','7896541230','KGISL09542435','323432',1,2,'641035','2025-09-19 05:53:12','2025-09-19 05:53:12');
+INSERT INTO `company` VALUES ('CO001','Jay Jay Mills (India) Private Ltd.,','Sipcot Industrial Growth centre, K-32, Perundurai, Tamil Nadu 638052','Gunasekar','914294234015','33AAACJ7915N1ZB','998717',2,1,'638052','2025-08-25 05:02:52','2025-08-25 05:02:52',NULL,NULL),('CO002','KGISL','Saravanampatti','Suresh','9484904147','ABC2109345STC23','3456',NULL,1,'641035','2025-09-03 04:41:57','2025-09-03 04:41:57',NULL,NULL),('CO003','Test','Test','Anand','8456679112','4984894983TEST1','409872',1,1,'641 035','2025-09-10 05:45:53','2025-09-30 06:20:38',NULL,'2'),('CO004','Test II','Test Address II','sanjay','9484847473','4984894983TEST','4098659393',1,1,'4343421','2025-09-27 05:02:15','2025-10-10 00:24:32','2','2');
 /*!40000 ALTER TABLE `company` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `company_updation_history`
+--
+
+DROP TABLE IF EXISTS `company_updation_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `company_updation_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `company_id` varchar(30) DEFAULT NULL,
+  `updated_by` varchar(100) DEFAULT NULL,
+  `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `company_name` varchar(100) DEFAULT NULL,
+  `address` varchar(300) DEFAULT NULL,
+  `spoc_name` varchar(100) DEFAULT NULL,
+  `spoc_contact_no` varchar(20) DEFAULT NULL,
+  `gst_number` varchar(15) DEFAULT NULL,
+  `vendor_code` varchar(50) DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  `state_id` int DEFAULT NULL,
+  `pincode` varchar(10) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `company_id` (`company_id`),
+  CONSTRAINT `company_updation_history_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `company` (`company_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `company_updation_history`
+--
+
+LOCK TABLES `company_updation_history` WRITE;
+/*!40000 ALTER TABLE `company_updation_history` DISABLE KEYS */;
+INSERT INTO `company_updation_history` VALUES (1,'CO004','2','2025-09-30 05:11:34','dummy','dummy address','sanjay','9484847473','4984894983TEST','409865',1,1,'43434','2025-09-27 05:02:15'),(2,'CO004','2','2025-09-30 05:12:02','dummy address','dummy address','sanjay','9484847473','4984894983TEST','409865',1,1,'43434','2025-09-27 05:02:15'),(3,'CO003','2','2025-09-30 06:20:38','Test','Test','Anand','8456679112','4984894983TEST','409872',1,1,'641 035','2025-09-10 05:45:53');
+/*!40000 ALTER TABLE `company_updation_history` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `completion_edit_entries_history`
+--
+
+DROP TABLE IF EXISTS `completion_edit_entries_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `completion_edit_entries_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `completion_status_id` int NOT NULL,
+  `area_completed` float DEFAULT NULL,
+  `rate` float DEFAULT NULL,
+  `value` float DEFAULT NULL,
+  `billed_area` float DEFAULT NULL,
+  `billed_value` float DEFAULT NULL,
+  `balance_area` float DEFAULT NULL,
+  `balance_value` float DEFAULT NULL,
+  `work_status` varchar(50) DEFAULT NULL,
+  `billing_status` varchar(50) DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` int DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `completion_status_id` (`completion_status_id`),
+  CONSTRAINT `completion_edit_entries_history_ibfk_1` FOREIGN KEY (`completion_status_id`) REFERENCES `completion_status` (`completion_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `completion_edit_entries_history`
+--
+
+LOCK TABLES `completion_edit_entries_history` WRITE;
+/*!40000 ALTER TABLE `completion_edit_entries_history` DISABLE KEYS */;
+INSERT INTO `completion_edit_entries_history` VALUES (1,1,30,135,4050,NULL,NULL,NULL,NULL,'In Progress','Not Billed','remarks',2,'2025-10-03 10:53:34',NULL,'2025-10-03 10:53:34'),(2,1,35,135,4725,NULL,NULL,NULL,NULL,'In Progress','Not Billed','remarks',2,'2025-10-03 10:53:34',2,'2025-10-03 10:53:42'),(3,1,55,135,7425,NULL,NULL,NULL,NULL,'In Progress','Not Billed','remarks',2,'2025-10-03 10:53:34',2,'2025-10-03 10:54:15'),(4,1,65,135,8775,NULL,NULL,NULL,NULL,'In Progress','Not Billed','first remarks',2,'2025-10-03 10:53:34',2,'2025-10-06 08:54:05'),(5,2,20,10,200,NULL,NULL,NULL,NULL,'In Progress','Not Billed','dummy1 remarks',2,'2025-10-06 08:56:13',NULL,'2025-10-06 08:56:13'),(6,1,105,135,14175,NULL,NULL,NULL,NULL,'In Progress','Not Billed','first remarks',2,'2025-10-03 10:53:34',2,'2025-10-06 08:54:15'),(7,1,115,135,15525,NULL,NULL,NULL,NULL,'In Progress','Not Billed','10 completed',7,'2025-10-03 10:53:34',2,'2025-10-07 06:45:40'),(8,1,135,135,18225,NULL,NULL,NULL,NULL,'In Progress','Not Billed','completed 20',7,'2025-10-03 10:53:34',2,'2025-10-07 06:46:51');
+/*!40000 ALTER TABLE `completion_edit_entries_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -157,12 +275,13 @@ CREATE TABLE `completion_entries_history` (
   `value_added` decimal(10,2) NOT NULL,
   `created_by` int NOT NULL,
   `created_at` datetime NOT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`entry_id`),
   KEY `created_by` (`created_by`),
   KEY `idx_rec_id_entry_date` (`rec_id`,`entry_date`),
   CONSTRAINT `completion_entries_history_ibfk_1` FOREIGN KEY (`rec_id`) REFERENCES `po_reckoner` (`rec_id`),
   CONSTRAINT `completion_entries_history_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=160 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -171,7 +290,7 @@ CREATE TABLE `completion_entries_history` (
 
 LOCK TABLES `completion_entries_history` WRITE;
 /*!40000 ALTER TABLE `completion_entries_history` DISABLE KEYS */;
-INSERT INTO `completion_entries_history` VALUES (1,1,'2025-05-28',85.00,120.00,10200.00,3,'2025-08-25 11:46:51'),(2,3,'2025-05-29',20.00,100.00,2000.00,3,'2025-08-25 11:48:20'),(3,2,'2025-05-29',45.00,140.00,6300.00,3,'2025-08-25 11:48:23'),(4,1,'2025-05-29',75.00,120.00,9000.00,3,'2025-08-25 11:48:24'),(5,1,'2025-05-30',40.00,120.00,4800.00,3,'2025-08-25 11:49:19'),(6,2,'2025-05-30',40.00,140.00,5600.00,3,'2025-08-25 11:49:21'),(7,3,'2025-05-30',61.00,100.00,6100.00,3,'2025-08-25 11:49:23'),(8,2,'2025-05-31',50.00,140.00,7000.00,3,'2025-08-25 11:49:33'),(9,3,'2025-05-31',40.00,100.00,4000.00,3,'2025-08-25 11:49:38'),(10,4,'2025-06-02',36.00,135.00,4860.00,3,'2025-08-25 11:49:51'),(11,1,'2025-06-02',15.00,120.00,1800.00,3,'2025-08-25 11:49:58'),(12,1,'2025-06-03',86.00,120.00,10320.00,3,'2025-08-25 11:50:08'),(13,1,'2025-06-04',36.00,120.00,4320.00,3,'2025-08-25 11:50:23'),(14,2,'2025-06-04',30.00,140.00,4200.00,3,'2025-08-25 11:50:26'),(15,2,'2025-06-05',60.00,140.00,8400.00,3,'2025-08-25 11:50:42'),(16,4,'2025-06-05',30.00,135.00,4050.00,3,'2025-08-25 11:50:44'),(17,1,'2025-06-06',40.00,120.00,4800.00,3,'2025-08-25 11:51:05'),(18,2,'2025-06-06',30.00,140.00,4200.00,3,'2025-08-25 11:51:06'),(19,4,'2025-06-06',20.00,135.00,2700.00,3,'2025-08-25 11:51:08'),(20,4,'2025-06-07',26.00,135.00,3510.00,3,'2025-08-25 11:51:26'),(21,2,'2025-06-07',40.00,140.00,5600.00,3,'2025-08-25 11:51:34'),(22,1,'2025-06-07',20.00,120.00,2400.00,3,'2025-08-25 11:51:39'),(23,1,'2025-06-08',60.00,120.00,7200.00,3,'2025-08-25 11:52:07'),(24,1,'2025-06-09',40.00,120.00,4800.00,3,'2025-08-25 11:52:16'),(25,2,'2025-06-09',40.00,140.00,5600.00,3,'2025-08-25 11:52:21'),(26,1,'2025-06-10',65.00,120.00,7800.00,3,'2025-08-25 11:52:31'),(27,2,'2025-06-10',40.00,140.00,5600.00,3,'2025-08-25 11:52:33'),(28,1,'2025-06-11',105.00,120.00,12600.00,3,'2025-08-25 11:52:41'),(29,2,'2025-06-11',65.00,140.00,9100.00,3,'2025-08-25 11:52:44'),(30,4,'2025-06-11',30.00,135.00,4050.00,3,'2025-08-25 11:52:55'),(31,4,'2025-06-12',30.00,135.00,4050.00,3,'2025-08-25 11:53:17'),(32,3,'2025-06-12',18.00,100.00,1800.00,3,'2025-08-25 11:53:18'),(33,2,'2025-06-12',50.00,140.00,7000.00,3,'2025-08-25 11:53:20'),(34,4,'2025-06-13',65.00,135.00,8775.00,3,'2025-08-25 11:53:38'),(35,3,'2025-06-13',65.00,100.00,6500.00,3,'2025-08-25 11:53:41'),(36,2,'2025-06-13',35.00,140.00,4900.00,3,'2025-08-25 11:53:44'),(37,1,'2025-06-13',20.00,120.00,2400.00,3,'2025-08-25 11:53:48'),(38,4,'2025-06-14',40.00,135.00,5400.00,3,'2025-08-25 11:53:56'),(39,2,'2025-06-14',40.00,140.00,5600.00,3,'2025-08-25 11:54:01'),(40,4,'2025-06-16',50.00,135.00,6750.00,3,'2025-08-25 11:54:24'),(41,4,'2025-06-17',65.00,135.00,8775.00,3,'2025-08-25 11:54:32'),(42,4,'2025-06-18',45.00,135.00,6075.00,3,'2025-08-25 11:54:38'),(43,3,'2025-06-18',60.00,100.00,6000.00,3,'2025-08-25 11:54:45'),(44,2,'2025-06-18',60.00,140.00,8400.00,3,'2025-08-25 11:54:49'),(45,1,'2025-06-18',30.00,120.00,3600.00,3,'2025-08-25 11:54:53'),(46,4,'2025-06-19',40.00,135.00,5400.00,3,'2025-08-25 11:55:03'),(47,2,'2025-06-19',55.00,140.00,7700.00,3,'2025-08-25 11:55:08'),(48,1,'2025-06-19',55.00,120.00,6600.00,3,'2025-08-25 11:55:12'),(49,4,'2025-06-20',50.00,135.00,6750.00,3,'2025-08-25 11:55:20'),(50,3,'2025-06-20',25.00,100.00,2500.00,3,'2025-08-25 11:55:24'),(51,2,'2025-06-20',30.00,140.00,4200.00,3,'2025-08-25 11:55:28'),(52,1,'2025-06-20',30.00,120.00,3600.00,3,'2025-08-25 11:55:31'),(53,4,'2025-06-21',35.00,135.00,4725.00,3,'2025-08-25 11:55:40'),(54,3,'2025-06-21',40.00,100.00,4000.00,3,'2025-08-25 11:55:44'),(55,1,'2025-06-21',40.00,120.00,4800.00,3,'2025-08-25 11:55:49'),(56,4,'2025-06-23',30.00,135.00,4050.00,3,'2025-08-25 11:56:00'),(57,2,'2025-06-23',30.00,140.00,4200.00,3,'2025-08-25 11:56:06'),(58,1,'2025-06-23',30.00,120.00,3600.00,3,'2025-08-25 11:56:09'),(59,4,'2025-06-25',45.00,135.00,6075.00,3,'2025-08-25 11:56:17'),(60,3,'2025-06-25',45.00,100.00,4500.00,3,'2025-08-25 11:56:20'),(61,1,'2025-06-25',20.00,120.00,2400.00,3,'2025-08-25 11:56:25'),(62,3,'2025-06-26',36.00,100.00,3600.00,3,'2025-08-25 11:56:36'),(64,2,'2025-06-26',40.00,140.00,5600.00,3,'2025-08-25 11:57:36'),(65,1,'2025-06-26',40.00,120.00,4800.00,3,'2025-08-25 11:57:42'),(66,4,'2025-06-27',40.00,135.00,5400.00,3,'2025-08-25 11:57:56'),(67,2,'2025-06-27',45.00,140.00,6300.00,3,'2025-08-25 11:57:59'),(68,1,'2025-06-27',45.00,120.00,5400.00,3,'2025-08-25 11:58:02'),(69,4,'2025-06-28',45.00,135.00,6075.00,3,'2025-08-25 11:58:11'),(70,2,'2025-06-28',45.00,140.00,6300.00,3,'2025-08-25 11:58:16'),(71,4,'2025-06-29',20.00,135.00,2700.00,3,'2025-08-25 11:58:28'),(72,3,'2025-06-29',20.00,100.00,2000.00,3,'2025-08-25 11:58:34'),(73,2,'2025-06-29',30.00,140.00,4200.00,3,'2025-08-25 11:58:37'),(74,1,'2025-06-29',30.00,120.00,3600.00,3,'2025-08-25 11:58:42'),(75,1,'2025-06-30',30.00,120.00,3600.00,3,'2025-08-25 11:58:57'),(76,2,'2025-06-30',30.00,140.00,4200.00,3,'2025-08-25 11:58:58'),(77,4,'2025-06-30',30.00,135.00,4050.00,3,'2025-08-25 11:59:00'),(78,4,'2025-07-01',30.00,135.00,4050.00,3,'2025-08-25 11:59:08'),(79,2,'2025-07-01',30.00,140.00,4200.00,3,'2025-08-25 11:59:13'),(80,4,'2025-07-02',25.00,135.00,3375.00,3,'2025-08-25 11:59:38'),(81,3,'2025-07-02',25.00,100.00,2500.00,3,'2025-08-25 11:59:39'),(82,2,'2025-07-02',25.00,140.00,3500.00,3,'2025-08-25 11:59:41'),(83,1,'2025-07-02',40.00,120.00,4800.00,3,'2025-08-25 11:59:42'),(84,4,'2025-07-03',26.00,135.00,3510.00,3,'2025-08-25 11:59:51'),(85,2,'2025-07-03',35.00,140.00,4900.00,3,'2025-08-25 11:59:59'),(86,1,'2025-07-03',35.00,120.00,4200.00,3,'2025-08-25 12:00:03'),(87,3,'2025-07-04',45.00,100.00,4500.00,3,'2025-08-25 12:00:13'),(88,2,'2025-07-04',45.00,140.00,6300.00,3,'2025-08-25 12:00:17'),(89,1,'2025-07-04',60.00,120.00,7200.00,3,'2025-08-25 12:00:21'),(90,4,'2025-07-05',20.00,135.00,2700.00,3,'2025-08-25 12:00:30'),(91,1,'2025-07-21',72.00,120.00,8640.00,3,'2025-08-25 12:00:52'),(92,2,'2025-07-21',53.00,140.00,7420.00,3,'2025-08-25 12:00:54'),(93,4,'2025-07-22',64.00,135.00,8640.00,3,'2025-08-25 12:01:26'),(94,2,'2025-07-22',20.00,140.00,2800.00,3,'2025-08-25 12:01:31'),(95,1,'2025-07-22',5.00,120.00,600.00,3,'2025-08-25 12:01:35'),(96,4,'2025-07-23',18.00,135.00,2430.00,3,'2025-08-25 12:01:46'),(97,2,'2025-07-23',61.00,140.00,8540.00,3,'2025-08-25 12:01:52'),(98,1,'2025-07-23',86.00,120.00,10320.00,3,'2025-08-25 12:01:55'),(99,4,'2025-07-24',68.00,135.00,9180.00,3,'2025-08-25 12:02:04'),(100,2,'2025-07-24',25.00,140.00,3500.00,3,'2025-08-25 12:02:09'),(101,2,'2025-07-25',68.00,140.00,9520.00,3,'2025-08-25 12:02:25'),(102,4,'2025-07-25',30.00,135.00,4050.00,3,'2025-08-25 12:02:27'),(103,4,'2025-07-26',85.00,135.00,11475.00,3,'2025-08-25 12:02:38'),(104,2,'2025-07-26',30.00,140.00,4200.00,3,'2025-08-25 12:02:44'),(105,1,'2025-07-26',85.00,120.00,10200.00,3,'2025-08-25 12:02:49'),(106,2,'2025-07-27',40.00,140.00,5600.00,3,'2025-08-25 12:03:04'),(107,1,'2025-07-27',25.00,120.00,3000.00,3,'2025-08-25 12:03:07'),(108,4,'2025-07-28',60.00,135.00,8100.00,3,'2025-08-25 12:03:20'),(109,1,'2025-07-28',20.00,120.00,2400.00,3,'2025-08-25 12:03:24'),(110,1,'2025-07-29',20.00,120.00,2400.00,3,'2025-08-25 12:03:35'),(111,2,'2025-07-29',20.00,140.00,2800.00,3,'2025-08-25 12:03:36'),(112,4,'2025-07-30',57.00,135.00,7695.00,3,'2025-08-25 12:03:48'),(113,2,'2025-07-30',37.00,140.00,5180.00,3,'2025-08-25 12:03:55'),(114,1,'2025-07-30',25.00,120.00,3000.00,3,'2025-08-25 12:03:59'),(115,1,'2025-07-31',50.00,120.00,6000.00,3,'2025-08-25 12:04:12'),(116,2,'2025-07-31',50.00,140.00,7000.00,3,'2025-08-25 12:04:13'),(117,4,'2025-08-01',50.00,135.00,6750.00,3,'2025-08-25 12:04:21'),(118,1,'2025-08-01',18.00,120.00,2160.00,3,'2025-08-25 12:04:26'),(119,4,'2025-08-02',30.00,135.00,4050.00,3,'2025-08-25 12:04:33'),(120,1,'2025-08-02',20.00,120.00,2400.00,3,'2025-08-25 12:04:37'),(121,4,'2025-08-04',30.00,135.00,4050.00,3,'2025-08-25 12:04:49'),(122,2,'2025-08-04',30.00,140.00,4200.00,3,'2025-08-25 12:04:54'),(123,4,'2025-08-05',20.00,135.00,2700.00,3,'2025-08-25 12:05:15'),(124,2,'2025-08-05',20.00,140.00,2800.00,3,'2025-08-25 12:05:23'),(125,1,'2025-08-05',45.00,120.00,5400.00,3,'2025-08-25 12:05:28'),(126,4,'2025-08-06',20.00,135.00,2700.00,3,'2025-08-25 12:05:37'),(127,2,'2025-08-06',45.00,140.00,6300.00,3,'2025-08-25 12:05:41'),(128,1,'2025-08-06',30.00,120.00,3600.00,3,'2025-08-25 12:05:45'),(129,4,'2025-08-07',60.00,135.00,8100.00,3,'2025-08-25 12:05:56'),(130,2,'2025-08-07',60.00,140.00,8400.00,3,'2025-08-25 12:06:01'),(131,1,'2025-08-07',60.00,120.00,7200.00,3,'2025-08-25 12:06:04'),(132,4,'2025-08-08',80.00,135.00,10800.00,3,'2025-08-25 12:06:16'),(133,2,'2025-08-08',80.00,140.00,11200.00,3,'2025-08-25 12:06:20'),(134,1,'2025-08-08',30.00,120.00,3600.00,3,'2025-08-25 12:06:23'),(135,4,'2025-08-09',15.00,135.00,2025.00,3,'2025-08-25 12:06:30'),(136,3,'2025-08-09',30.00,100.00,3000.00,3,'2025-08-25 12:06:34'),(137,2,'2025-08-09',30.00,140.00,4200.00,3,'2025-08-25 12:06:38'),(138,1,'2025-08-10',40.00,120.00,4800.00,3,'2025-08-25 12:06:47'),(139,4,'2025-08-10',15.00,135.00,2025.00,3,'2025-08-25 12:06:51'),(140,4,'2025-08-10',0.00,135.00,0.00,3,'2025-08-25 12:06:54'),(141,1,'2025-08-13',45.00,120.00,5400.00,3,'2025-08-25 12:08:10'),(142,4,'2025-08-13',35.00,135.00,4725.00,3,'2025-08-25 12:08:16'),(143,4,'2025-08-14',25.00,135.00,3375.00,3,'2025-08-25 12:08:22'),(144,2,'2025-08-14',65.00,140.00,9100.00,3,'2025-08-25 12:08:27'),(146,1,'2025-08-14',45.00,120.00,5400.00,3,'2025-08-25 12:12:59'),(147,4,'2025-08-15',25.00,135.00,3375.00,3,'2025-08-25 12:15:22'),(148,2,'2025-08-16',35.00,140.00,4900.00,3,'2025-08-25 12:15:35'),(149,1,'2025-08-16',35.00,120.00,4200.00,3,'2025-08-25 12:15:39'),(150,3,'2025-08-18',20.00,100.00,2000.00,3,'2025-08-25 12:16:20'),(151,1,'2025-08-19',40.00,120.00,4800.00,3,'2025-08-25 12:16:34'),(152,2,'2025-08-19',20.00,140.00,2800.00,3,'2025-08-25 12:16:39'),(153,4,'2025-08-20',20.00,135.00,2700.00,3,'2025-08-25 12:17:00'),(154,2,'2025-08-20',20.00,140.00,2800.00,3,'2025-08-25 12:17:04'),(155,4,'2025-08-21',30.00,135.00,4050.00,3,'2025-08-25 12:17:28'),(156,1,'2025-08-21',20.00,120.00,2400.00,3,'2025-08-25 12:17:34'),(157,1,'2025-08-11',30.00,120.00,3600.00,3,'2025-08-25 12:20:16'),(158,4,'2025-09-12',10.00,135.00,1350.00,3,'2025-09-12 11:13:18'),(159,4,'2025-09-12',100.00,135.00,13500.00,3,'2025-09-12 12:00:48');
+INSERT INTO `completion_entries_history` VALUES (1,4,'2025-10-03',55.00,135.00,4050.00,2,'2025-10-03 16:23:34','remarks2'),(2,4,'2025-10-06',50.00,135.00,1350.00,2,'2025-10-06 14:24:05','correct secondremarks'),(3,13,'2025-10-06',30.00,10.00,200.00,2,'2025-10-06 14:26:13','dummy2 remarks'),(4,10,'2025-10-07',10.00,100.00,1000.00,7,'2025-10-07 09:50:23','remarks for 10'),(5,4,'2025-10-07',10.00,135.00,1350.00,7,'2025-10-07 12:15:40','10 completed'),(6,4,'2025-10-07',20.00,135.00,2700.00,7,'2025-10-07 12:16:51','completed 20'),(7,4,'2025-10-07',10.00,135.00,1350.00,7,'2025-10-07 12:17:58','10 completed');
 /*!40000 ALTER TABLE `completion_entries_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -196,13 +315,15 @@ CREATE TABLE `completion_status` (
   `billing_status` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` int DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `remarks` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`completion_id`),
   KEY `rec_id` (`rec_id`),
   KEY `fk_created_by` (`created_by`),
   CONSTRAINT `completion_status_ibfk_1` FOREIGN KEY (`rec_id`) REFERENCES `po_reckoner` (`rec_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -211,7 +332,7 @@ CREATE TABLE `completion_status` (
 
 LOCK TABLES `completion_status` WRITE;
 /*!40000 ALTER TABLE `completion_status` DISABLE KEYS */;
-INSERT INTO `completion_status` VALUES (1,1,1848,120,221760,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-08-25 05:29:50',3,'2025-08-25 06:38:10'),(2,2,1854,140,259560,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-08-25 05:29:50',3,'2025-08-25 06:46:39'),(3,3,550,100,55000,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-08-25 05:29:50',3,'2025-08-25 06:46:20'),(4,4,1820,135,245700,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-08-25 05:29:50',3,'2025-09-12 06:30:48'),(5,5,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-04 10:26:49',NULL,'2025-09-04 10:26:49'),(6,6,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-04 10:26:49',NULL,'2025-09-04 10:26:49'),(7,7,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-10 04:34:19',NULL,'2025-09-10 04:34:19'),(8,8,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-10 04:34:19',NULL,'2025-09-10 04:34:19'),(9,9,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-10 04:34:19',NULL,'2025-09-10 04:34:19'),(10,10,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-10 04:34:19',NULL,'2025-09-10 04:34:19');
+INSERT INTO `completion_status` VALUES (1,4,145,135,19575,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-10-03 10:53:34',7,2,'2025-10-07 06:47:58','10 completed'),(2,13,30,10,300,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-10-06 08:56:13',2,2,'2025-10-06 08:56:24','dummy1 remarks'),(3,10,10,100,1000,NULL,NULL,NULL,NULL,'In Progress','Not Billed','2025-10-07 04:20:23',7,NULL,'2025-10-07 04:20:23','remarks for 10');
 /*!40000 ALTER TABLE `completion_status` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -438,6 +559,7 @@ CREATE TABLE `employee_master` (
   `esic_number` varchar(50) DEFAULT NULL,
   `pf_number` varchar(50) DEFAULT NULL,
   `approved_salary` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `created_by` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`emp_id`),
   KEY `fk_gender` (`gender_id`),
   KEY `fk_department` (`dept_id`),
@@ -458,7 +580,7 @@ CREATE TABLE `employee_master` (
 
 LOCK TABLES `employee_master` WRITE;
 /*!40000 ALTER TABLE `employee_master` DISABLE KEYS */;
-INSERT INTO `employee_master` VALUES ('EMP001','Ezhavahgan','1988-07-13','2024-06-19','SathyaCoating PVT LTD','Edayarpalayam','9856741246','ezhavahgan001@sathyacoating.com','221 Chinnammal Nagar, Edayarpalayam, Vadavalli Road, Coimbatore-641041','221 Chinnammal Nagar, Edayarpalayam, Vadavalli Road, Coimbatore-641041','2025-07-29 15:57:40',1,2,1,6,1,'2-1234567890-12-0997','N/AMB/0123456/0008483',0.00),('EMP002','ragul prakash','1992-07-09','2025-08-06','Student','peelamedu','+919942883595','sanjayravichandran006@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,periyanaicken palayam','2025-08-19 17:41:20',1,2,1,1,1,'12-1234567890-12-0001','TN/AMB/0123456/0001234',0.00),('EMP003','Suresh','1997-06-19','2025-03-20','Sathya Coatings','perundurai','9484938839','suresh@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,perundurai','2025-08-25 10:39:57',1,1,1,6,1,'4894883988943','489438389343',0.00),('EMP004','ram','1992-07-07','2025-08-06','sathyacoatings','peelamedu','9876789874','ram@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,periyanaicken palayam','2025-08-19 17:41:20',1,1,1,7,1,'12-1234567890-12-0001','TN/AMB/0123456/0001234',0.00),('emp0043','sanjay','2025-09-02','2025-09-18','mills','pm','8978767987','name@gmail.com','cbe','cbe','2025-09-08 15:13:53',1,1,1,1,1,'84484949494949494','4984983898989344',0.00),('EMP005','eric','1997-06-18','2025-08-06','sathyacoatings','edayarpalayam','8484949484','eric@gmail.com','123 RS Puram , Combatore','123 RS Puram , Combatore','2025-09-01 15:05:00',1,2,1,7,1,'8484847478484','848484849834983498',0.00),('EMP006','velraj','1987-10-13','2025-08-14','sathyacoatings','peelamedu','9847837263','peelamedu@gmail.com','123 , gandhipuram','123 , gandhipuram','2025-09-01 15:08:27',1,2,1,7,1,'398983298329832','8938989327832',0.00);
+INSERT INTO `employee_master` VALUES ('EMP001','Ezhavahgan','1988-07-13','2024-06-19','SathyaCoating PVT LTD','Edayarpalayam','9856741246','ezhavahgan001@sathyacoating.com','221 Chinnammal Nagar, Edayarpalayam, Vadavalli Road, Coimbatore-641041','221 Chinnammal Nagar, Edayarpalayam, Vadavalli Road, Coimbatore-641041','2025-07-29 15:57:40',1,2,1,6,1,'2-1234567890-12-0997','N/AMB/0123456/0008483',13000.00,NULL),('EMP002','ragul prakash','1992-07-09','2025-08-06','Student','peelamedu','+919942883595','sanjayravichandran006@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,periyanaicken palayam','2025-08-19 17:41:20',1,2,1,1,1,'12-1234567890-12-0001','TN/AMB/0123456/0001234',15000.00,NULL),('EMP003','Suresh','1997-06-19','2025-03-20','Sathya Coatings','perundurai','9484938839','suresh@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,perundurai','2025-08-25 10:39:57',1,1,1,6,1,'4894883988943','489438389343',12500.00,NULL),('EMP004','ram','1992-07-07','2025-08-06','sathyacoatings','peelamedu','9876789874','ram@gmail.com','25c, uniontank road, 1st street,periyanaicken palayam','25c, uniontank road, 1st street,periyanaicken palayam','2025-08-19 17:41:20',1,1,1,7,1,'12-1234567890-12-0001','TN/AMB/0123456/0001234',14000.00,NULL),('emp0043','sanjay','2025-09-02','2025-09-18','mills','pm','8978767987','name@gmail.com','cbe','cbe','2025-09-08 15:13:53',1,1,1,1,1,'84484949494949494','4984983898989344',11000.00,NULL),('EMP005','eric','1997-06-18','2025-08-06','sathyacoatings','edayarpalayam','8484949484','eric@gmail.com','123 RS Puram , Combatore','123 RS Puram , Combatore','2025-09-01 15:05:00',1,2,1,7,1,'8484847478484','848484849834983498',12000.00,NULL),('EMP006','velraj','1987-10-13','2025-08-14','sathyacoatings','peelamedu','9847837263','peelamedu@gmail.com','123 , gandhipuram','123 , gandhipuram','2025-09-01 15:08:27',1,2,1,7,1,'398983298329832','8938989327832',10000.00,NULL),('EMP007','surya','1984-10-24','2025-09-09','sathyacoatings','peelamedu','9584948394','surya@gmail.com','RS puram , coimbatore','RS puram , coimbatore','2025-09-18 14:24:48',1,1,1,1,1,'5898954985498','5989845985498',14000.00,NULL),('emp49834938','bala','1982-07-01','2025-09-11','lakshmi mills','peelamedu','8949389383','bala@sathyahitec.com','gandhipuram','gandhipuram','2025-09-29 14:51:58',1,1,1,1,1,'12345678901203','48384384989c94934',25000.00,'2');
 /*!40000 ALTER TABLE `employee_master` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -642,6 +764,7 @@ CREATE TABLE `labour` (
   `approved_salary` decimal(10,2) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `contractor_id` (`contractor_id`),
   KEY `emp_type_id` (`emp_type_id`),
@@ -655,7 +778,7 @@ CREATE TABLE `labour` (
   CONSTRAINT `labour_ibfk_4` FOREIGN KEY (`emp_type_id`) REFERENCES `employment_type` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `labour_ibfk_5` FOREIGN KEY (`designation_id`) REFERENCES `emp_designation` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `labour_ibfk_6` FOREIGN KEY (`status_id`) REFERENCES `emp_status` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -664,7 +787,7 @@ CREATE TABLE `labour` (
 
 LOCK TABLES `labour` WRITE;
 /*!40000 ALTER TABLE `labour` DISABLE KEYS */;
-INSERT INTO `labour` VALUES (6,'moorthi','2025-05-09','2025-09-12','mills','pm','8494937493','name@gmail.com','cbe','cbe',1,1,1,1,1,'12345678901234567','9885489898945',NULL,1000.00,'2025-09-08 09:54:13','2025-09-09 09:28:45'),(7,'gopal','2000-01-14','2025-08-20','lakshmi mills','peelamedu','9484948493','gopal@gmail.com','rs puram','rs puram',1,1,1,7,1,'12345678901234567','49889894389344389',NULL,1200.00,'2025-09-10 04:49:15','2025-09-10 04:49:15');
+INSERT INTO `labour` VALUES (6,'moorthi','2025-05-09','2025-09-12','mills','pm','8494937493','name@gmail.com','cbe','cbe',1,1,1,1,1,'12345678901234567','9885489898945',NULL,1000.00,'2025-09-08 09:54:13','2025-09-09 09:28:45',NULL),(7,'gopal','2000-01-14','2025-08-20','lakshmi mills','peelamedu','9484948493','gopal@gmail.com','rs puram','rs puram',1,1,1,7,1,'12345678901234567','49889894389344389',NULL,1200.00,'2025-09-10 04:49:15','2025-09-10 04:49:15',NULL),(8,'ragu','2025-10-10','2025-10-10','lakshmi mills','peelamedu','9483928382','ragu@sathyacoating.com','coimbatore','coimbatore',1,1,2,1,1,NULL,'4783498484839',NULL,25000.00,'2025-09-29 09:35:21','2025-09-29 09:35:21','2');
 /*!40000 ALTER TABLE `labour` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -686,18 +809,22 @@ CREATE TABLE `labour_assignment` (
   `created_at` datetime NOT NULL,
   `labour_id` int DEFAULT NULL,
   `salary` decimal(15,2) DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `project_id` (`project_id`),
   KEY `site_id` (`site_id`),
   KEY `desc_id` (`desc_id`),
   KEY `created_by` (`created_by`),
   KEY `fk_labour_assignment_labour` (`labour_id`),
+  KEY `fk_labour_assignment_updated_by` (`updated_by`),
   CONSTRAINT `fk_labour_assignment_labour` FOREIGN KEY (`labour_id`) REFERENCES `labour` (`id`),
+  CONSTRAINT `fk_labour_assignment_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
   CONSTRAINT `labour_assignment_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `project_details` (`pd_id`),
   CONSTRAINT `labour_assignment_ibfk_2` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`),
   CONSTRAINT `labour_assignment_ibfk_3` FOREIGN KEY (`desc_id`) REFERENCES `work_descriptions` (`desc_id`),
   CONSTRAINT `labour_assignment_ibfk_5` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -706,8 +833,57 @@ CREATE TABLE `labour_assignment` (
 
 LOCK TABLES `labour_assignment` WRITE;
 /*!40000 ALTER TABLE `labour_assignment` DISABLE KEYS */;
-INSERT INTO `labour_assignment` VALUES (1,'PD001','ST001',69,'2025-09-08','2025-09-08',2,'2025-09-08 16:20:59',6,1000.00),(5,'PD002','ST002',17,'2025-09-10','2025-09-12',2,'2025-09-10 10:05:16',6,NULL),(6,'PD002','ST002',53,'2025-09-10','2025-09-12',2,'2025-09-10 10:05:23',6,NULL),(7,'PD001','ST001',69,'2025-09-12','2025-09-13',3,'2025-09-10 10:22:40',7,NULL),(8,'PD001','ST001',69,'2025-09-12','2025-09-15',3,'2025-09-12 12:04:54',6,NULL),(9,'PD001','ST001',69,'2025-09-16','2025-09-19',2,'2025-09-16 11:40:37',7,NULL),(10,'PD001','ST001',69,'2025-09-16','2025-09-19',2,'2025-09-16 11:40:37',6,NULL);
+INSERT INTO `labour_assignment` VALUES (1,'PD001','ST001',69,'2025-09-29','2025-10-04',2,'2025-09-29 10:07:14',7,NULL,NULL,NULL),(2,'PD001','ST001',69,'2025-09-29','2025-10-11',2,'2025-09-29 16:04:24',6,NULL,NULL,NULL),(3,'PD001','ST001',69,'2025-10-03','2025-10-03',2,'2025-10-03 09:12:30',7,NULL,NULL,NULL),(4,'PD001','ST001',69,'2025-10-06','2025-10-29',2,'2025-10-03 16:25:03',6,3000.00,2,'2025-10-04 09:59:40'),(5,'PD001','ST001',69,'2025-10-21','2025-10-31',7,'2025-10-07 12:31:14',6,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `labour_assignment` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `labour_assignment_edit_history`
+--
+
+DROP TABLE IF EXISTS `labour_assignment_edit_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `labour_assignment_edit_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `labour_assignment_id` int NOT NULL,
+  `project_id` varchar(30) NOT NULL,
+  `site_id` varchar(30) NOT NULL,
+  `desc_id` int NOT NULL,
+  `labour_id` int NOT NULL,
+  `from_date` date NOT NULL,
+  `to_date` date NOT NULL,
+  `salary` decimal(15,2) DEFAULT NULL,
+  `created_by` int NOT NULL,
+  `updated_by` int DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `labour_assignment_id` (`labour_assignment_id`),
+  KEY `project_id` (`project_id`),
+  KEY `site_id` (`site_id`),
+  KEY `desc_id` (`desc_id`),
+  KEY `labour_id` (`labour_id`),
+  KEY `created_by` (`created_by`),
+  KEY `updated_by` (`updated_by`),
+  CONSTRAINT `labour_assignment_edit_history_ibfk_1` FOREIGN KEY (`labour_assignment_id`) REFERENCES `labour_assignment` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES `project_details` (`pd_id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_3` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_4` FOREIGN KEY (`desc_id`) REFERENCES `work_descriptions` (`desc_id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_5` FOREIGN KEY (`labour_id`) REFERENCES `labour` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_6` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_assignment_edit_history_ibfk_7` FOREIGN KEY (`updated_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `labour_assignment_edit_history`
+--
+
+LOCK TABLES `labour_assignment_edit_history` WRITE;
+/*!40000 ALTER TABLE `labour_assignment_edit_history` DISABLE KEYS */;
+INSERT INTO `labour_assignment_edit_history` VALUES (1,4,'PD001','ST001',69,6,'2025-10-03','2025-10-03',NULL,2,NULL,'2025-10-03 16:25:03','2025-10-03 16:25:03'),(2,4,'PD001','ST001',69,6,'2025-10-14','2025-10-24',NULL,2,2,'2025-10-03 16:25:03','2025-10-04 09:17:48'),(3,4,'PD001','ST001',69,6,'2025-10-22','2025-10-30',NULL,2,2,'2025-10-03 16:25:03','2025-10-04 09:18:22'),(4,4,'PD001','ST001',69,6,'2025-10-08','2025-10-17',NULL,2,2,'2025-10-03 16:25:03','2025-10-04 09:47:59'),(5,4,'PD001','ST001',69,6,'2025-10-09','2025-10-30',NULL,2,2,'2025-10-03 16:25:03','2025-10-04 09:56:35'),(6,4,'PD001','ST001',69,6,'2025-10-08','2025-10-31',NULL,2,2,'2025-10-03 16:25:03','2025-10-04 09:57:00'),(7,4,'PD001','ST001',69,6,'2025-10-07','2025-10-30',2000.00,2,2,'2025-10-03 16:25:03','2025-10-04 09:59:16');
+/*!40000 ALTER TABLE `labour_assignment_edit_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -724,12 +900,17 @@ CREATE TABLE `labour_attendance` (
   `created_by` int NOT NULL,
   `created_at` datetime NOT NULL,
   `entry_date` date NOT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `updated_by` int DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `labour_assignment_id` (`labour_assignment_id`),
   KEY `created_by` (`created_by`),
+  KEY `fk_labour_attendance_updated_by` (`updated_by`),
+  CONSTRAINT `fk_labour_attendance_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
   CONSTRAINT `labour_attendance_ibfk_1` FOREIGN KEY (`labour_assignment_id`) REFERENCES `labour_assignment` (`id`),
   CONSTRAINT `labour_attendance_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -738,8 +919,78 @@ CREATE TABLE `labour_attendance` (
 
 LOCK TABLES `labour_attendance` WRITE;
 /*!40000 ALTER TABLE `labour_attendance` DISABLE KEYS */;
-INSERT INTO `labour_attendance` VALUES (1,1,1.0,3,'2025-09-09 12:46:12','2025-09-09'),(2,1,2.0,3,'2025-09-09 14:00:48','2025-09-08'),(3,1,1.5,3,'2025-09-09 14:10:34','2025-09-07'),(4,5,0.5,3,'2025-09-10 10:06:10','2025-09-10'),(5,5,1.0,3,'2025-09-10 10:06:17','2025-09-11'),(6,5,1.5,3,'2025-09-10 10:06:29','2025-09-12'),(7,6,1.0,3,'2025-09-10 10:06:42','2025-09-10'),(8,6,0.5,3,'2025-09-10 10:06:49','2025-09-11'),(9,7,1.5,3,'2025-09-10 10:22:56','2025-09-11'),(10,7,0.5,3,'2025-09-10 10:23:07','2025-09-12');
+INSERT INTO `labour_attendance` VALUES (1,1,1.0,2,'2025-09-29 16:04:46','2025-09-29',NULL,NULL,NULL),(2,2,1.5,2,'2025-09-29 16:04:46','2025-09-29',NULL,NULL,NULL),(3,1,1.0,2,'2025-09-29 16:05:30','2025-09-30',NULL,NULL,NULL),(4,2,0.5,2,'2025-09-29 16:05:30','2025-09-30',NULL,NULL,NULL),(5,2,1.0,2,'2025-10-04 10:03:40','2025-10-04','no ot hours',2,'2025-10-04 10:21:35'),(6,4,1.0,2,'2025-10-04 10:03:40','2025-10-04',NULL,2,'2025-10-04 10:16:29'),(7,1,1.0,2,'2025-10-04 10:03:40','2025-10-04',NULL,2,'2025-10-04 10:16:29'),(8,3,1.0,2,'2025-10-04 10:03:40','2025-10-04',NULL,2,'2025-10-04 10:16:29'),(9,2,1.5,2,'2025-10-06 10:07:41','2025-10-06','full day + OT',2,'2025-10-06 14:37:50'),(10,4,1.5,2,'2025-10-06 10:07:41','2025-10-06','ot',NULL,NULL),(11,1,0.5,2,'2025-10-06 10:07:41','2025-10-06','half day',NULL,NULL),(12,2,1.0,7,'2025-10-07 12:34:02','2025-10-07','full day',NULL,NULL),(13,2,1.5,7,'2025-10-07 12:49:41','2025-10-08','ot',NULL,NULL);
 /*!40000 ALTER TABLE `labour_attendance` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `labour_attendance_edit_history`
+--
+
+DROP TABLE IF EXISTS `labour_attendance_edit_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `labour_attendance_edit_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `labour_attendance_id` int NOT NULL,
+  `labour_assignment_id` int NOT NULL,
+  `shift` decimal(3,1) NOT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `created_by` int NOT NULL,
+  `updated_by` int DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `labour_attendance_id` (`labour_attendance_id`),
+  KEY `labour_assignment_id` (`labour_assignment_id`),
+  KEY `created_by` (`created_by`),
+  KEY `updated_by` (`updated_by`),
+  CONSTRAINT `labour_attendance_edit_history_ibfk_1` FOREIGN KEY (`labour_attendance_id`) REFERENCES `labour_attendance` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `labour_attendance_edit_history_ibfk_2` FOREIGN KEY (`labour_assignment_id`) REFERENCES `labour_assignment` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_attendance_edit_history_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE RESTRICT,
+  CONSTRAINT `labour_attendance_edit_history_ibfk_4` FOREIGN KEY (`updated_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `labour_attendance_edit_history`
+--
+
+LOCK TABLES `labour_attendance_edit_history` WRITE;
+/*!40000 ALTER TABLE `labour_attendance_edit_history` DISABLE KEYS */;
+INSERT INTO `labour_attendance_edit_history` VALUES (1,5,2,1.0,NULL,2,NULL,'2025-10-04 10:03:40','2025-10-04 10:03:40'),(2,6,4,1.0,NULL,2,NULL,'2025-10-04 10:03:40','2025-10-04 10:03:40'),(3,7,1,1.0,NULL,2,NULL,'2025-10-04 10:03:40','2025-10-04 10:03:40'),(4,8,3,1.0,NULL,2,NULL,'2025-10-04 10:03:40','2025-10-04 10:03:40'),(5,5,2,1.5,'ot hours',2,NULL,'2025-10-04 10:03:40','2025-10-04 10:16:29'),(6,9,2,1.0,'full day',2,NULL,'2025-10-06 10:07:41','2025-10-06 10:07:41');
+/*!40000 ALTER TABLE `labour_attendance_edit_history` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `labour_overhead`
+--
+
+DROP TABLE IF EXISTS `labour_overhead`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `labour_overhead` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `site_id` varchar(30) NOT NULL,
+  `desc_id` int NOT NULL,
+  `calculation_type` enum('no_of_labours','total_shifts') NOT NULL,
+  `no_of_labours` int DEFAULT NULL,
+  `total_shifts` int DEFAULT NULL,
+  `rate_per_shift` decimal(10,2) NOT NULL,
+  `total_cost` decimal(12,2) NOT NULL,
+  `overhead_type` varchar(50) DEFAULT 'labour',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `labour_overhead`
+--
+
+LOCK TABLES `labour_overhead` WRITE;
+/*!40000 ALTER TABLE `labour_overhead` DISABLE KEYS */;
+/*!40000 ALTER TABLE `labour_overhead` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -777,10 +1028,11 @@ CREATE TABLE `master_dc_no` (
   `id` int NOT NULL AUTO_INCREMENT,
   `dc_no` varchar(100) NOT NULL,
   `company_id` varchar(10) DEFAULT NULL,
+  `created_by` varchar(30) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `company_id` (`company_id`),
   CONSTRAINT `master_dc_no_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `company` (`company_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -789,7 +1041,7 @@ CREATE TABLE `master_dc_no` (
 
 LOCK TABLES `master_dc_no` WRITE;
 /*!40000 ALTER TABLE `master_dc_no` DISABLE KEYS */;
-INSERT INTO `master_dc_no` VALUES (1,'456','CO002');
+INSERT INTO `master_dc_no` VALUES (1,'KGiSL002','CO002',''),(2,'J001','CO001',''),(10,'TESTMASTER001','CO003','2');
 /*!40000 ALTER TABLE `master_dc_no` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -813,10 +1065,12 @@ CREATE TABLE `material_acknowledgement` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `overall_quantity` int DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `material_dispatch_id` (`material_dispatch_id`),
   CONSTRAINT `material_acknowledgement_ibfk_1` FOREIGN KEY (`material_dispatch_id`) REFERENCES `material_dispatch` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -825,8 +1079,47 @@ CREATE TABLE `material_acknowledgement` (
 
 LOCK TABLES `material_acknowledgement` WRITE;
 /*!40000 ALTER TABLE `material_acknowledgement` DISABLE KEYS */;
-INSERT INTO `material_acknowledgement` VALUES (1,1,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-12 05:39:19','2025-09-12 05:39:19',300,'300 litre received');
+INSERT INTO `material_acknowledgement` VALUES (1,1,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-03 06:03:41','2025-10-03 07:04:22',5000,'enter incorrect value , total dispatched received','2','2'),(2,2,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-03 06:11:08','2025-10-03 06:11:08',4000,'received','2',NULL),(3,3,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-03 06:33:36','2025-10-03 06:33:36',5000,'received','2',NULL),(4,4,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-03 06:33:52','2025-10-03 06:33:52',5000,'received','2',NULL),(5,8,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-06 06:35:11','2025-10-06 06:35:18',150,'received','2','2'),(6,5,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-07 05:27:29','2025-10-07 05:28:04',150,'150 used ','7','7'),(7,7,NULL,NULL,NULL,NULL,NULL,NULL,'2025-10-07 06:02:29','2025-10-07 06:02:29',500,'used','7',NULL);
 /*!40000 ALTER TABLE `material_acknowledgement` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `material_acknowledgement_history`
+--
+
+DROP TABLE IF EXISTS `material_acknowledgement_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `material_acknowledgement_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `material_acknowledgement_id` int NOT NULL,
+  `material_dispatch_id` int NOT NULL,
+  `comp_a_qty` int DEFAULT NULL,
+  `comp_b_qty` int DEFAULT NULL,
+  `comp_c_qty` int DEFAULT NULL,
+  `comp_a_remarks` text,
+  `comp_b_remarks` text,
+  `comp_c_remarks` text,
+  `overall_quantity` int DEFAULT NULL,
+  `remarks` text,
+  `created_by` varchar(255) NOT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `material_acknowledgement_id` (`material_acknowledgement_id`),
+  CONSTRAINT `material_acknowledgement_history_ibfk_1` FOREIGN KEY (`material_acknowledgement_id`) REFERENCES `material_acknowledgement` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `material_acknowledgement_history`
+--
+
+LOCK TABLES `material_acknowledgement_history` WRITE;
+/*!40000 ALTER TABLE `material_acknowledgement_history` DISABLE KEYS */;
+INSERT INTO `material_acknowledgement_history` VALUES (1,1,1,NULL,NULL,NULL,NULL,NULL,NULL,5000,'5000 received','2',NULL,'2025-10-03 06:03:41','2025-10-03 06:03:41'),(2,1,1,NULL,NULL,NULL,NULL,NULL,NULL,4000,'5000 received','2','2','2025-10-03 06:03:41','2025-10-03 06:39:02'),(3,1,1,NULL,NULL,NULL,NULL,NULL,NULL,6000,'enter incorrect value , total dispatched received','2','2','2025-10-03 06:03:41','2025-10-03 06:43:22'),(4,5,8,NULL,NULL,NULL,NULL,NULL,NULL,200,'received','2',NULL,'2025-10-06 06:35:11','2025-10-06 06:35:11'),(5,6,5,NULL,NULL,NULL,NULL,NULL,NULL,100,'used','7',NULL,'2025-10-07 05:27:29','2025-10-07 05:27:29');
+/*!40000 ALTER TABLE `material_acknowledgement_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -848,7 +1141,8 @@ CREATE TABLE `material_assign` (
   `comp_ratio_b` int DEFAULT NULL,
   `comp_ratio_c` int DEFAULT NULL,
   `desc_id` int DEFAULT NULL,
-  `rate` decimal(10,2) DEFAULT NULL,
+  `rate` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `created_by` varchar(30) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `pd_id` (`pd_id`),
   KEY `site_id` (`site_id`),
@@ -860,7 +1154,7 @@ CREATE TABLE `material_assign` (
   CONSTRAINT `material_assign_ibfk_2` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`) ON DELETE RESTRICT,
   CONSTRAINT `material_assign_ibfk_3` FOREIGN KEY (`item_id`) REFERENCES `material_master` (`item_id`) ON DELETE RESTRICT,
   CONSTRAINT `material_assign_ibfk_4` FOREIGN KEY (`uom_id`) REFERENCES `uom_master` (`uom_id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -869,7 +1163,7 @@ CREATE TABLE `material_assign` (
 
 LOCK TABLES `material_assign` WRITE;
 /*!40000 ALTER TABLE `material_assign` DISABLE KEYS */;
-INSERT INTO `material_assign` VALUES (1,'PD001','ST001','item_104',1,300,'2025-08-29 12:32:06',3,2,1,69,100.00),(2,'PD001','ST001','item_108',1,100,'2025-08-29 12:32:06',3,2,NULL,69,50.00),(3,'PD001','ST001','item_105',1,520,'2025-08-29 12:32:06',2,1,NULL,69,30.00),(4,'PD001','ST001','item_109',1,300,'2025-08-29 12:32:06',3,1,NULL,69,20.00),(6,'PD002','ST002','item_10',2,600,'2025-09-17 09:49:14',3,2,NULL,17,100.00),(7,'PD001','ST001','item_10',2,500,'2025-09-23 09:59:10',NULL,NULL,NULL,69,125.00);
+INSERT INTO `material_assign` VALUES (1,'PD001','ST001','item_10',2,6000,'2025-09-22 16:51:40',3,2,1,69,2.00,''),(2,'PD001','ST001','item_100',2,4000,'2025-09-22 16:51:40',3,2,1,69,3.00,''),(3,'PD001','ST001','item_101',2,4500,'2025-09-22 16:51:40',3,2,NULL,69,3.00,''),(4,'PD001','ST001','item_107',2,400,'2025-09-22 16:51:40',3,2,NULL,69,3.00,''),(5,'PD001','ST001','item_109',2,6000,'2025-09-22 16:51:40',5,2,NULL,69,3.00,''),(6,'PD001','ST001','item_12',2,6000,'2025-09-22 16:51:40',5,3,NULL,69,8.00,''),(7,'PD001','ST001','item_37',2,4000,'2025-09-22 16:51:40',3,2,NULL,69,3.00,''),(8,'PD001','ST001','item_33',2,200,'2025-09-22 16:51:40',3,2,NULL,69,2.00,''),(9,'PD001','ST001','item_4',2,1198,'2025-09-22 16:51:40',3,2,NULL,69,2.00,''),(10,'PD002','ST002','item_1',2,100,'2025-09-25 14:20:33',3,2,NULL,53,30.00,''),(11,'PD003','ST003','item_1',2,30,'2025-09-29 10:34:35',2,1,NULL,46,20.00,'2'),(12,'PD003','ST003','item_101',2,500,'2025-09-29 11:02:09',3,2,NULL,46,30.00,'2'),(13,'PD002','ST002','item_100',3,500,'2025-10-06 11:07:15',3,2,1,53,25.00,'2');
 /*!40000 ALTER TABLE `material_assign` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -897,12 +1191,13 @@ CREATE TABLE `material_dispatch` (
   `comp_c_remarks` varchar(255) DEFAULT NULL,
   `order_no` varchar(50) DEFAULT NULL,
   `vendor_code` varchar(50) DEFAULT NULL,
+  `created_by` varchar(30) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_material_assign_id` (`material_assign_id`),
   KEY `fk_material_dispatch_desc_id` (`desc_id`),
   CONSTRAINT `fk_material_assign_id` FOREIGN KEY (`material_assign_id`) REFERENCES `material_assign` (`id`),
   CONSTRAINT `fk_material_dispatch_desc_id` FOREIGN KEY (`desc_id`) REFERENCES `work_descriptions` (`desc_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -911,7 +1206,7 @@ CREATE TABLE `material_dispatch` (
 
 LOCK TABLES `material_dispatch` WRITE;
 /*!40000 ALTER TABLE `material_dispatch` DISABLE KEYS */;
-INSERT INTO `material_dispatch` VALUES (1,1,69,1,'2025-08-30',300.00,'2025-08-29 07:03:13','2025-08-29 07:03:13',150,100,50,'remarks 150','remarks 100','remarks 50','6789098483','998717'),(2,2,69,1,'2025-08-30',100.00,'2025-08-29 07:03:13','2025-08-29 07:03:13',60,40,NULL,'remarks 60','remarks 40',NULL,'6789098483','998717'),(3,3,69,1,'2025-08-30',520.00,'2025-08-29 07:03:13','2025-08-29 07:03:13',347,173,NULL,'remarks 347','remarks 173',NULL,'6789098483','998717'),(4,4,69,1,'2025-08-30',300.00,'2025-08-29 07:03:13','2025-08-29 07:03:13',225,75,NULL,'remarks 225','remarks 75',NULL,'6789098483','998717'),(5,6,17,2,'2025-09-17',300.00,'2025-09-17 04:21:05','2025-09-17 04:21:05',180,120,NULL,'2 pile','3pile',NULL,'NA0000000001','3456'),(6,6,17,3,'2025-09-20',300.00,'2025-09-19 04:17:25','2025-09-19 04:17:25',180,120,NULL,'76','56',NULL,'NA0000000001','3456');
+INSERT INTO `material_dispatch` VALUES (1,1,69,1,'2025-09-24',6000.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',3000,2000,1000,'first remarks','first remarks','first remarks','6789098483','998717',''),(2,2,69,1,'2025-09-24',4000.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',2001,1333,666,'first remarks','first remarks','first remarks','6789098483','998717',''),(3,3,69,1,'2025-09-24',4500.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',2700,1800,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(4,4,69,1,'2025-09-24',400.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',240,160,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(5,5,69,1,'2025-09-24',6000.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',4286,1714,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(6,6,69,1,'2025-09-24',6000.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',3750,2250,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(7,7,69,1,'2025-09-24',4000.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',2400,1600,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(8,8,69,1,'2025-09-24',200.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',120,80,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(9,9,69,1,'2025-09-24',1198.00,'2025-09-22 11:23:32','2025-09-22 11:23:32',719,479,NULL,'first remarks','first remarks',NULL,'6789098483','998717',''),(10,11,46,1,'2025-10-09',30.00,'2025-09-29 09:09:06','2025-09-29 09:09:06',20,10,NULL,'remarks','remarks',NULL,'9876540321','409872','2'),(11,12,46,1,'2025-10-09',500.00,'2025-09-29 09:09:06','2025-09-29 09:09:06',300,200,NULL,'remarks','remarks',NULL,'9876540321','409872','2');
 /*!40000 ALTER TABLE `material_dispatch` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -935,7 +1230,7 @@ CREATE TABLE `material_master` (
 
 LOCK TABLES `material_master` WRITE;
 /*!40000 ALTER TABLE `material_master` DISABLE KEYS */;
-INSERT INTO `material_master` VALUES ('item_1','CPS '),('item_10','Sathya Omegakoat 6000 FR Grey'),('item_100','Sathya Fluorocoat 9000'),('item_101','DW CS BC'),('item_102','No.1 sand'),('item_103','DW CS TC Pastel Green '),('item_104','SLF - SG Pastel Green'),('item_105','Sathya SLF - G RAL 7040 Grey'),('item_106','Sathya ZPP Primer Grey'),('item_107','SCPU TCPU DA Grey'),('item_108','NONO KOAT 2000'),('item_109','OMEGAKOAT 6000'),('item_11','Sathya Omegakoat FR PU Grey'),('item_110','Sathya HB PA Pearl Grey'),('item_111','Reflectkoat white'),('item_112','Powder For Light Green'),('item_113','SCPL TCPU Light Green'),('item_12','Sathya Omegakoat EPM 6000'),('item_13','SCPL TCPU RAL 5017'),('item_14','SCPL TCPU RAL 1026 yellow'),('item_15','SCPL TCPU RAL 6037'),('item_16','Sathya Nanokoat 2000'),('item_17','TCPU Clear'),('item_18','TCPU Clear'),('item_19','SCPL TCPU Smoke Grey'),('item_2','CPS PU'),('item_20','DTM UHB 6000 Smoke Grey'),('item_21','DTM 6000 UHB - 3K'),('item_22','SCPL TCPU Golden yellow'),('item_23','DTM 1K PU Maroon'),('item_24','Sathya ROZP Brown'),('item_25','Sathya TCPU UVR 750 Dark Green'),('item_26','Sathya TCPU UVR 750 Smoke Grey'),('item_27','Sathya DTM 600 Grey'),('item_28','Sathya TCPU UVR 750 Golden yellow'),('item_29','Sathya TCPU UVR 750 Sea Green'),('item_3','Sathya Duramort EP'),('item_30','Sathya TCPU UVR 750 Sky Blue'),('item_31','Sathya TCPU PO Red'),('item_32','Sathya TCPU UVR 750 Black'),('item_33','Sathya TCPU UVR 750 Signal Red'),('item_34','Sathya TCPU UVR 750 Canary yellow'),('item_35','Sathya TCPU UVR 750 PO Red'),('item_36','Stickers'),('item_37','Sathya ZPP Primer'),('item_38','Acrylic Primer'),('item_39','Sathya HBE Epoxy Light Green'),('item_4','Solvent'),('item_40','Aliphatic TCPU UVR 500 Dark Green'),('item_41','Fluorokoat 9000 - Comp.B'),('item_42','Sathya Reflectkoat white'),('item_43','All Surface Roller'),('item_44','SCC'),('item_45','DW CS Primer'),('item_46','Sand'),('item_47','DW CS TC Smoke Grey'),('item_48','TCPU RAL 7043 Grey'),('item_49','HBPU Int. Silver Grey'),('item_5','Duracrete PU Pearl Grey'),('item_50','HBPU Ext. Silver Grey'),('item_51','AFC Topcot Crimson'),('item_52','Rainguard PRO - Morning Glory'),('item_53','Sathya Line Marking Golden yellow'),('item_54','SCPL TCPU UVR 500 Golden yellow'),('item_55','Sathya SF ZPP Grey'),('item_56','SCPL TCPU RAL 2003 Orange'),('item_57','SCPL TCPU UVR 500 Black'),('item_58','Sathya DTM 1K PU Dark Grey'),('item_59','Sathya DTM Red'),('item_6','Duracrete PU Pearl Grey'),('item_60','Sathya TCPU DA Grey'),('item_61','H.B.C.1000 White'),('item_62','Sathya DTM 2K PU Light Green'),('item_63','Sathya TCPU UVR 500 Grey'),('item_64','CLEANING SOLVENT'),('item_65','Sathya HBE Epoxy Line Marking Golden yellow'),('item_66','Sathya SF HBE Epoxy Pearl Grey'),('item_67','Sathya SF PU Prime'),('item_68','Sathya HYC PU LIGHT BLUE'),('item_69','Roller'),('item_7','SCPL TCPU Pink'),('item_70','Tray'),('item_71','Putty Blade 4'),('item_72','Sheet'),('item_73','Interior Royale Roller'),('item_74','Sathya HYC PU Beige'),('item_75','9\" Roller'),('item_76','2\" Brush'),('item_77','Empty Plastic pail'),('item_78','Sathya HB PU RAL 7002 Olive Grey'),('item_79','Sathya SLS Screed'),('item_8','SCPL TCPU Blue RAL 5015'),('item_80','Sathya HB PU RAL 7031 Grey'),('item_81','Sathya HB PU RAL 7035 Grey'),('item_82','SCPL TCPU Red'),('item_83','SCPL TCPU Sky Blue'),('item_84','Sathya SLF - SG Pearl Grey'),('item_85','Sathya SLF - SG Pearl Grey'),('item_86','Sathya SLF - G Pearl Grey'),('item_87','Sathya SLF PU 2K P.Green'),('item_88','Sathya SLF PU 2K French Blue'),('item_89','ESDEE Coat PU Paint'),('item_9','Sathya Omegakoat 6000 Grey'),('item_90','Vertical Fall Arrest Equipment'),('item_91','SCPL ZPP Grey'),('item_92','Durakoat TCPU Oxford Blue'),('item_93','SCPL TCPU Ivory'),('item_94','Durakoat TCPU Opaline Green'),('item_95','GREENSOL 9000'),('item_96','CRE FR - Nile Blue'),('item_97','Sathya Technobond FR EP Grey'),('item_98','Sathya Technobond FR PU'),('item_99','SCPL TCPU Silver Grey');
+INSERT INTO `material_master` VALUES ('item_00129','material50'),('item_1','CPS '),('item_10','Sathya Omegakoat 6000 FR Grey'),('item_100','Sathya Fluorocoat 9000'),('item_101','DW CS BC'),('item_102','No.1 sand'),('item_103','DW CS TC Pastel Green '),('item_104','SLF - SG Pastel Green'),('item_105','Sathya SLF - G RAL 7040 Grey'),('item_106','Sathya ZPP Primer Grey'),('item_107','SCPU TCPU DA Grey'),('item_108','NONO KOAT 2000'),('item_109','OMEGAKOAT 6000'),('item_11','Sathya Omegakoat FR PU Grey'),('item_110','Sathya HB PA Pearl Grey'),('item_111','Reflectkoat white'),('item_11130','material56'),('item_112','Powder For Light Green'),('item_113','SCPL TCPU Light Green'),('item_114','new materisl'),('item_115','new material 2'),('item_116','newmaterial3'),('item_117','newmaterial4'),('item_118','material5'),('item_119','material6'),('item_12','Sathya Omegakoat EPM 6000'),('item_120','material7'),('item_121','material8'),('item_122','material9'),('item_123','material10'),('item_124','material11'),('item_125','material12'),('item_126','material12'),('item_127','material13'),('item_128','material22'),('item_13','SCPL TCPU RAL 5017'),('item_14','SCPL TCPU RAL 1026 yellow'),('item_15','SCPL TCPU RAL 6037'),('item_16','Sathya Nanokoat 2000'),('item_17','TCPU Clear'),('item_18','TCPU Clear'),('item_19','SCPL TCPU Smoke Grey'),('item_2','CPS PU'),('item_20','DTM UHB 6000 Smoke Grey'),('item_21','DTM 6000 UHB - 3K'),('item_22','SCPL TCPU Golden yellow'),('item_23','DTM 1K PU Maroon'),('item_24','Sathya ROZP Brown'),('item_25','Sathya TCPU UVR 750 Dark Green'),('item_26','Sathya TCPU UVR 750 Smoke Grey'),('item_27','Sathya DTM 600 Grey'),('item_28','Sathya TCPU UVR 750 Golden yellow'),('item_29','Sathya TCPU UVR 750 Sea Green'),('item_3','Sathya Duramort EP'),('item_30','Sathya TCPU UVR 750 Sky Blue'),('item_31','Sathya TCPU PO Red'),('item_32','Sathya TCPU UVR 750 Black'),('item_33','Sathya TCPU UVR 750 Signal Red'),('item_34','Sathya TCPU UVR 750 Canary yellow'),('item_35','Sathya TCPU UVR 750 PO Red'),('item_36','Stickers'),('item_37','Sathya ZPP Primer'),('item_38','Acrylic Primer'),('item_39','Sathya HBE Epoxy Light Green'),('item_4','Solvent'),('item_40','Aliphatic TCPU UVR 500 Dark Green'),('item_41','Fluorokoat 9000 - Comp.B'),('item_42','Sathya Reflectkoat white'),('item_43','All Surface Roller'),('item_44','SCC'),('item_45','DW CS Primer'),('item_46','Sand'),('item_47','DW CS TC Smoke Grey'),('item_48','TCPU RAL 7043 Grey'),('item_49','HBPU Int. Silver Grey'),('item_5','Duracrete PU Pearl Grey'),('item_50','HBPU Ext. Silver Grey'),('item_51','AFC Topcot Crimson'),('item_52','Rainguard PRO - Morning Glory'),('item_53','Sathya Line Marking Golden yellow'),('item_54','SCPL TCPU UVR 500 Golden yellow'),('item_55','Sathya SF ZPP Grey'),('item_56','SCPL TCPU RAL 2003 Orange'),('item_57','SCPL TCPU UVR 500 Black'),('item_58','Sathya DTM 1K PU Dark Grey'),('item_59','Sathya DTM Red'),('item_6','Duracrete PU Pearl Grey'),('item_60','Sathya TCPU DA Grey'),('item_61','H.B.C.1000 White'),('item_62','Sathya DTM 2K PU Light Green'),('item_63','Sathya TCPU UVR 500 Grey'),('item_64','CLEANING SOLVENT'),('item_65','Sathya HBE Epoxy Line Marking Golden yellow'),('item_66','Sathya SF HBE Epoxy Pearl Grey'),('item_67','Sathya SF PU Prime'),('item_68','Sathya HYC PU LIGHT BLUE'),('item_69','Roller'),('item_7','SCPL TCPU Pink'),('item_70','Tray'),('item_71','Putty Blade 4'),('item_72','Sheet'),('item_73','Interior Royale Roller'),('item_74','Sathya HYC PU Beige'),('item_75','9\" Roller'),('item_76','2\" Brush'),('item_77','Empty Plastic pail'),('item_78','Sathya HB PU RAL 7002 Olive Grey'),('item_79','Sathya SLS Screed'),('item_8','SCPL TCPU Blue RAL 5015'),('item_80','Sathya HB PU RAL 7031 Grey'),('item_81','Sathya HB PU RAL 7035 Grey'),('item_82','SCPL TCPU Red'),('item_83','SCPL TCPU Sky Blue'),('item_84','Sathya SLF - SG Pearl Grey'),('item_85','Sathya SLF - SG Pearl Grey'),('item_86','Sathya SLF - G Pearl Grey'),('item_87','Sathya SLF PU 2K P.Green'),('item_88','Sathya SLF PU 2K French Blue'),('item_89','ESDEE Coat PU Paint'),('item_9','Sathya Omegakoat 6000 Grey'),('item_90','Vertical Fall Arrest Equipment'),('item_91','SCPL ZPP Grey'),('item_92','Durakoat TCPU Oxford Blue'),('item_93','SCPL TCPU Ivory'),('item_94','Durakoat TCPU Opaline Green'),('item_95','GREENSOL 9000'),('item_96','CRE FR - Nile Blue'),('item_97','Sathya Technobond FR EP Grey'),('item_98','Sathya Technobond FR PU'),('item_99','SCPL TCPU Silver Grey');
 /*!40000 ALTER TABLE `material_master` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -959,10 +1254,12 @@ CREATE TABLE `material_usage` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `overall_qty` int DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `material_ack_id` (`material_ack_id`),
   CONSTRAINT `material_usage_ibfk_1` FOREIGN KEY (`material_ack_id`) REFERENCES `material_acknowledgement` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -971,8 +1268,47 @@ CREATE TABLE `material_usage` (
 
 LOCK TABLES `material_usage` WRITE;
 /*!40000 ALTER TABLE `material_usage` DISABLE KEYS */;
-INSERT INTO `material_usage` VALUES (1,1,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-12 05:55:41','2025-09-12 05:55:41',260,'260 received');
+INSERT INTO `material_usage` VALUES (1,1,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-12 05:55:41','2025-10-07 06:09:56',740,'200 used + 100 used','7','7'),(2,3,NULL,NULL,NULL,NULL,NULL,NULL,'2025-09-12 09:09:20','2025-09-12 09:09:31',20,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `material_usage` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `material_usage_edit_history`
+--
+
+DROP TABLE IF EXISTS `material_usage_edit_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `material_usage_edit_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `material_usage_history_id` bigint NOT NULL,
+  `material_ack_id` int NOT NULL,
+  `comp_a_qty` int DEFAULT NULL,
+  `comp_b_qty` int DEFAULT NULL,
+  `comp_c_qty` int DEFAULT NULL,
+  `comp_a_remarks` varchar(255) DEFAULT NULL,
+  `comp_b_remarks` varchar(255) DEFAULT NULL,
+  `comp_c_remarks` varchar(255) DEFAULT NULL,
+  `overall_qty` int DEFAULT NULL,
+  `remarks` varchar(255) DEFAULT NULL,
+  `created_by` varchar(30) NOT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `material_usage_history_id` (`material_usage_history_id`),
+  CONSTRAINT `material_usage_edit_history_ibfk_1` FOREIGN KEY (`material_usage_history_id`) REFERENCES `material_usage_history` (`entry_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `material_usage_edit_history`
+--
+
+LOCK TABLES `material_usage_edit_history` WRITE;
+/*!40000 ALTER TABLE `material_usage_edit_history` DISABLE KEYS */;
+INSERT INTO `material_usage_edit_history` VALUES (1,12,1,NULL,NULL,NULL,NULL,NULL,NULL,80,'used','2',NULL,'2025-10-03 06:49:27','2025-10-03 07:01:25'),(2,13,1,NULL,NULL,NULL,NULL,NULL,NULL,200,'200 used','7',NULL,'2025-10-07 06:09:41','2025-10-07 06:09:41');
+/*!40000 ALTER TABLE `material_usage_edit_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -996,10 +1332,12 @@ CREATE TABLE `material_usage_history` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `overall_qty` int DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`entry_id`),
   KEY `material_ack_id` (`material_ack_id`),
   CONSTRAINT `material_usage_history_ibfk_1` FOREIGN KEY (`material_ack_id`) REFERENCES `material_acknowledgement` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1008,7 +1346,7 @@ CREATE TABLE `material_usage_history` (
 
 LOCK TABLES `material_usage_history` WRITE;
 /*!40000 ALTER TABLE `material_usage_history` DISABLE KEYS */;
-INSERT INTO `material_usage_history` VALUES (1,3,'2025-09-01',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:03',20,'20 litres used'),(2,3,'2025-09-02',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:18',10,'10 litres used'),(3,4,'2025-09-02',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:55',20,'20 litres used'),(4,3,'2025-09-03',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:06:13',10,'10 litres used'),(5,4,'2025-09-03',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:06:23',10,'10 litres used'),(6,3,'2025-09-04',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:08:46',30,'30 completed'),(7,1,'2025-09-12',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-12 11:25:41',260,'260 received');
+INSERT INTO `material_usage_history` VALUES (1,3,'2025-09-01',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:03',20,'20 litres used',NULL,'2025-10-03 07:01:25'),(2,3,'2025-09-02',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:18',10,'10 litres used',NULL,'2025-10-03 07:01:25'),(3,4,'2025-09-02',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:05:55',20,'20 litres used',NULL,'2025-10-03 07:01:25'),(4,3,'2025-09-03',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:06:13',10,'10 litres used',NULL,'2025-10-03 07:01:25'),(5,4,'2025-09-03',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:06:23',10,'10 litres used',NULL,'2025-10-03 07:01:25'),(6,3,'2025-09-04',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-01 11:08:46',30,'30 completed',NULL,'2025-10-03 07:01:25'),(7,1,'2025-09-12',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-12 11:25:41',260,'260 received',NULL,'2025-10-03 07:01:25'),(8,3,'2025-09-11',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-12 14:39:20',10,NULL,NULL,'2025-10-03 07:01:25'),(9,3,'2025-09-11',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-12 14:39:31',10,NULL,NULL,'2025-10-03 07:01:25'),(10,1,'2025-09-29',NULL,NULL,NULL,NULL,NULL,NULL,3,'2025-09-29 16:00:02',40,'60 litre used for sample',NULL,'2025-10-03 07:01:25'),(11,1,'2025-10-03',NULL,NULL,NULL,NULL,NULL,NULL,2,'2025-10-03 12:19:18',50,'50 used',NULL,'2025-10-03 07:01:25'),(12,1,'2025-10-03',NULL,NULL,NULL,NULL,NULL,NULL,2,'2025-10-03 12:19:27',90,'overall 90 used i enter wrong value previously as 80','2','2025-10-03 07:02:13'),(13,1,'2025-10-07',NULL,NULL,NULL,NULL,NULL,NULL,7,'2025-10-07 11:39:41',300,'200 used + 100 used','7','2025-10-07 06:09:56');
 /*!40000 ALTER TABLE `material_usage_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1024,7 +1362,7 @@ CREATE TABLE `overhead` (
   `expense_name` varchar(100) NOT NULL,
   `is_default` tinyint DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1033,7 +1371,7 @@ CREATE TABLE `overhead` (
 
 LOCK TABLES `overhead` WRITE;
 /*!40000 ALTER TABLE `overhead` DISABLE KEYS */;
-INSERT INTO `overhead` VALUES (1,'materials',1),(2,'labours',1),(3,'consumables',0),(4,'rent',0),(5,'Accomadation',0);
+INSERT INTO `overhead` VALUES (1,'materials',1),(2,'labours',1),(3,'consumables',0),(4,'rent',0),(5,'Accomadation',0),(6,'Petty Cash',0);
 /*!40000 ALTER TABLE `overhead` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1139,7 +1477,7 @@ CREATE TABLE `po_budget` (
   KEY `desc_id` (`desc_id`),
   CONSTRAINT `po_budget_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`),
   CONSTRAINT `po_budget_ibfk_2` FOREIGN KEY (`desc_id`) REFERENCES `work_descriptions` (`desc_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1148,7 +1486,7 @@ CREATE TABLE `po_budget` (
 
 LOCK TABLES `po_budget` WRITE;
 /*!40000 ALTER TABLE `po_budget` DISABLE KEYS */;
-INSERT INTO `po_budget` VALUES (1,'ST001',69,919215.00,597489.75,'2025-09-09 09:26:24','2025-09-09 09:26:24'),(2,'ST002',53,55900.00,36335.00,'2025-09-10 04:38:19','2025-09-10 04:38:19');
+INSERT INTO `po_budget` VALUES (1,'ST003',46,1500.00,1350.00,'2025-10-03 09:47:18','2025-10-06 08:39:31'),(2,'ST001',69,919215.00,183843.00,'2025-10-06 04:57:11','2025-10-06 08:39:02'),(3,'ST002',53,55900.00,39130.00,'2025-10-06 05:02:25','2025-10-06 05:02:25');
 /*!40000 ALTER TABLE `po_budget` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1171,6 +1509,7 @@ CREATE TABLE `po_reckoner` (
   `desc_id` varchar(10) DEFAULT NULL,
   `item_id` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` varchar(30) NOT NULL,
   PRIMARY KEY (`rec_id`),
   KEY `fk_category` (`category_id`),
   KEY `fk_subcategory` (`subcategory_id`),
@@ -1178,7 +1517,7 @@ CREATE TABLE `po_reckoner` (
   CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFERENCES `item_category` (`category_id`),
   CONSTRAINT `fk_po_reckoner_site` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_subcategory` FOREIGN KEY (`subcategory_id`) REFERENCES `item_subcategory` (`subcategory_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1187,7 +1526,7 @@ CREATE TABLE `po_reckoner` (
 
 LOCK TABLES `po_reckoner` WRITE;
 /*!40000 ALTER TABLE `po_reckoner` DISABLE KEYS */;
-INSERT INTO `po_reckoner` VALUES (1,'CA105','SC101',1857,'sqm',120,222840,'ST001','69','10','2025-08-25 10:59:50'),(2,'CA105','SC102',1857,'sqm',140,259980,'ST001','69','10','2025-08-25 10:59:50'),(3,'CA105','SC103',1857,'sqm',100,185700,'ST001','69','10','2025-08-25 10:59:50'),(4,'CA105','SC105',1857,'sqm',135,250695,'ST001','69','10','2025-08-25 10:59:50'),(7,'CA102','SC101',130,'sqm',215,27950,'ST002','53','10','2025-09-10 10:04:19'),(8,'CA102','SC101',220,'sqm',100,22000,'ST002','17','15','2025-09-10 10:04:19'),(9,'CA102','SC102',130,'sqm',215,27950,'ST002','53','10','2025-09-10 10:04:19'),(10,'CA102','SC102',220,'sqm',100,22000,'ST002','17','15','2025-09-10 10:04:19');
+INSERT INTO `po_reckoner` VALUES (1,'CA105','SC101',1857,'sqm',120,222840,'ST001','69','10','2025-08-25 10:59:50',''),(2,'CA105','SC102',1857,'sqm',140,259980,'ST001','69','10','2025-08-25 10:59:50',''),(3,'CA105','SC103',1857,'sqm',100,185700,'ST001','69','10','2025-08-25 10:59:50',''),(4,'CA105','SC105',1857,'sqm',135,250695,'ST001','69','10','2025-08-25 10:59:50',''),(7,'CA102','SC101',130,'sqm',215,27950,'ST002','53','10','2025-09-10 10:04:19',''),(8,'CA102','SC101',220,'sqm',100,22000,'ST002','17','15','2025-09-10 10:04:19',''),(9,'CA102','SC102',130,'sqm',215,27950,'ST002','53','10','2025-09-10 10:04:19',''),(10,'CA102','SC102',220,'sqm',100,22000,'ST002','17','15','2025-09-10 10:04:19',''),(11,'CA102','SC101',50,'sqm',10,500,'ST003','46','30','2025-09-29 10:24:07','2'),(12,'CA102','SC102',50,'sqm',10,500,'ST003','46','30','2025-09-29 10:24:07','2'),(13,'CA102','SC103',50,'sqm',10,500,'ST003','46','30','2025-09-29 10:24:07','2');
 /*!40000 ALTER TABLE `po_reckoner` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1203,6 +1542,9 @@ CREATE TABLE `project_details` (
   `company_id` varchar(30) DEFAULT NULL,
   `project_type_id` varchar(30) DEFAULT NULL,
   `project_name` varchar(100) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`pd_id`),
   KEY `fk_company_details` (`company_id`),
   KEY `fk_project_type` (`project_type_id`),
@@ -1217,7 +1559,7 @@ CREATE TABLE `project_details` (
 
 LOCK TABLES `project_details` WRITE;
 /*!40000 ALTER TABLE `project_details` DISABLE KEYS */;
-INSERT INTO `project_details` VALUES ('PD001','CO001','PT001','Jay Jay Mills (Perundurai)'),('PD002','CO002','PT001','kgcas'),('PD003','CO003','PT001','Test Cost Center'),('PD004','CO002','PT001','KITE'),('PD005','CO005','PT001','Test Costcenter 05');
+INSERT INTO `project_details` VALUES ('PD001','CO001','PT001','Jay Jay Mills (Perundurai)',NULL,'2025-10-03 03:23:39','2025-10-03 03:23:39'),('PD002','CO002','PT001','kgcas',NULL,'2025-10-03 03:23:39','2025-10-03 03:23:39'),('PD003','CO003','PT001','Test Cost Center',NULL,'2025-10-03 03:23:39','2025-10-03 03:23:39'),('PD004','CO002','PT001','newcostcenter','2','2025-10-03 03:35:14','2025-10-03 03:35:14'),('PD005','CO002','PT001','newcostcenter2','2','2025-10-03 03:39:48','2025-10-03 03:39:48');
 /*!40000 ALTER TABLE `project_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1246,6 +1588,67 @@ INSERT INTO `project_type` VALUES ('PT001','service'),('PT002','supply');
 UNLOCK TABLES;
 
 --
+-- Table structure for table `project_updation_history`
+--
+
+DROP TABLE IF EXISTS `project_updation_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `project_updation_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `pd_id` varchar(30) DEFAULT NULL,
+  `company_id` varchar(30) DEFAULT NULL,
+  `project_type_id` varchar(30) DEFAULT NULL,
+  `project_name` varchar(100) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `pd_id` (`pd_id`),
+  CONSTRAINT `project_updation_history_ibfk_1` FOREIGN KEY (`pd_id`) REFERENCES `project_details` (`pd_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `project_updation_history`
+--
+
+LOCK TABLES `project_updation_history` WRITE;
+/*!40000 ALTER TABLE `project_updation_history` DISABLE KEYS */;
+/*!40000 ALTER TABLE `project_updation_history` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `projection_allocated`
+--
+
+DROP TABLE IF EXISTS `projection_allocated`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `projection_allocated` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `site_id` varchar(30) NOT NULL,
+  `desc_id` int NOT NULL,
+  `overhead_type_id` int NOT NULL,
+  `projection_id` int NOT NULL,
+  `total_cost` decimal(12,2) NOT NULL,
+  `budget_percentage` decimal(5,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `projection_allocated`
+--
+
+LOCK TABLES `projection_allocated` WRITE;
+/*!40000 ALTER TABLE `projection_allocated` DISABLE KEYS */;
+/*!40000 ALTER TABLE `projection_allocated` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `provider_master`
 --
 
@@ -1261,7 +1664,7 @@ CREATE TABLE `provider_master` (
   PRIMARY KEY (`id`),
   KEY `transport_type_id` (`transport_type_id`),
   CONSTRAINT `provider_master_ibfk_1` FOREIGN KEY (`transport_type_id`) REFERENCES `transport_type` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1270,7 +1673,7 @@ CREATE TABLE `provider_master` (
 
 LOCK TABLES `provider_master` WRITE;
 /*!40000 ALTER TABLE `provider_master` DISABLE KEYS */;
-INSERT INTO `provider_master` VALUES (1,'ABC parcel service','chennai','94839483',2),(2,'karthi','chennai','94838283',1),(3,'sankar',NULL,NULL,1),(5,'guna','gandhhipuram','9958475945',4),(6,'guru','example address','9483847384',1),(7,'xyz parcel service limited','example address','9484838483',2),(8,'lmw parcel service','PN palayam','9859493943',2),(9,'No.1 Transport','gandhi nagar','8474839929',1),(10,'arun',NULL,NULL,1);
+INSERT INTO `provider_master` VALUES (1,'ABC parcel service','chennai','94839483',2),(2,'karthi','chennai','94838283',1),(3,'sankar',NULL,NULL,1),(5,'guna','gandhhipuram','9958475945',4),(6,'guru','example address','9483847384',1),(7,'xyz parcel service limited','example address','9484838483',2),(8,'lmw parcel service','PN palayam','9859493943',2),(9,'No.1 Transport','gandhi nagar','8474839929',1);
 /*!40000 ALTER TABLE `provider_master` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1369,7 +1772,7 @@ CREATE TABLE `roles` (
 
 LOCK TABLES `roles` WRITE;
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'superadmin'),(2,'admin'),(3,'site incharge'),(4,'accounts_team');
+INSERT INTO `roles` VALUES (1,'superadmin'),(2,'admin'),(3,'accounts_team'),(4,'siteincharge');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1391,6 +1794,10 @@ CREATE TABLE `site_details` (
   `pd_id` varchar(30) NOT NULL,
   `location_id` varchar(10) DEFAULT NULL,
   `reckoner_type_id` int DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_by` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`site_id`),
   KEY `fk_incharge_type` (`incharge_id`),
   KEY `fk_workforce_type` (`workforce_id`),
@@ -1411,7 +1818,7 @@ CREATE TABLE `site_details` (
 
 LOCK TABLES `site_details` WRITE;
 /*!40000 ALTER TABLE `site_details` DISABLE KEYS */;
-INSERT INTO `site_details` VALUES ('ST001','Perundurai ','6789098483','2025-05-28',NULL,'SI002',NULL,'PD001','LO008',2),('ST002','ground','NA0000000001','2025-09-04','2025-09-10','SI002',NULL,'PD002','LO003',3),('ST003','New','9876540321','2025-09-01',NULL,'SI001',NULL,'PD003','LO006',2),('ST004','AI&DS Block','4563210897','2025-09-20','2025-09-30','SI002',NULL,'PD004','LO006',2),('ST005','Site Test 05','123243254371','2025-09-17','2025-09-27','SI001',NULL,'PD005','LO003',2);
+INSERT INTO `site_details` VALUES ('ST001','Perundurai ','6789098483','2025-05-28',NULL,'SI002',NULL,'PD001','LO008',2,NULL,'2025-10-03 03:23:44','2025-10-03 03:23:44',NULL),('ST002','ground0786','NA0000000001','2025-09-03','2025-09-09','SI002',NULL,'PD002','LO003',3,NULL,'2025-10-03 03:23:44','2025-10-03 04:05:27',NULL),('ST003','new site','9876540321','2025-08-31',NULL,'SI001',NULL,'PD003','LO006',2,NULL,'2025-10-03 03:23:44','2025-10-03 03:23:44',NULL),('ST004','newsitedemo','8484748483','2025-10-09',NULL,'SI002',NULL,'PD002','LO006',2,'2','2025-10-03 03:31:30','2025-10-03 03:31:30',NULL),('ST005','newsitedemo1785668','8484748483','2025-10-13','2025-10-22','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2025-10-03 05:05:14','2'),('ST006','newsite232','43349898434883','2025-10-05','2025-10-19','SI002',NULL,'PD005','LO006',2,'2','2025-10-03 03:39:48','2025-10-03 04:22:16',NULL);
 /*!40000 ALTER TABLE `site_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1435,8 +1842,50 @@ CREATE TABLE `site_incharge` (
 
 LOCK TABLES `site_incharge` WRITE;
 /*!40000 ALTER TABLE `site_incharge` DISABLE KEYS */;
-INSERT INTO `site_incharge` VALUES ('SI001','Site Engineer'),('SI002','Supervisor');
+INSERT INTO `site_incharge` VALUES ('SI001','supervisor'),('SI002','site engineer'),('SI003','supervisor + site engineer');
 /*!40000 ALTER TABLE `site_incharge` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `site_updation_history`
+--
+
+DROP TABLE IF EXISTS `site_updation_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `site_updation_history` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `site_id` varchar(30) DEFAULT NULL,
+  `site_name` varchar(100) DEFAULT NULL,
+  `po_number` varchar(70) DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `incharge_id` varchar(30) DEFAULT NULL,
+  `workforce_id` varchar(30) DEFAULT NULL,
+  `pd_id` varchar(30) DEFAULT NULL,
+  `location_id` varchar(10) DEFAULT NULL,
+  `reckoner_type_id` int DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `updated_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `previous_updated_by` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `site_id` (`site_id`),
+  KEY `pd_id` (`pd_id`),
+  CONSTRAINT `site_updation_history_ibfk_1` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`) ON DELETE CASCADE,
+  CONSTRAINT `site_updation_history_ibfk_2` FOREIGN KEY (`pd_id`) REFERENCES `project_details` (`pd_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `site_updation_history`
+--
+
+LOCK TABLES `site_updation_history` WRITE;
+/*!40000 ALTER TABLE `site_updation_history` DISABLE KEYS */;
+INSERT INTO `site_updation_history` VALUES (1,'ST006','newsite232','43349898434883','2025-10-05','2025-10-19','SI002',NULL,'PD005','LO006',2,'2','2025-10-03 03:39:48','2','2025-10-03 04:27:07',NULL),(2,'ST006','newsite232','43349898434883','2025-10-05','2025-10-19','SI002',NULL,'PD005','LO006',2,'2','2025-10-03 03:39:48','2','2025-10-03 04:28:13',NULL),(3,'ST006','newsite232','43349898434883','2025-10-05','2025-10-19','SI002',NULL,'PD005','LO006',2,'2','2025-10-03 03:39:48','2','2025-10-03 04:41:45',NULL),(4,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:43:35',NULL),(5,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:44:19',NULL),(6,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:44:20',NULL),(7,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:44:25',NULL),(8,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:44:32',NULL),(9,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:44:32',NULL),(10,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 04:46:20',NULL),(11,'ST005','newsitedemo1','8484748483','2025-10-15','2025-10-24','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 05:04:54',NULL),(12,'ST005','newsitedemo178','8484748483','2025-10-14','2025-10-23','SI002',NULL,'PD004','LO005',2,'2','2025-10-03 03:35:14','2','2025-10-03 05:05:14',NULL);
+/*!40000 ALTER TABLE `site_updation_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1454,6 +1903,10 @@ CREATE TABLE `siteincharge_assign` (
   `emp_id` varchar(30) NOT NULL,
   `from_date` date NOT NULL,
   `to_date` date DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(30) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `pd_id` (`pd_id`),
   KEY `site_id` (`site_id`),
@@ -1463,7 +1916,7 @@ CREATE TABLE `siteincharge_assign` (
   CONSTRAINT `siteincharge_assign_ibfk_1` FOREIGN KEY (`pd_id`) REFERENCES `project_details` (`pd_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `siteincharge_assign_ibfk_2` FOREIGN KEY (`site_id`) REFERENCES `site_details` (`site_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `siteincharge_assign_ibfk_3` FOREIGN KEY (`emp_id`) REFERENCES `employee_master` (`emp_id`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1472,7 +1925,7 @@ CREATE TABLE `siteincharge_assign` (
 
 LOCK TABLES `siteincharge_assign` WRITE;
 /*!40000 ALTER TABLE `siteincharge_assign` DISABLE KEYS */;
-INSERT INTO `siteincharge_assign` VALUES (1,'PD001','ST001',NULL,'EMP003','2025-05-28','2025-08-31'),(2,'PD002','ST002',NULL,'EMP006','2025-09-05','2025-09-11'),(3,'PD001','ST001',69,'EMP004','2025-09-08','2025-09-08'),(4,'PD001','ST001',69,'EMP006','2025-09-08','2025-09-08'),(5,'PD003','ST003',NULL,'EMP005','2025-09-01','2025-09-30'),(6,'PD001','ST001',69,'EMP004','2025-09-16','2025-09-19'),(7,'PD004','ST004',NULL,'emp0043','2025-09-20','2025-09-30'),(8,'PD005','ST005',NULL,'EMP005','2025-09-17','2025-09-27');
+INSERT INTO `siteincharge_assign` VALUES (1,'PD001','ST001',NULL,'EMP003','2025-05-28','2025-08-31','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(2,'PD002','ST002',NULL,'EMP006','2025-09-05','2025-09-11','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(3,'PD001','ST001',69,'EMP004','2025-09-08','2025-09-08','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(4,'PD001','ST001',69,'EMP006','2025-09-08','2025-09-08','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(5,'PD003','ST003',NULL,'EMP005','2025-09-01','2025-09-30','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(6,'PD001','ST001',69,'EMP005','2025-09-15','2025-09-17','','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(7,'PD001','ST001',69,'EMP004','2025-09-29','2025-10-01','2','2025-10-03 03:36:23',NULL,'2025-10-03 03:36:23'),(8,'PD005','ST006',NULL,'EMP005','2025-10-09','2025-10-16','2','2025-10-03 03:39:48',NULL,'2025-10-03 03:39:48'),(9,'PD001','ST001',69,'EMP004','2025-10-23','2025-10-31','2','2025-10-03 03:42:11',NULL,'2025-10-03 03:42:11');
 /*!40000 ALTER TABLE `siteincharge_assign` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1525,7 +1978,7 @@ CREATE TABLE `state` (
   `id` int NOT NULL AUTO_INCREMENT,
   `state_name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1534,7 +1987,7 @@ CREATE TABLE `state` (
 
 LOCK TABLES `state` WRITE;
 /*!40000 ALTER TABLE `state` DISABLE KEYS */;
-INSERT INTO `state` VALUES (1,'Tamil Nadu'),(2,'Tamil Nādu');
+INSERT INTO `state` VALUES (1,'Tamil Nadu');
 /*!40000 ALTER TABLE `state` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1615,6 +2068,71 @@ INSERT INTO `structural_painting` VALUES (1,1,1,NULL,NULL,NULL,NULL,NULL,NULL,NU
 UNLOCK TABLES;
 
 --
+-- Table structure for table `supply_company`
+--
+
+DROP TABLE IF EXISTS `supply_company`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_company` (
+  `company_id` varchar(30) NOT NULL,
+  `company_name` varchar(100) DEFAULT NULL,
+  `address` varchar(300) DEFAULT NULL,
+  `spoc_name` varchar(100) DEFAULT NULL,
+  `spoc_contact_no` varchar(20) DEFAULT NULL,
+  `gst_number` varchar(15) DEFAULT NULL,
+  `vendor_code` varchar(50) DEFAULT NULL,
+  `city_id` int DEFAULT NULL,
+  `state_id` int DEFAULT NULL,
+  `pincode` varchar(10) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_company`
+--
+
+LOCK TABLES `supply_company` WRITE;
+/*!40000 ALTER TABLE `supply_company` DISABLE KEYS */;
+INSERT INTO `supply_company` VALUES ('SUPP001','supply company 1','PN palayam','sanjay','9484847473','498489498394','48348',1,1,'641 020','2025-09-25 04:33:39','2025-09-25 04:33:39',NULL),('SUPP002','supply company 2','Test','Anand','8456678383','4984894983TEST2','4999373',1,1,'641 035','2025-09-29 09:44:17','2025-09-29 09:44:17','2');
+/*!40000 ALTER TABLE `supply_company` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_master_dc_no`
+--
+
+DROP TABLE IF EXISTS `supply_master_dc_no`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_master_dc_no` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `dc_no` varchar(100) NOT NULL,
+  `company_id` varchar(10) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_by` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `company_id` (`company_id`),
+  CONSTRAINT `supply_master_dc_no_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `supply_company` (`company_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_master_dc_no`
+--
+
+LOCK TABLES `supply_master_dc_no` WRITE;
+/*!40000 ALTER TABLE `supply_master_dc_no` DISABLE KEYS */;
+INSERT INTO `supply_master_dc_no` VALUES (1,'sup1ground001','SUPP001','2025-09-26 05:55:42','2025-09-26 05:55:42',NULL);
+/*!40000 ALTER TABLE `supply_master_dc_no` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `supply_material_assign`
 --
 
@@ -1635,8 +2153,9 @@ CREATE TABLE `supply_material_assign` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `created_by` int DEFAULT NULL,
+  `target_date` date DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1645,7 +2164,137 @@ CREATE TABLE `supply_material_assign` (
 
 LOCK TABLES `supply_material_assign` WRITE;
 /*!40000 ALTER TABLE `supply_material_assign` DISABLE KEYS */;
+INSERT INTO `supply_material_assign` VALUES (1,'SPD002','SSITE006','item_101',2,3000,25.00,75000.00,20.00,60000.00,'2025-09-26 11:24:44','2025-09-26 11:24:44',2,'2025-10-03'),(2,'SPD002','SSITE006','item_109',2,150,20.00,3000.00,25.00,3750.00,'2025-09-26 11:24:44','2025-09-26 11:24:44',2,'2025-10-02'),(3,'SPD002','SSITE006','item_12',2,3000,36.00,108000.00,40.00,120000.00,'2025-09-26 11:24:44','2025-09-26 11:24:44',2,'2025-10-04'),(4,'SPD002','SSITE003','item_10',2,100,20.00,2000.00,25.00,2500.00,'2025-09-26 12:48:34','2025-09-26 12:48:34',2,'2025-09-30'),(5,'SPD001','SSITE002','item_100',5,300,25.00,7500.00,35.00,10500.00,'2025-09-29 15:39:15','2025-09-29 15:39:15',2,'2025-09-30');
 /*!40000 ALTER TABLE `supply_material_assign` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_material_dispatch`
+--
+
+DROP TABLE IF EXISTS `supply_material_dispatch`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_material_dispatch` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `supply_material_assign_id` int NOT NULL,
+  `dc_no` int NOT NULL,
+  `dispatch_date` date NOT NULL,
+  `order_no` varchar(50) NOT NULL,
+  `vendor_code` varchar(50) NOT NULL,
+  `dispatch_qty` decimal(10,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `dispatch_cost` decimal(10,2) DEFAULT NULL,
+  `created_by` varchar(30) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `supply_material_assign_id` (`supply_material_assign_id`),
+  CONSTRAINT `supply_material_dispatch_ibfk_1` FOREIGN KEY (`supply_material_assign_id`) REFERENCES `supply_material_assign` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_material_dispatch`
+--
+
+LOCK TABLES `supply_material_dispatch` WRITE;
+/*!40000 ALTER TABLE `supply_material_dispatch` DISABLE KEYS */;
+INSERT INTO `supply_material_dispatch` VALUES (1,1,1,'2025-10-10','sup834','48348',2000.00,'2025-09-26 05:55:42','2025-09-26 05:55:42',40000.00,NULL),(2,2,1,'2025-10-10','sup834','48348',100.00,'2025-09-26 05:55:42','2025-09-26 05:55:42',2500.00,NULL),(3,3,1,'2025-10-10','sup834','48348',2500.00,'2025-09-26 05:55:42','2025-09-26 05:55:42',100000.00,NULL),(4,1,1,'2025-10-09','sup834','48348',500.00,'2025-09-26 05:57:28','2025-09-26 05:57:28',10000.00,NULL),(5,2,1,'2025-10-09','sup834','48348',40.00,'2025-09-26 05:57:28','2025-09-26 05:57:28',1000.00,NULL),(6,3,1,'2025-10-09','sup834','48348',400.00,'2025-09-26 05:57:28','2025-09-26 05:57:28',16000.00,NULL),(7,1,1,'2025-10-03','sup834','48348',500.00,'2025-09-26 05:58:28','2025-09-26 05:58:28',10000.00,NULL),(8,2,1,'2025-10-03','sup834','48348',10.00,'2025-09-26 05:58:28','2025-09-26 05:58:28',250.00,NULL),(9,3,1,'2025-10-03','sup834','48348',100.00,'2025-09-26 05:58:28','2025-09-26 05:58:28',4000.00,NULL),(10,4,1,'2025-10-02','8484748483','48348',100.00,'2025-09-29 10:10:02','2025-09-29 10:10:02',2500.00,'2');
+/*!40000 ALTER TABLE `supply_material_dispatch` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_project_details`
+--
+
+DROP TABLE IF EXISTS `supply_project_details`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_project_details` (
+  `pd_id` varchar(30) NOT NULL,
+  `company_id` varchar(30) DEFAULT NULL,
+  `project_type_id` varchar(30) DEFAULT NULL,
+  `project_name` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`pd_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_project_details`
+--
+
+LOCK TABLES `supply_project_details` WRITE;
+/*!40000 ALTER TABLE `supply_project_details` DISABLE KEYS */;
+INSERT INTO `supply_project_details` VALUES ('SPD001','SUPP001',NULL,'new cost center for supply company 1'),('SPD002','SUPP001','PT002','new cost center'),('SPD003','SUPP001','PT002','new testing');
+/*!40000 ALTER TABLE `supply_project_details` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_site_details`
+--
+
+DROP TABLE IF EXISTS `supply_site_details`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_site_details` (
+  `site_id` varchar(30) NOT NULL,
+  `site_name` varchar(100) DEFAULT NULL,
+  `po_number` varchar(70) DEFAULT NULL,
+  `pd_id` varchar(30) DEFAULT NULL,
+  `location_id` varchar(10) DEFAULT NULL,
+  `reckoner_type_id` int DEFAULT NULL,
+  `supply_code` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`site_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_site_details`
+--
+
+LOCK TABLES `supply_site_details` WRITE;
+/*!40000 ALTER TABLE `supply_site_details` DISABLE KEYS */;
+INSERT INTO `supply_site_details` VALUES ('SSITE001','Perundurais','','SPD001','LO006',1,'sup4093'),('SSITE002','New','6789098425','SPD001','LO006',2,NULL),('SSITE003','new site','8484748483','SPD002','LO006',2,NULL),('SSITE004','new test site',NULL,'SPD003','LO005',3,'supss948'),('SSITE005','new site2','5848958','SPD002','LO005',3,NULL),('SSITE006','ground3','','SPD002','LO005',2,'sup834'),('SSITE007','New','','SPD003','LO005',3,'sup584');
+/*!40000 ALTER TABLE `supply_site_details` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_transport_master`
+--
+
+DROP TABLE IF EXISTS `supply_transport_master`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_transport_master` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `supply_dispatch_id` int NOT NULL,
+  `provider_id` int NOT NULL,
+  `destination` varchar(255) NOT NULL,
+  `vehicle_id` int NOT NULL,
+  `driver_id` int NOT NULL,
+  `booking_expense` decimal(10,2) DEFAULT NULL,
+  `travel_expense` decimal(10,2) NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `supply_dispatch_id` (`supply_dispatch_id`),
+  KEY `provider_id` (`provider_id`),
+  KEY `vehicle_id` (`vehicle_id`),
+  KEY `driver_id` (`driver_id`),
+  CONSTRAINT `supply_transport_master_ibfk_1` FOREIGN KEY (`supply_dispatch_id`) REFERENCES `supply_material_dispatch` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `supply_transport_master_ibfk_2` FOREIGN KEY (`provider_id`) REFERENCES `provider_master` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `supply_transport_master_ibfk_3` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicle_master` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `supply_transport_master_ibfk_4` FOREIGN KEY (`driver_id`) REFERENCES `driver_master` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_transport_master`
+--
+
+LOCK TABLES `supply_transport_master` WRITE;
+/*!40000 ALTER TABLE `supply_transport_master` DISABLE KEYS */;
+INSERT INTO `supply_transport_master` VALUES (1,1,2,'gandhipuram',3,1,NULL,5000.00,'2025-09-26 11:25:42'),(2,2,2,'gandhipuram',3,1,NULL,5000.00,'2025-09-26 11:25:42'),(3,3,2,'gandhipuram',3,1,NULL,5000.00,'2025-09-26 11:25:42'),(4,4,3,'ganapathy',3,3,NULL,2500.00,'2025-09-26 11:27:28'),(5,5,3,'ganapathy',3,3,NULL,2500.00,'2025-09-26 11:27:28'),(6,6,3,'ganapathy',3,3,NULL,2500.00,'2025-09-26 11:27:28'),(7,7,3,'thudiyalur',1,3,NULL,3000.00,'2025-09-26 11:28:28'),(8,8,3,'thudiyalur',1,3,NULL,3000.00,'2025-09-26 11:28:28'),(9,9,3,'thudiyalur',1,3,NULL,3000.00,'2025-09-26 11:28:28'),(10,10,3,'saravanampatti',1,3,NULL,5000.00,'2025-09-29 15:40:02');
+/*!40000 ALTER TABLE `supply_transport_master` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1674,7 +2323,7 @@ CREATE TABLE `transport_master` (
   CONSTRAINT `transport_master_ibfk_2` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicle_master` (`id`) ON DELETE SET NULL,
   CONSTRAINT `transport_master_ibfk_3` FOREIGN KEY (`driver_id`) REFERENCES `driver_master` (`id`) ON DELETE SET NULL,
   CONSTRAINT `transport_master_ibfk_4` FOREIGN KEY (`dispatch_id`) REFERENCES `material_dispatch` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1683,7 +2332,7 @@ CREATE TABLE `transport_master` (
 
 LOCK TABLES `transport_master` WRITE;
 /*!40000 ALTER TABLE `transport_master` DISABLE KEYS */;
-INSERT INTO `transport_master` VALUES (1,2,'coimbatore',4,1,NULL,5000.00,37,'2025-08-23 10:50:12'),(2,2,'coimbatore',4,1,NULL,5000.00,38,'2025-08-23 10:50:12'),(3,2,'coimbatore',4,1,NULL,5000.00,39,'2025-08-23 10:50:12'),(4,2,'coimbatore',4,1,NULL,5000.00,40,'2025-08-23 10:50:12'),(5,2,'coimbatore',4,1,NULL,5000.00,41,'2025-08-23 10:50:12'),(6,2,'coimbatore',4,1,NULL,5000.00,42,'2025-08-23 10:50:12'),(7,2,'coimbatore',4,1,NULL,5000.00,43,'2025-08-23 10:50:12'),(8,2,'coimbatore',4,1,NULL,5000.00,44,'2025-08-23 10:50:12'),(9,2,'coimbatore',4,1,NULL,5000.00,45,'2025-08-23 10:50:12'),(10,2,'coimbatore',4,1,NULL,5000.00,46,'2025-08-23 10:50:12'),(11,2,'coimbatore',4,1,NULL,5000.00,47,'2025-08-23 10:50:12'),(12,2,'coimbatore',4,1,NULL,5000.00,48,'2025-08-23 10:50:12'),(13,3,'chennai',3,3,NULL,5000.00,49,'2025-08-23 10:52:49'),(14,3,'chennai',3,3,NULL,5000.00,50,'2025-08-23 10:52:49'),(15,3,'chennai',3,3,NULL,5000.00,51,'2025-08-23 10:52:49'),(16,3,'chennai',3,3,NULL,5000.00,52,'2025-08-23 10:52:49'),(17,3,'chennai',3,3,NULL,5000.00,53,'2025-08-23 10:52:49'),(18,3,'chennai',3,3,NULL,5000.00,54,'2025-08-23 10:52:49'),(19,3,'chennai',3,3,NULL,5000.00,55,'2025-08-23 10:52:49'),(20,3,'chennai',3,3,NULL,5000.00,56,'2025-08-23 10:52:49'),(21,9,'perundurai',3,3,NULL,20000.00,1,'2025-08-25 11:41:47'),(22,9,'perundurai',3,3,NULL,20000.00,2,'2025-08-25 11:41:47'),(23,9,'perundurai',3,3,NULL,20000.00,3,'2025-08-25 11:41:47'),(24,9,'perundurai',3,3,NULL,20000.00,4,'2025-08-25 11:41:47'),(25,9,'perundurai',3,3,NULL,20000.00,5,'2025-08-25 11:41:47'),(26,9,'perundurai',3,3,NULL,20000.00,6,'2025-08-25 11:41:47'),(27,9,'perundurai',3,3,NULL,20000.00,7,'2025-08-25 11:41:47'),(28,9,'perundurai',3,3,NULL,20000.00,8,'2025-08-25 11:41:47'),(29,9,'perundurai',3,3,NULL,20000.00,9,'2025-08-25 11:41:47'),(30,2,'coimbatore',3,1,NULL,10000.00,1,'2025-08-29 10:32:58'),(31,2,'coimbatore',1,1,NULL,5000.00,1,'2025-08-29 12:33:13'),(32,2,'coimbatore',1,1,NULL,5000.00,2,'2025-08-29 12:33:13'),(33,2,'coimbatore',1,1,NULL,5000.00,3,'2025-08-29 12:33:13'),(34,2,'coimbatore',1,1,NULL,5000.00,4,'2025-08-29 12:33:13'),(35,10,'kumar',3,1,NULL,90000.00,5,'2025-09-17 09:51:05'),(36,3,'Salem',1,1,NULL,50000.00,6,'2025-09-19 09:47:25');
+INSERT INTO `transport_master` VALUES (1,3,'saravanampatti',3,3,NULL,3500.00,1,'2025-09-22 09:36:25'),(2,3,'saravanampatti',3,3,NULL,3500.00,2,'2025-09-22 09:36:25'),(3,3,'saravanampatti',3,3,NULL,3500.00,3,'2025-09-22 09:36:25'),(4,3,'saravanampatti',3,3,NULL,3500.00,4,'2025-09-22 09:36:25'),(5,2,'saravanampatti',3,3,NULL,3500.00,1,'2025-09-22 12:10:05'),(6,2,'saravanampatti',3,3,NULL,3500.00,2,'2025-09-22 12:10:05'),(7,2,'saravanampatti',3,3,NULL,3500.00,3,'2025-09-22 12:10:05'),(8,3,'saravanampatti',3,3,NULL,5000.00,1,'2025-09-22 16:53:32'),(9,3,'saravanampatti',3,3,NULL,5000.00,2,'2025-09-22 16:53:32'),(10,3,'saravanampatti',3,3,NULL,5000.00,3,'2025-09-22 16:53:32'),(11,3,'saravanampatti',3,3,NULL,5000.00,4,'2025-09-22 16:53:32'),(12,3,'saravanampatti',3,3,NULL,5000.00,5,'2025-09-22 16:53:32'),(13,3,'saravanampatti',3,3,NULL,5000.00,6,'2025-09-22 16:53:32'),(14,3,'saravanampatti',3,3,NULL,5000.00,7,'2025-09-22 16:53:32'),(15,3,'saravanampatti',3,3,NULL,5000.00,8,'2025-09-22 16:53:32'),(16,3,'saravanampatti',3,3,NULL,5000.00,9,'2025-09-22 16:53:32'),(17,3,'saravanampatti',3,1,NULL,50000.00,10,'2025-09-29 14:39:06'),(18,3,'saravanampatti',3,1,NULL,50000.00,11,'2025-09-29 14:39:06');
 /*!40000 ALTER TABLE `transport_master` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1754,7 +2403,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `user_email` (`user_email`),
   KEY `role_id` (`role_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1763,7 +2412,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'superadmin','superadmin@gmail.com','12345678',1,'2025-07-18 04:46:28'),(2,'admin','admin@gmail.com','12345678',2,'2025-07-18 04:46:28'),(3,'siteincharge','siteincharge@gmail.com','12345678',3,'2025-07-18 04:46:28'),(4,'accountant','accountant@gmail.com','12345678',4,'2025-07-18 04:46:28');
+INSERT INTO `users` VALUES (1,'superadmin1','superadmin1@gmail.com','12345678',1,'2025-10-06 09:41:56'),(2,'superadmin2','superadmin2@gmail.com','12345678',1,'2025-10-06 09:41:56'),(3,'admin1','admin1@gmail.com','12345678',2,'2025-10-06 09:41:56'),(4,'admin2','admin2@gmail.com','12345678',2,'2025-10-06 09:41:56'),(5,'accounts1','accounts1@gmail.com','12345678',3,'2025-10-06 09:41:56'),(6,'accounts2','accounts2@gmail.com','12345678',3,'2025-10-06 09:41:56'),(7,'siteincharge1','siteincharge1@gmail.com','12345678',4,'2025-10-06 09:41:56'),(8,'siteincharge2','siteincharge2@gmail.com','12345678',4,'2025-10-06 09:41:56'),(9,'siteincharge3','siteincharge3@gmail.com','12345678',4,'2025-10-06 09:41:56'),(10,'siteincharge4','siteincharge4@gmail.com','12345678',4,'2025-10-06 09:41:56'),(11,'siteincharge5','siteincharge5@gmail.com','12345678',4,'2025-10-06 09:41:56'),(12,'siteincharge6','siteincharge6@gmail.com','12345678',4,'2025-10-06 09:41:56'),(13,'siteincharge7','siteincharge7@gmail.com','12345678',4,'2025-10-06 09:41:56'),(14,'siteincharge8','siteincharge8@gmail.com','12345678',4,'2025-10-06 09:41:56'),(15,'siteincharge9','siteincharge9@gmail.com','12345678',4,'2025-10-06 09:41:56'),(16,'siteincharge10','siteincharge10@gmail.com','12345678',4,'2025-10-06 09:41:56'),(17,'siteincharge11','siteincharge11@gmail.com','12345678',4,'2025-10-06 09:41:56'),(18,'siteincharge12','siteincharge12@gmail.com','12345678',4,'2025-10-06 09:41:56'),(19,'siteincharge13','siteincharge13@gmail.com','12345678',4,'2025-10-06 09:41:56'),(20,'siteincharge14','siteincharge14@gmail.com','12345678',4,'2025-10-06 09:41:56'),(21,'siteincharge15','siteincharge15@gmail.com','12345678',4,'2025-10-06 09:41:56');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1851,4 +2500,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-23 13:59:57
+-- Dump completed on 2025-10-10  6:03:20
