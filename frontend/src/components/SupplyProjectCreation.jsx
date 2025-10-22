@@ -33,10 +33,10 @@ const SupplyProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
     try {
       setLoading((prev) => ({ ...prev, initial: true }));
       const [companyResponse, projectsResponse, locationsResponse, reckonerTypesResponse] = await Promise.all([
-        axios.get(`http://103.118.158.127/api/supply/companies/${companyId}`),
-        axios.get(`http://103.118.158.127/api/supply/projects/${companyId}`),
-        axios.get(`http://103.118.158.127/api/supply/locations`),
-        axios.get(`http://103.118.158.127/api/supply/reckoner-types`),
+        axios.get(`http://localhost:5000/supply/companies/${companyId}`),
+        axios.get(`http://localhost:5000/supply/projects/${companyId}`),
+        axios.get(`http://localhost:5000/supply/locations`),
+        axios.get(`http://localhost:5000/supply/reckoner-types`),
       ]);
 
       setCompanyName(companyResponse.data.company_name || "Unknown Company");
@@ -122,7 +122,7 @@ const SupplyProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
 
       let pd_id;
       if (isNewProject) {
-        const projectResponse = await axios.post("http://103.118.158.127/api/supply/create-project", {
+        const projectResponse = await axios.post("http://localhost:5000/supply/create-project", {
           company_id: companyId,
           project_name: formData.project_name,
         });
@@ -142,7 +142,7 @@ const SupplyProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         reckoner_type_id: formData.reckoner_type_id || null,
       };
 
-      await axios.post("http://103.118.158.127/api/supply/create-site", siteData);
+      await axios.post("http://localhost:5000/supply/create-site", siteData);
 
       // Reset form and show success
       setFormData({

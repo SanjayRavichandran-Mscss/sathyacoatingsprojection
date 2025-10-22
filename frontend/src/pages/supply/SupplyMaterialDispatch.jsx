@@ -171,7 +171,7 @@ const SupplyMaterialDispatch = () => {
   const fetchCompanies = async () => {
     setLoading((prev) => ({ ...prev, companies: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/companies");
+      const response = await axios.get("http://localhost:5000/supply/companies");
       setCompanies(
         Array.isArray(response.data)
           ? response.data.map((company) => ({
@@ -194,7 +194,7 @@ const SupplyMaterialDispatch = () => {
     if (!selectedCompany) return;
     setLoading((prev) => ({ ...prev, projects: true }));
     try {
-      const response = await axios.get(`http://103.118.158.127/api/supply/sites-by-company/${selectedCompany}`);
+      const response = await axios.get(`http://localhost:5000/supply/sites-by-company/${selectedCompany}`);
       const sitesData = Array.isArray(response.data.data) ? response.data.data : [];
       setAllSites(sitesData);
 
@@ -222,7 +222,7 @@ const SupplyMaterialDispatch = () => {
     }
     setLoading((prev) => ({ ...prev, masterDcNo: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/master-dc-no", {
+      const response = await axios.get("http://localhost:5000/supply/master-dc-no", {
         params: { company_id: selectedCompany },
       });
       const masterDcNoData = response.data.data?.dc_no || "";
@@ -245,7 +245,7 @@ const SupplyMaterialDispatch = () => {
       return;
     }
     try {
-      await axios.post("http://103.118.158.127/api/supply/master-dc-no", {
+      await axios.post("http://localhost:5000/supply/master-dc-no", {
         company_id: selectedCompany,
         dc_no: masterDcNo,
         created_by: userId, // Include created_by
@@ -272,7 +272,7 @@ const SupplyMaterialDispatch = () => {
     if (!selectedSite) return;
     setLoading((prev) => ({ ...prev, dcNo: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/next-supply-dc-no", {
+      const response = await axios.get("http://localhost:5000/supply/next-supply-dc-no", {
         params: { site_id: selectedSite },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -299,7 +299,7 @@ const SupplyMaterialDispatch = () => {
     setLoading((prev) => ({ ...prev, materials: true }));
     setError(null);
     try {
-      const response = await axios.get(`http://103.118.158.127/api/supply/assigned-materials/?site_id=${selectedSite}`);
+      const response = await axios.get(`http://localhost:5000/supply/assigned-materials/?site_id=${selectedSite}`);
       const materials = response.data.data || [];
       setAssignedMaterials(materials);
 
@@ -320,7 +320,7 @@ const SupplyMaterialDispatch = () => {
   const fetchTransportTypes = async () => {
     setLoading((prev) => ({ ...prev, transportTypes: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/supply-transport-types");
+      const response = await axios.get("http://localhost:5000/supply/supply-transport-types");
       setTransportTypes(response.data.data || []);
     } catch (error) {
       console.error("Error fetching transport types:", error);
@@ -334,7 +334,7 @@ const SupplyMaterialDispatch = () => {
   const fetchProviders = async (transport_type_id) => {
     setLoading((prev) => ({ ...prev, providers: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/supply-providers", {
+      const response = await axios.get("http://localhost:5000/supply/supply-providers", {
         params: { transport_type_id: Number.isInteger(parseInt(transport_type_id)) ? transport_type_id : undefined },
       });
       setProviders(response.data.data || []);
@@ -350,7 +350,7 @@ const SupplyMaterialDispatch = () => {
   const fetchVehicles = async () => {
     setLoading((prev) => ({ ...prev, vehicles: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/supply-vehicles");
+      const response = await axios.get("http://localhost:5000/supply/supply-vehicles");
       setVehicles(response.data.data || []);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
@@ -364,7 +364,7 @@ const SupplyMaterialDispatch = () => {
   const fetchDrivers = async () => {
     setLoading((prev) => ({ ...prev, drivers: true }));
     try {
-      const response = await axios.get("http://103.118.158.127/api/supply/supply-drivers");
+      const response = await axios.get("http://localhost:5000/supply/supply-drivers");
       setDrivers(response.data.data || []);
     } catch (error) {
       console.error("Error fetching drivers:", error);
@@ -657,7 +657,7 @@ const SupplyMaterialDispatch = () => {
       };
 
       const payload = { assignments: dispatchPayload, transport: transportPayload, created_by: userId }; // Include created_by
-      const response = await axios.post("http://103.118.158.127/api/supply/add-supply-dispatch", payload);
+      const response = await axios.post("http://localhost:5000/supply/add-supply-dispatch", payload);
 
       if (response.data.status === "already_dispatched") {
         const conflicts = response.data.conflicts

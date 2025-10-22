@@ -813,6 +813,82 @@ exports.saveOverheadValue = async (req, res) => {
   }
 };
 
+exports.saveDynamicOverheadValues = async (req, res) => {
+  const { site_id, desc_id, value, percentage, overhead_type } = req.body;
+
+  // Enhanced validation
+  if (!site_id || !desc_id || value === undefined || percentage === undefined || !overhead_type) {
+    return res.status(400).json({
+      success: false,
+      message: "All fields are required",
+    });
+  }
+
+  if (isNaN(value) || isNaN(percentage)) {
+    return res.status(400).json({
+      success: false,
+      message: "Value and percentage must be valid numbers",
+    });
+  }
+
+  let conn;
+  try {
+    // Get a connection from the pool
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    // Step 1: Get overhead_type_id dynamically based on input
+    const [overheadRows] = await conn.query(
+      'SELECT id FROM overhead WHERE expense_name = ? LIMIT 1',
+      [overhead_type]
+    );
+
+    if (overheadRows.length === 0) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Invalid overhead type: '${overhead_type}' not found`,
+      });
+    }
+    const overhead_type_id = overheadRows[0].id;
+
+    // Step 2: Find last projection_id and calculate next
+    const [projectionRows] = await conn.query(
+      "SELECT MAX(projection_id) AS lastProjectionId FROM projection_allocated WHERE site_id = ? AND desc_id = ? AND overhead_type_id = ?",
+      [site_id, desc_id, overhead_type_id]
+    );
+    const nextProjectionId = (projectionRows[0]?.lastProjectionId || 0) + 1;
+
+    // Step 3: Insert the new record
+    await conn.query(
+      "INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage) VALUES (?, ?, ?, ?, ?, ?)",
+      [site_id, desc_id, overhead_type_id, nextProjectionId, parseFloat(value), parseFloat(percentage)]
+    );
+
+    // Commit transaction
+    await conn.commit();
+
+    // Success response
+    return res.status(200).json({
+      success: true,
+      message: `${overhead_type} overhead saved successfully!`,
+    });
+  } catch (error) {
+    // Rollback on error
+    if (conn) await conn.rollback().catch(rollbackErr => console.error('Rollback failed:', rollbackErr));
+    
+    console.error('Error saving dynamic overhead:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while saving the overhead value. Please try again.",
+    });
+  } finally {
+    // Always release the connection
+    if (conn) conn.release();
+  }
+};
+
 // Save or update actual budget entries (updated to allocate only once, no updates)
 exports.saveActualBudget = async (req, res) => {
   const { po_budget_id, actual_budget_entries } = req.body;
@@ -936,7 +1012,6 @@ exports.getActualBudgetEntries = async (req, res) => {
   }
 };
 
-
 exports.getActualBudget = async (req, res) => {
   const { po_budget_id } = req.params;
 
@@ -1044,8 +1119,6 @@ exports.fetchMaterialPlanningBudget = async (req, res) => {
     });
   }
 };
-
-
 
 // Fetch contractors
 exports.getContractors = async (req, res) => {
@@ -1212,8 +1285,6 @@ exports.addLabour = async (req, res) => {
     });
   }
 };
-
-
 
 // Fetch all labour employees
 exports.getLabourEmployees = async (req, res) => {

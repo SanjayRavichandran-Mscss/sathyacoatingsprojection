@@ -31,24 +31,11 @@ const ProjectProjectionOld = () => {
   const [isAllocated, setIsAllocated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-   const [materialAssignments, setMaterialAssignments] = useState([]);
-   const [submitting, setSubmitting] = useState(false); // State for submission loading
-
 
   // New state for material overhead
   const [materials, setMaterials] = useState([]);
 
   const [uoms, setUoms] = useState([]);
-  const [materialEntries, setMaterialEntries] = useState([{
-  item_id: "",
-  uom_id: "",
-  rate_per_uom: "",
-  overall_quantity: "",
-  overall_cost: 0,
-  comp_ratio_a: "", // Add comp_ratio_a
-  comp_ratio_b: "", // Add comp_ratio_b
-  comp_ratio_c: "", // Add comp_ratio_c
-}])
   const [materialTotalCost, setMaterialTotalCost] = useState(0);
   const [materialBudgetPercentage, setMaterialBudgetPercentage] = useState(0);
 
@@ -61,15 +48,15 @@ const ProjectProjectionOld = () => {
   const [labourBudgetPercentage, setLabourBudgetPercentage] = useState(0);
 
   // New state for consumables and transportation
-  const [consumablesValue, setConsumablesValue] = useState("");
-  const [consumablesBudgetPercentage, setConsumablesBudgetPercentage] = useState(0);
-  const [transportationValue, setTransportationValue] = useState("");
-  const [transportationBudgetPercentage, setTransportationBudgetPercentage] = useState(0);
+  // const [consumablesValue, setConsumablesValue] = useState("");
+  // const [consumablesBudgetPercentage, setConsumablesBudgetPercentage] = useState(0);
+  // const [transportationValue, setTransportationValue] = useState("");
+  // const [transportationBudgetPercentage, setTransportationBudgetPercentage] = useState(0);
 
   // Active overhead tab
   const [activeOverheadTab, setActiveOverheadTab] = useState("material");
-
-  console.log("Budget Data:", budgetData);
+  const [dynamicOverheads, setDynamicOverheads] = useState({});
+  const [selectedDynamicOverheads, setSelectedDynamicOverheads] = useState([]);
 
   // ALL EXISTING FUNCTIONS FROM ORIGINAL COMPONENT
   const fetchCompanies = async () => {
@@ -214,91 +201,94 @@ const ProjectProjectionOld = () => {
   };
 
   const fetchOverheads = async (po_budget_id) => {
-    try {
-      const response = await axios.get("http://localhost:5000/admin/overheads", {
-        params: po_budget_id ? { po_budget_id } : {},
-      });
-      if (response.data.success) {
-        setOverheads(response.data.data);
-        const initialChecked = {};
-        const newEntries = {};
-        response.data.data.forEach((overhead) => {
-          initialChecked[overhead.id] = overhead.is_default === 1;
-          newEntries[overhead.id] = {
-            splitted_budget: null,
-            percentage: null,
-            actual_value: null,
-            difference_value: null,
-            remarks: "",
-            edited: false,
+  try {
+    const response = await axios.get("http://localhost:5000/admin/overheads", {
+      params: po_budget_id ? { po_budget_id } : {},
+    });
+    if (response.data.success) {
+      setOverheads(response.data.data);
+      const initialChecked = {};
+      const newEntries = {};
+      const initialDynamicOverheads = {};
+      response.data.data.forEach((overhead) => {
+        initialChecked[overhead.id] = overhead.is_default === 1;
+        newEntries[overhead.id] = {
+          splitted_budget: null,
+          percentage: null,
+          actual_value: null,
+          difference_value: null,
+          remarks: "",
+          edited: false,
+        };
+        if (overhead.is_default === 0) {
+          initialDynamicOverheads[overhead.id] = {
+            value: "",
+            budgetPercentage: 0,
+            expense_name: overhead.expense_name,
           };
-        });
-        setCheckedExpenses(initialChecked);
-        setActualBudgetEntries(newEntries);
-      } else {
-        setError("Failed to fetch overheads.");
-      }
-    } catch (error) {
-      console.error("Error fetching overheads:", error);
-      setError("Failed to load overheads. Please try again.");
+        }
+      });
+      setCheckedExpenses(initialChecked);
+      setActualBudgetEntries(newEntries);
+      setDynamicOverheads(initialDynamicOverheads);
+    } else {
+      setError("Failed to fetch overheads.");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching overheads:", error);
+    setError("Failed to load overheads. Please try again.");
+  }
+};
+
 
   const fetchActualBudgetEntries = async (po_budget_id) => {
-    try {
-      const response = await axios.get(`http://localhost:5000/admin/actual-budget/${po_budget_id}`);
-      if (response.data.success) {
-        const entries = response.data.data || {};
-        const processedEntries = {};
-        Object.keys(entries).forEach((overheadId) => {
-          const val = parseFloat(entries[overheadId].splitted_budget) || 0;
-          const perc = existingBudget?.total_budget_value > 0 ? (val / existingBudget.total_budget_value * 100).toFixed(2) : "0.00";
-          processedEntries[overheadId] = {
-            ...entries[overheadId],
-            percentage: perc,
-            edited: true,
-          };
-        });
-        setActualBudgetEntries(processedEntries);
-        setIsAllocated(Object.keys(processedEntries).length > 0);
-        if (Object.keys(processedEntries).length > 0) {
-          const checked = {};
-          Object.keys(processedEntries).forEach((id) => {
-            checked[id] = true;
-          });
-          setCheckedExpenses(checked);
+  try {
+    const response = await axios.get(`http://localhost:5000/admin/actual-budget/${po_budget_id}`);
+    if (response.data.success) {
+      const entries = response.data.data || {};
+      const processedEntries = {};
+      const selectedOverheads = [];
+      Object.keys(entries).forEach((overheadId) => {
+        const val = parseFloat(entries[overheadId].splitted_budget) || 0;
+        const perc = existingBudget?.total_budget_value > 0 ? (val / existingBudget.total_budget_value * 100).toFixed(2) : "0.00";
+        processedEntries[overheadId] = {
+          ...entries[overheadId],
+          percentage: perc,
+          edited: true,
+        };
+        const overhead = overheads.find((oh) => oh.id === parseInt(overheadId));
+        if (overhead && overhead.is_default === 0) {
+          selectedOverheads.push(overhead);
+          setDynamicOverheads((prev) => ({
+            ...prev,
+            [overheadId]: {
+              value: val.toString(),
+              budgetPercentage: parseFloat(perc),
+              expense_name: overhead.expense_name,
+            },
+          }));
         }
-      } else {
-        setError(response.data.message || "Failed to fetch actual budget entries.");
+      });
+      setActualBudgetEntries(processedEntries);
+      setSelectedDynamicOverheads(selectedOverheads);
+      setIsAllocated(Object.keys(processedEntries).length > 0);
+      if (Object.keys(processedEntries).length > 0) {
+        const checked = {};
+        Object.keys(processedEntries).forEach((id) => {
+          checked[id] = true;
+        });
+        setCheckedExpenses(checked);
       }
-    } catch (error) {
-      console.error("Error fetching actual budget entries:", error);
-      setError("Failed to load actual budget entries. Please try again.");
+    } else {
+      setError(response.data.message || "Failed to fetch actual budget entries.");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching actual budget entries:", error);
+    setError("Failed to load actual budget entries. Please try again.");
+  }
+};
 
-  // NEW FUNCTIONS FOR OVERHEAD MANAGEMENT
-  const fetchMaterials = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/material/materials");
-      setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
-    } catch (error) {
-      console.error("Error fetching materials:", error);
-      setMaterials([]);
-    }
-  };
-
-  const fetchUoms = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/material/uom");
-      setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
-    } catch (error) {
-      console.error("Error fetching UOMs:", error);
-      setUoms([]);
-    }
-  };
-
-   const handleTotalCostChange = (totalCost) => {
+  const handleTotalCostChange = (totalCost) => {
     console.log("Received total cost from MaterialPlanning:", totalCost);
     setMaterialTotalCost(Number(totalCost) || 0);
     
@@ -307,12 +297,6 @@ const ProjectProjectionOld = () => {
       setMaterialBudgetPercentage(percentage);
     }
   };
-
-  const handleMaterialsChange = (materials) => {
-    setMaterialAssignments(materials);
-  };
-
-  console.log("Material Total Cost:", materialTotalCost);
 
   const calculateLabourTotalCost = () => {
     let total = 0;
@@ -334,65 +318,45 @@ const ProjectProjectionOld = () => {
     }
   };
 
-  const calculateConsumablesBudgetPercentage = () => {
-    const value = parseFloat(consumablesValue) || 0;
-    if (existingBudget?.total_budget_value) {
-      const percentage = (value / existingBudget.total_budget_value) * 100;
-      setConsumablesBudgetPercentage(percentage);
-    }
-  };
+  // const calculateConsumablesBudgetPercentage = () => {
+  //   const value = parseFloat(consumablesValue) || 0;
+  //   if (existingBudget?.total_budget_value) {
+  //     const percentage = (value / existingBudget.total_budget_value) * 100;
+  //     setConsumablesBudgetPercentage(percentage);
+  //   }
+  // };
 
-  const calculateTransportationBudgetPercentage = () => {
-    const value = parseFloat(transportationValue) || 0;
-    if (existingBudget?.total_budget_value) {
-      const percentage = (value / existingBudget.total_budget_value) * 100;
-      setTransportationBudgetPercentage(percentage);
-    }
-  };
+  // const calculateTransportationBudgetPercentage = () => {
+  //   const value = parseFloat(transportationValue) || 0;
+  //   if (existingBudget?.total_budget_value) {
+  //     const percentage = (value / existingBudget.total_budget_value) * 100;
+  //     setTransportationBudgetPercentage(percentage);
+  //   }
+  // };
+ const calculateDynamicOverheadBudgetPercentage = (overheadId, value) => {
+  const parsedValue = parseFloat(value) || 0;
+  if (existingBudget?.total_budget_value) {
+    const percentage = (parsedValue / existingBudget.total_budget_value) * 100;
+    setDynamicOverheads((prev) => ({
+      ...prev,
+      [overheadId]: {
+        ...prev[overheadId],
+        value: parsedValue,
+        budgetPercentage: percentage,
+      },
+    }));
+  }
+};
 
-  const calculateRemainingBudget = () => {
-    const totalAllocated = materialTotalCost + labourTotalCost + 
-                          (parseFloat(consumablesValue) || 0) + 
-                          (parseFloat(transportationValue) || 0);
-    const budgetValue = existingBudget?.total_budget_value || 0;
-    return budgetValue - totalAllocated;
-  };
-
-  const handleAddNewMaterial = async (inputValue) => {
-    if (!inputValue.trim()) {
-      setError("Material name is required.");
-      return;
-    }
-
-    try {
-      const response = await axios.post("http://localhost:5000/material/add-material", {
-        item_name: inputValue.trim(),
-      });
-
-      if (response.data?.status === 'success' && response.data?.data?.item_id) {
-        await fetchMaterials();
-        
-        Swal.fire({
-          position: "top-end",
-          icon: "success",
-          title: "Material Added!",
-          text: "New material has been added successfully.",
-          timer: 1500,
-          showConfirmButton: false,
-          toast: true,
-          background: "#ecfdf5",
-          iconColor: "#10b981",
-        });
-        
-        return { value: response.data.data.item_id, label: inputValue.trim() };
-      } else {
-        setError(response.data?.message || "Failed to add material.");
-      }
-    } catch (error) {
-      console.error("Error adding material:", error);
-      setError(error.response?.data?.message || "Failed to add material.");
-    }
-  };
+ const calculateRemainingBudget = () => {
+  const dynamicOverheadTotal = Object.values(dynamicOverheads).reduce(
+    (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+    0
+  );
+  const totalAllocated = materialTotalCost + labourTotalCost + dynamicOverheadTotal;
+  const budgetValue = existingBudget?.total_budget_value || 0;
+  return budgetValue - totalAllocated;
+};
 
   // SAVE FUNCTIONS FOR NEW OVERHEADS
  
@@ -435,57 +399,89 @@ const ProjectProjectionOld = () => {
     }
   };
 
-  const saveConsumablesOverhead = async () => {
-    try {
-      const payload = {
-        site_id: selectedSite.value,
-        desc_id: selectedWorkDescription.value,
-        value: parseFloat(consumablesValue),
-        overhead_type: "consumables"
-      };
+  // const saveConsumablesOverhead = async () => {
+  //   try {
+  //     const payload = {
+  //       site_id: selectedSite.value,
+  //       desc_id: selectedWorkDescription.value,
+  //       value: parseFloat(consumablesValue),
+  //       overhead_type: "consumables"
+  //     };
 
-      const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
+  //     const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
       
-      if (response.data.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Consumables overhead saved successfully!",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error saving consumables overhead:", error);
-    }
-  };
+  //     if (response.data.success) {
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Success",
+  //         text: "Consumables overhead saved successfully!",
+  //         confirmButtonColor: "#4f46e5",
+  //         timer: 3000,
+  //         timerProgressBar: true,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving consumables overhead:", error);
+  //   }
+  // };
 
-  const saveTransportationOverhead = async () => {
-    try {
-      const payload = {
-        site_id: selectedSite.value,
-        desc_id: selectedWorkDescription.value,
-        value: parseFloat(transportationValue),
-        overhead_type: "transportation"
-      };
+  // const saveTransportationOverhead = async () => {
+  //   try {
+  //     const payload = {
+  //       site_id: selectedSite.value,
+  //       desc_id: selectedWorkDescription.value,
+  //       value: parseFloat(transportationValue),
+  //       overhead_type: "transportation"
+  //     };
 
-      const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
+  //     const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
       
-      if (response.data.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Transportation overhead saved successfully!",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error saving transportation overhead:", error);
+  //     if (response.data.success) {
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Success",
+  //         text: "Transportation overhead saved successfully!",
+  //         confirmButtonColor: "#4f46e5",
+  //         timer: 3000,
+  //         timerProgressBar: true,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving transportation overhead:", error);
+  //   }
+  // };
+
+ const saveDynamicOverhead = async (overheadId, overheadName) => {
+  try {
+    const payload = {
+      site_id: selectedSite.value,
+      desc_id: selectedWorkDescription.value,
+      value: parseFloat(dynamicOverheads[overheadId]?.value) || 0,
+      overhead_type: overheadName,
+    };
+
+    const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
+
+    if (response.data.success) {
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: `${overheadName} overhead saved successfully!`,
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
-  };
+  } catch (error) {
+    console.error(`Error saving ${overheadName} overhead:`, error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: `Failed to save ${overheadName} overhead. Please try again.`,
+      confirmButtonColor: "#4f46e5",
+    });
+  }
+};
 
   // ALL REMAINING EXISTING FUNCTIONS (savePoBudget, saveOverhead, allocateBudget, etc.)
   const savePoBudget = async () => {
@@ -705,6 +701,86 @@ const ProjectProjectionOld = () => {
     }
   };
 
+  const addNewOverhead = async () => {
+  const { value: expense_name } = await Swal.fire({
+    title: "Add New Overhead",
+    input: "text",
+    inputLabel: "Expense Name",
+    inputPlaceholder: "Enter expense name",
+    showCancelButton: true,
+    confirmButtonText: "Save",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#4f46e5",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Expense name is required!";
+      }
+      if (overheads.some((oh) => oh.expense_name.toLowerCase() === value.toLowerCase())) {
+        return "Expense name already exists!";
+      }
+    },
+  });
+
+  if (expense_name) {
+    try {
+      const response = await axios.post("http://localhost:5000/admin/save-overhead", {
+        expense_name,
+      });
+      if (response.data.success) {
+        const newOverhead = response.data.data;
+        setOverheads((prev) => [...prev, newOverhead]);
+        setDynamicOverheads((prev) => ({
+          ...prev,
+          [newOverhead.id]: {
+            value: "",
+            budgetPercentage: 0,
+            expense_name: newOverhead.expense_name,
+          },
+        }));
+        setCheckedExpenses((prev) => ({
+          ...prev,
+          [newOverhead.id]: false,
+        }));
+        setActualBudgetEntries((prev) => ({
+          ...prev,
+          [newOverhead.id]: {
+            splitted_budget: null,
+            percentage: null,
+            actual_value: null,
+            difference_value: null,
+            remarks: "",
+            edited: false,
+          },
+        }));
+        // Automatically select the new overhead
+        setSelectedDynamicOverheads((prev) => [...prev, newOverhead]);
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Overhead added successfully!",
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: response.data.message,
+          confirmButtonColor: "#4f46e5",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding new overhead:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to add overhead. Please try again.",
+        confirmButtonColor: "#4f46e5",
+      });
+    }
+  }
+};
   // ALL EXISTING HANDLERS
   const handleBudgetPercentageChange = (e) => {
     let percentage = e.target.value;
@@ -876,6 +952,24 @@ const ProjectProjectionOld = () => {
       },
     }));
   };
+  const handleSelectOverhead = (overhead) => {
+  if (!selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
+    setSelectedDynamicOverheads((prev) => [...prev, overhead]);
+  }
+};
+const handleRemoveOverhead = (overheadId) => {
+  setSelectedDynamicOverheads((prev) => prev.filter((oh) => oh.id !== overheadId));
+  setDynamicOverheads((prev) => {
+    const newOverheads = { ...prev };
+    newOverheads[overheadId] = {
+      ...newOverheads[overheadId],
+      value: "",
+      budgetPercentage: 0,
+    };
+    return newOverheads;
+  });
+};
+
 
   const computeSums = () => {
     let sumPerc = 0;
@@ -911,46 +1005,24 @@ const ProjectProjectionOld = () => {
     }
   };
 
-  // Options for dropdowns
-  const materialOptions = Array.isArray(materials)
-    ? materials.map((material) => ({
-        value: material.item_id,
-        label: material.item_name,
-      }))
-    : [];
-
-    console.log("Material Options:", materialOptions);
-  const uomOptions = Array.isArray(uoms)
-    ? uoms.map((uom) => ({
-        value: uom.uom_id,
-        label: uom.uom_name,
-      }))
-    : [];
-
   const remainingBudget = calculateRemainingBudget();
 
   // ALL EXISTING USEEFFECTS PLUS NEW ONES
   useEffect(() => {
     fetchCompanies();
-    fetchMaterials();
-    fetchUoms();
   }, []);
-
-  // useEffect(() => {
-  //   calculateMaterialTotalCost();
-  // }, [materialEntries, existingBudget]);
 
   useEffect(() => {
     calculateLabourTotalCost();
   }, [labourCalculationType, noOfLabours, totalShifts, ratePerShift, existingBudget]);
 
-  useEffect(() => {
-    calculateConsumablesBudgetPercentage();
-  }, [consumablesValue, existingBudget]);
+  // useEffect(() => {
+  //   calculateConsumablesBudgetPercentage();
+  // }, [consumablesValue, existingBudget]);
 
-  useEffect(() => {
-    calculateTransportationBudgetPercentage();
-  }, [transportationValue, existingBudget]);
+  // useEffect(() => {
+  //   calculateTransportationBudgetPercentage();
+  // }, [transportationValue, existingBudget]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -1061,17 +1133,19 @@ const ProjectProjectionOld = () => {
     }
   }, [selectedSite, selectedWorkDescription]);
 
-  useEffect(() => {
-    if (existingBudget && existingBudget.id) {
-      fetchOverheads(existingBudget.id);
-      fetchActualBudgetEntries(existingBudget.id);
-    } else {
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
-    }
-  }, [existingBudget]);
+useEffect(() => {
+  if (existingBudget && existingBudget.id) {
+    fetchOverheads(existingBudget.id);
+    fetchActualBudgetEntries(existingBudget.id);
+  } else {
+    setOverheads([]);
+    setCheckedExpenses({});
+    setActualBudgetEntries({});
+    setDynamicOverheads({});
+    setSelectedDynamicOverheads([]);
+    setIsAllocated(false);
+  }
+}, [existingBudget]);
 
   // CHART CALCULATIONS
   const chartData = existingBudget && actualBudgetEntries ? (() => {
@@ -1102,11 +1176,6 @@ const ProjectProjectionOld = () => {
         actualFill: actualExceedsBudget ? "#C84D4D" : "#40A4DF",
       };
     });
-
-    const CustomCreateLabel = ({ inputValue }) => (
-  <span>Create "{inputValue}"</span>
-);
-
 
   const { sumPerc, sumBudget } = computeSums();
   const total = existingBudget?.total_budget_value || 0;
@@ -1296,18 +1365,20 @@ const ProjectProjectionOld = () => {
         {existingBudget && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Overhead Allocation</h2>
-            
+
             {/* Tab Navigation */}
-            <div className="flex space-x-2 mb-6 border-b">
+            <div className="flex space-x-2 mb-6 border-b overflow-x-auto">
               {[
                 { key: "material", label: "Material" },
                 { key: "labour", label: "Labour" },
-                { key: "consumables", label: "Consumables" },
-                { key: "transportation", label: "Transportation" }
-              ].map(tab => (
+                ...selectedDynamicOverheads.map((overhead) => ({
+                  key: `overhead-${overhead.id}`,
+                  label: overhead.expense_name,
+                })),
+              ].map((tab) => (
                 <button
                   key={tab.key}
-                  className={`px-4 py-2 font-medium ${
+                  className={`px-4 py-2 font-medium whitespace-nowrap ${
                     activeOverheadTab === tab.key
                       ? "text-indigo-600 border-b-2 border-indigo-600"
                       : "text-gray-600 hover:text-indigo-600"
@@ -1317,11 +1388,48 @@ const ProjectProjectionOld = () => {
                   {tab.label}
                 </button>
               ))}
+              <button
+                onClick={() => {
+                  Swal.fire({
+                    title: "Select Overhead",
+                    input: "select",
+                    inputOptions: overheads
+                      .filter((oh) => oh.is_default === 0)
+                      .filter((oh) => !selectedDynamicOverheads.some((selected) => selected.id === oh.id))
+                      .reduce((options, overhead) => {
+                        options[overhead.id] = overhead.expense_name;
+                        return options;
+                      }, {}),
+                    inputPlaceholder: "Select an overhead",
+                    showCancelButton: true,
+                    confirmButtonText: "Add",
+                    confirmButtonColor: "#4f46e5",
+                    showDenyButton: true,
+                    denyButtonText: "Add New Overhead",
+                    denyButtonColor: "#22c55e",
+                    inputValidator: (value) => {
+                      if (!value) {
+                        return "Please select an overhead!";
+                      }
+                    },
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
+                      handleSelectOverhead(selectedOverhead);
+                      setActiveOverheadTab(`overhead-${selectedOverhead.id}`); // Switch to new tab
+                    } else if (result.isDenied) {
+                      addNewOverhead();
+                    }
+                  });
+                }}
+                className="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
+              >
+                <PlusCircle className="mr-2" size={16} />
+                Add Overhead
+              </button>
             </div>
 
             {/* Material Overhead Tab */}
-
-
             {activeOverheadTab === "material" && (
               <div>
                 <h3 className="text-lg font-medium mb-4">Material Overhead</h3>
@@ -1332,176 +1440,137 @@ const ProjectProjectionOld = () => {
                   selectedWorkDesc={selectedWorkDescription}
                   existingBudget={existingBudget}
                   onTotalCostChange={handleTotalCostChange}
-                  // onMaterialsChange={handleMaterialsChange}
                 />
               </div>
             )}
 
-  {/* Labour Overhead Tab */}
-  {activeOverheadTab === "labour" && (
-    <div>
-      <h3 className="text-lg font-medium mb-4">Labour Overhead</h3> 
-      
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Calculation Type</label>
-          <select
-            value={labourCalculationType}
-            onChange={(e) => setLabourCalculationType(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg"
-          >
-            <option value="">Select Type</option>
-            <option value="no_of_labours">No of Labours</option>
-            <option value="total_shifts">Total Estimated Shifts</option>
-          </select>
-        </div>
-      </div>
-      
-      {labourCalculationType && (
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          {labourCalculationType === "no_of_labours" && (
-            <div>
-              <label className="block text-sm font-medium mb-2">No of Labours</label>
-              <input
-                type="number"
-                value={noOfLabours}
-                onChange={(e) => setNoOfLabours(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg"
-                placeholder="Enter number of labours"
-              />
-            </div>
-          )}
-          
-          {labourCalculationType === "total_shifts" && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
-              <input
-                type="number"
-                value={totalShifts}
-                onChange={(e) => setTotalShifts(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-lg"
-                placeholder="Enter total shifts"
-              />
-            </div>
-          )}
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Rate per Shift</label>
-            <input
-              type="number"
-              value={ratePerShift}
-              onChange={(e) => setRatePerShift(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-              placeholder="Enter rate per shift"
-            />
-          </div>
-        </div>
-      )}
-      
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-        <div className="flex justify-between items-center mb-2">
-          <span className="font-medium">Total Labour Cost:</span>
-          <span className="text-lg font-semibold">Rs. {labourTotalCost.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="font-medium">Budget Percentage:</span>
-          <span className="text-lg font-semibold">{labourBudgetPercentage.toFixed(2)}%</span>
-        </div>
-      </div>
-      
-      <button
-        onClick={saveLabourOverhead}
-        className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-      >
-        Save Labour Overhead
-      </button>
-    </div>
-  )}
-
-
-            {/* Consumables Overhead Tab */}
-            {activeOverheadTab === "consumables" && (
+            {/* Labour Overhead Tab */}
+            {activeOverheadTab === "labour" && (
               <div>
-                <h3 className="text-lg font-medium mb-4">Consumables Overhead</h3>
-                
+                <h3 className="text-lg font-medium mb-4">Labour Overhead</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Consumables Value</label>
-                    <input
-                      type="number"
-                      value={consumablesValue}
-                      onChange={(e) => setConsumablesValue(e.target.value)}
-                      max={remainingBudget}
+                    <label className="block text-sm font-medium mb-2">Calculation Type</label>
+                    <select
+                      value={labourCalculationType}
+                      onChange={(e) => setLabourCalculationType(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg"
-                      placeholder="Enter consumables value"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                      Remaining Budget: Rs. {remainingBudget.toFixed(2)}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Budget Percentage</label>
-                    <input
-                      type="text"
-                      value={`${consumablesBudgetPercentage.toFixed(2)}%`}
-                      readOnly
-                      className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
-                    />
+                    >
+                      <option value="">Select Type</option>
+                      <option value="no_of_labours">No of Labours</option>
+                      <option value="total_shifts">Total Estimated Shifts</option>
+                    </select>
                   </div>
                 </div>
-                
+                {labourCalculationType && (
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    {labourCalculationType === "no_of_labours" && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">No of Labours</label>
+                        <input
+                          type="number"
+                          value={noOfLabours}
+                          onChange={(e) => setNoOfLabours(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          placeholder="Enter number of labours"
+                        />
+                      </div>
+                    )}
+                    {labourCalculationType === "total_shifts" && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
+                        <input
+                          type="number"
+                          value={totalShifts}
+                          onChange={(e) => setTotalShifts(e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          placeholder="Enter total shifts"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Rate per Shift</label>
+                      <input
+                        type="number"
+                        value={ratePerShift}
+                        onChange={(e) => setRatePerShift(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        placeholder="Enter rate per shift"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">Total Labour Cost:</span>
+                    <span className="text-lg font-semibold">Rs. {labourTotalCost.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Budget Percentage:</span>
+                    <span className="text-lg font-semibold">{labourBudgetPercentage.toFixed(2)}%</span>
+                  </div>
+                </div>
                 <button
-                  onClick={saveConsumablesOverhead}
+                  onClick={saveLabourOverhead}
                   className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                 >
-                  Save Consumables Overhead
+                  Save Labour Overhead
                 </button>
               </div>
             )}
 
-            {/* Transportation Overhead Tab */}
-            {activeOverheadTab === "transportation" && (
-              <div>
-                <h3 className="text-lg font-medium mb-4">Transportation Overhead</h3>
-                
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Transportation Value</label>
-                    <input
-                      type="number"
-                      value={transportationValue}
-                      onChange={(e) => setTransportationValue(e.target.value)}
-                      max={remainingBudget}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                      placeholder="Enter transportation value"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                      Remaining Budget: Rs. {remainingBudget.toFixed(2)}
-                    </p>
+            {/* Dynamic Overhead Tabs */}
+            {selectedDynamicOverheads.map((overhead) => (
+              activeOverheadTab === `overhead-${overhead.id}` && (
+                <div key={overhead.id} className="relative">
+                  <h3 className="text-lg font-medium mb-4">{overhead.expense_name} Overhead</h3>
+                  <button
+                    onClick={() => handleRemoveOverhead(overhead.id)}
+                    className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                    title={`Remove ${overhead.expense_name}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        {overhead.expense_name} Value
+                      </label>
+                      <input
+                        type="number"
+                        value={dynamicOverheads[overhead.id]?.value || ""}
+                        onChange={(e) =>
+                          calculateDynamicOverheadBudgetPercentage(overhead.id, e.target.value)
+                        }
+                        max={remainingBudget}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        placeholder={`Enter ${overhead.expense_name} value`}
+                      />
+                      <p className="text-sm text-gray-600 mt-1">
+                        Remaining Budget: Rs. {remainingBudget.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Budget Percentage</label>
+                      <input
+                        type="text"
+                        value={`${(dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
+                        readOnly
+                        className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
+                      />
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Budget Percentage</label>
-                    <input
-                      type="text"
-                      value={`${transportationBudgetPercentage.toFixed(2)}%`}
-                      readOnly
-                      className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
-                    />
-                  </div>
+                  <button
+                    onClick={() => saveDynamicOverhead(overhead.id, overhead.expense_name)}
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    Save {overhead.expense_name} Overhead
+                  </button>
                 </div>
-                
-                <button
-                  onClick={saveTransportationOverhead}
-                  className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                >
-                  Save Transportation Overhead
-                </button>
-              </div>
-            )}
-            
-            {/* Overall Budget Summary */}
+              )
+            ))}
+
+            {/* Budget Allocation Summary */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-lg font-medium mb-3">Budget Allocation Summary</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -1510,22 +1579,30 @@ const ProjectProjectionOld = () => {
                   <p>Labour: Rs. {labourTotalCost.toFixed(2)} ({labourBudgetPercentage.toFixed(2)}%)</p>
                 </div>
                 <div>
-                  <p>Consumables: Rs. {(parseFloat(consumablesValue) || 0).toFixed(2)} ({consumablesBudgetPercentage.toFixed(2)}%)</p>
-                  <p>Transportation: Rs. {(parseFloat(transportationValue) || 0).toFixed(2)} ({transportationBudgetPercentage.toFixed(2)}%)</p>
+                  {selectedDynamicOverheads.map((overhead) => (
+                    <p key={overhead.id}>
+                      {overhead.expense_name}: Rs. {(parseFloat(dynamicOverheads[overhead.id]?.value) || 0).toFixed(2)} (
+                      {(dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%)
+                    </p>
+                  ))}
                 </div>
               </div>
               <div className="mt-3 pt-3 border-t">
                 <p className="font-semibold">
-                  Total Allocated: Rs. {(materialTotalCost + labourTotalCost + (parseFloat(consumablesValue) || 0) + (parseFloat(transportationValue) || 0)).toFixed(2)}
+                  Total Allocated: Rs.{' '}
+                  {(materialTotalCost +
+                    labourTotalCost +
+                    Object.values(dynamicOverheads).reduce(
+                      (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+                      0
+                    )).toFixed(2)}
                 </p>
-                <p className="font-semibold">
-                  Remaining Budget: Rs. {remainingBudget.toFixed(2)}
-                </p>
+                <p className="font-semibold">Remaining Budget: Rs. {remainingBudget.toFixed(2)}</p>
               </div>
             </div>
           </div>
         )}
-
+        
         {/* Existing Overhead Allocation Section */}
         {existingBudget && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -1897,6 +1974,5 @@ const ProjectProjectionOld = () => {
     </div>
   );
 };
-
 
 export default ProjectProjectionOld;

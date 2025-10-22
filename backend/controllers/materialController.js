@@ -1235,14 +1235,6 @@ exports.addDesignation = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-
-
 exports.getAssignedMaterials = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -1258,7 +1250,8 @@ exports.getAssignedMaterials = async (req, res) => {
         ma.uom_id,
         u.uom_name,
         ma.quantity,
-        ma.created_at
+        ma.created_at,
+        ma.projection_id
       FROM material_assign ma
       LEFT JOIN project_details p ON ma.pd_id = p.pd_id
       LEFT JOIN site_details s ON ma.site_id = s.site_id
@@ -1281,8 +1274,6 @@ exports.getAssignedMaterials = async (req, res) => {
     });
   }
 };
-
-
 
 
 // exports.assignMaterial = async (req, res) => {
@@ -1373,21 +1364,36 @@ exports.getAssignedMaterials = async (req, res) => {
 
 
 exports.assignMaterial = async (req, res) => {
+  let connection;
   try {
     const assignments = Array.isArray(req.body) ? req.body : [req.body];
 
     // Validate each assignment
     const validationErrors = [];
     assignments.forEach((assignment, index) => {
-      const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by } = assignment;
+      const {
+        pd_id,
+        site_id,
+        item_id,
+        uom_id,
+        quantity,
+        desc_id,
+        comp_ratio_a,
+        comp_ratio_b,
+        comp_ratio_c,
+        rate,
+        materialTotalCost,
+        materialBudgetPercentage,
+        created_by
+      } = assignment;
 
-      if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
+      if (!pd_id || typeof pd_id !== "string" || pd_id.trim() === "") {
         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
       }
-      if (!site_id || typeof site_id !== 'string' || site_id.trim() === '') {
+      if (!site_id || typeof site_id !== "string" || site_id.trim() === "") {
         validationErrors.push(`Assignment ${index + 1}: site_id is required and must be a non-empty string`);
       }
-      if (!item_id || typeof item_id !== 'string' || item_id.trim() === '' || item_id === 'N/A') {
+      if (!item_id || typeof item_id !== "string" || item_id.trim() === "" || item_id === "N/A") {
         validationErrors.push(`Assignment ${index + 1}: item_id is required and must be a valid material ID (not 'N/A')`);
       }
       if (!Number.isInteger(uom_id) || uom_id <= 0) {
@@ -1396,7 +1402,7 @@ exports.assignMaterial = async (req, res) => {
       if (!Number.isInteger(quantity) || quantity <= 0) {
         validationErrors.push(`Assignment ${index + 1}: quantity is required and must be a positive integer`);
       }
-      if (!desc_id || typeof desc_id !== 'string' || desc_id.trim() === '') {
+      if (!desc_id || typeof desc_id !== "string" || desc_id.trim() === "") {
         validationErrors.push(`Assignment ${index + 1}: desc_id is required and must be a non-empty string`);
       }
       if (comp_ratio_a !== null && (!Number.isInteger(comp_ratio_a) || comp_ratio_a < 0)) {
@@ -1408,75 +1414,108 @@ exports.assignMaterial = async (req, res) => {
       if (comp_ratio_c !== null && (!Number.isInteger(comp_ratio_c) || comp_ratio_c < 0)) {
         validationErrors.push(`Assignment ${index + 1}: comp_ratio_c must be a non-negative integer or null`);
       }
-      if (rate === undefined || typeof rate !== 'number' || rate < 0 || isNaN(rate)) {
+      if (rate === undefined || typeof rate !== "number" || rate < 0 || isNaN(rate)) {
         validationErrors.push(`Assignment ${index + 1}: rate is required and must be a non-negative number`);
       }
       if (!created_by || typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
         validationErrors.push(`Assignment ${index + 1}: created_by is required and must be a non-empty string with maximum length of 30 characters`);
       }
+
     });
 
     if (validationErrors.length > 0) {
       return res.status(400).json({
-        status: 'error',
-        message: 'Validation errors',
+        status: "error",
+        message: "Validation errors",
         errors: validationErrors,
       });
     }
 
-    // Optional: Validate created_by against a reference table (e.g., employee_master)
-    /*
-    for (const assignment of assignments) {
-      const [user] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [assignment.created_by]);
-      if (user.length === 0) {
-        return res.status(400).json({
-          status: 'error',
-          message: `Invalid created_by: ${assignment.created_by} does not exist in employee_master`,
-        });
-      }
-    }
-    */
+    // Get materialTotalCost and materialBudgetPercentage from the first assignment (assuming they are the same for all)
+    const { site_id, desc_id, materialTotalCost = 0, materialBudgetPercentage = 0 } = assignments[0];
 
+    // Validate that materialTotalCost and materialBudgetPercentage are provided
+    if (materialTotalCost === undefined || materialBudgetPercentage === undefined) {
+      return res.status(400).json({
+        status: "error",
+        message: "materialTotalCost and materialBudgetPercentage are required",
+      });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Step 1: Get overhead_type_id for material
+    const [overheadRows] = await connection.query('SELECT id FROM overhead WHERE expense_name = ? LIMIT 1', ["materials"]);
+    if (overheadRows.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid overhead type: 'material' not found",
+      });
+    }
+    const overhead_type_id = overheadRows[0].id;
+
+    // Step 3: Find last projection_id
+    const [projectionRows] = await connection.query(
+      "SELECT MAX(projection_id) AS lastProjectionId FROM projection_allocated WHERE site_id = ? AND desc_id = ? AND overhead_type_id = ?",
+      [site_id, desc_id, overhead_type_id]
+    );
+    const nextProjectionId = (projectionRows[0]?.lastProjectionId || 0) + 1;
+
+    console.log('Next Projection ID:', nextProjectionId);
+
+
+    // Step 2: Insert into material_assign
     const insertedIds = [];
     for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by } of assignments) {
       const parsed_desc_id = parseInt(desc_id);
       if (isNaN(parsed_desc_id)) {
+        await connection.rollback();
         return res.status(400).json({
-          status: 'error',
+          status: "error",
           message: `Invalid desc_id: must be convertible to integer`,
         });
       }
-      const [result] = await db.query(
-        'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-        [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by]
+      console.log('Projection ID being used:', nextProjectionId);
+      const [result] = await connection.query(
+        "INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, created_at, projection_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(),?)",
+        [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, nextProjectionId]
       );
       insertedIds.push(result.insertId);
     }
 
+    // Step 4: Insert into projection_allocated
+    await connection.query(
+      "INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage) VALUES (?, ?, ?, ?, ?, ?)",
+      [site_id, desc_id, overhead_type_id, nextProjectionId, materialTotalCost, materialBudgetPercentage]
+    );
+
+    await connection.commit();
     res.status(201).json({
-      status: 'success',
-      message: 'Materials assigned successfully',
+      status: "success",
+      message: "Materials assigned and projection allocated successfully",
       data: { insertedIds },
     });
   } catch (error) {
-    console.error('Error in assignMaterial:', {
-      message: error.message,
-      sqlMessage: error.sqlMessage || 'No SQL message available',
-      stack: error.stack
-    });
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (connection) await connection.rollback();
+    console.error("Error in assignMaterial:", error);
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(400).json({
-        status: 'error',
-        message: 'Invalid reference: pd_id, site_id, item_id, uom_id, desc_id, or created_by does not exist in the database',
+        status: "error",
+        message: "Invalid reference: pd_id, site_id, item_id, uom_id, or desc_id does not exist in the database",
       });
     }
     res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
+      status: "error",
+      message: "Internal server error",
       error: error.message,
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
+
 
 exports.checkDescAssigned = async (req, res) => {
   try {
@@ -1577,6 +1616,7 @@ exports.fetchWorkDescriptions = async (req, res) => {
     });
   }
 };
+
 
 exports.getNextDcNo = async function (req, res) {
   try {

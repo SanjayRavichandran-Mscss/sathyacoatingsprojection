@@ -28,7 +28,7 @@ const LabourAttendance = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get("http://103.118.158.127/api/project/companies");
+        const response = await axios.get("http://localhost:5000/project/companies");
         if (Array.isArray(response.data) && response.data.length > 0) {
           setCompanies(response.data);
         } else {
@@ -47,7 +47,7 @@ const LabourAttendance = () => {
     if (selectedCompany) {
       const fetchProjectsAndSites = async () => {
         try {
-          const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
+          const response = await axios.get("http://localhost:5000/project/projects-with-sites");
           if (Array.isArray(response.data) && response.data.length > 0) {
             const filteredProjects = response.data.filter(project => project.company_id === selectedCompany.value);
             setProjects(filteredProjects);
@@ -103,7 +103,7 @@ const LabourAttendance = () => {
       const fetchWorkDescriptions = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://103.118.158.127/api/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
+          const response = await axios.get(`http://localhost:5000/site-incharge/work-descriptions?site_id=${selectedSite.value}`);
           setWorkDescriptions(response.data.data || []);
           setError(null);
         } catch (err) {
@@ -122,7 +122,7 @@ const LabourAttendance = () => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+            `http://localhost:5000/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
           );
           setAssignedLabours(response.data.data || []);
           // Reset states on refresh
@@ -218,7 +218,7 @@ const LabourAttendance = () => {
         created_by: parseInt(user_id)
       };
       console.log('Sending payload for row save:', payload);
-      const response = await axios.post("http://103.118.158.127/api/site-incharge/save-labour-attendance", payload);
+      const response = await axios.post("http://localhost:5000/site-incharge/save-labour-attendance", payload);
       toast.success(response.data.message);
       // Reset for this row
       setShifts(prev => {
@@ -234,7 +234,7 @@ const LabourAttendance = () => {
       toggleEdit(labour.assignment_id);
       // Refresh full list
       const responseRefresh = await axios.get(
-        `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+        `http://localhost:5000/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
       );
       setAssignedLabours(responseRefresh.data.data || []);
     } catch (err) {
@@ -294,14 +294,14 @@ const LabourAttendance = () => {
         created_by: parseInt(user_id)
       };
       console.log('Sending payload for new attendance:', payload);
-      const response = await axios.post("http://103.118.158.127/api/site-incharge/save-labour-attendance", payload);
+      const response = await axios.post("http://localhost:5000/site-incharge/save-labour-attendance", payload);
       toast.success(response.data.message);
       // Reset states for new rows
       setShifts({});
       setRemarks({});
       // Refresh attendance data
       const responseRefresh = await axios.get(
-        `http://103.118.158.127/api/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
+        `http://localhost:5000/site-incharge/labour-attendance?project_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDesc.value}&entry_date=${selectedDate}`
       );
       setAssignedLabours(responseRefresh.data.data || []);
     } catch (err) {

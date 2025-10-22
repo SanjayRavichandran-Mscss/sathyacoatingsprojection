@@ -134,7 +134,7 @@ const SuppliedMaterials = () => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://103.118.158.127/api/supply/companies");
+      const response = await axios.get("http://localhost:5000/supply/companies");
       setCompanies(
         Array.isArray(response.data)
           ? response.data.map((company) => ({
@@ -157,7 +157,7 @@ const SuppliedMaterials = () => {
     if (!selectedCompany) return;
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get(`http://103.118.158.127/api/supply/sites-by-company/${selectedCompany}`);
+      const response = await axios.get(`http://localhost:5000/supply/sites-by-company/${selectedCompany}`);
       const sitesData = Array.isArray(response.data.data) ? response.data.data : [];
       setAllSites(sitesData);
 
@@ -181,7 +181,7 @@ const SuppliedMaterials = () => {
     if (!company_id) return;
     try {
       setLoading((prev) => ({ ...prev, masterDcNo: true }));
-      const response = await axios.get("http://103.118.158.127/api/supply/master-dc-no", {
+      const response = await axios.get("http://localhost:5000/supply/master-dc-no", {
         params: { company_id },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -209,7 +209,7 @@ const SuppliedMaterials = () => {
     if (!site_id) return;
     try {
       setLoading((prev) => ({ ...prev, dcNo: true }));
-      const response = await axios.get("http://103.118.158.127/api/supply/next-supply-dc-no", {
+      const response = await axios.get("http://localhost:5000/supply/next-supply-dc-no", {
         params: { site_id },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -239,7 +239,7 @@ const SuppliedMaterials = () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
       setError(null);
-      const response = await axios.get("http://103.118.158.127/api/supply/supply-dispatch-details", {
+      const response = await axios.get("http://localhost:5000/supply/supply-dispatch-details", {
         params: { site_id: selectedSite },
       });
       const materials = response.data.data || [];

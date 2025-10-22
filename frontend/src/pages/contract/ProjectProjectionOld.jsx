@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
-import CreatableSelect from "react-select/creatable";
 import Swal from "sweetalert2";
-import { Plus, PlusCircle, Trash2, Loader2 } from "lucide-react";
+import { Plus, PlusCircle, Trash2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import MaterialPlanning from "./MaterialPlanning";
 
@@ -32,10 +31,6 @@ const ProjectProjectionOld = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // New state for material overhead
-  const [materials, setMaterials] = useState([]);
-
-  const [uoms, setUoms] = useState([]);
   const [materialTotalCost, setMaterialTotalCost] = useState(0);
   const [materialBudgetPercentage, setMaterialBudgetPercentage] = useState(0);
 
@@ -47,22 +42,39 @@ const ProjectProjectionOld = () => {
   const [labourTotalCost, setLabourTotalCost] = useState(0);
   const [labourBudgetPercentage, setLabourBudgetPercentage] = useState(0);
 
-  // New state for consumables and transportation
-  // const [consumablesValue, setConsumablesValue] = useState("");
-  // const [consumablesBudgetPercentage, setConsumablesBudgetPercentage] = useState(0);
-  // const [transportationValue, setTransportationValue] = useState("");
-  // const [transportationBudgetPercentage, setTransportationBudgetPercentage] = useState(0);
-
   // Active overhead tab
   const [activeOverheadTab, setActiveOverheadTab] = useState("material");
   const [dynamicOverheads, setDynamicOverheads] = useState({});
+  console.log("Dynamic Overheads:", dynamicOverheads);
   const [selectedDynamicOverheads, setSelectedDynamicOverheads] = useState([]);
+
+  // New state for projection management
+  const [projections, setProjections] = useState([
+    {
+      id: 1,
+      name: "Projection 1",
+      isOpen: true,
+      budgetAllocated: false,
+      materialTotalCost: 0,
+      materialBudgetPercentage: 0,
+      labourCalculationType: "",
+      noOfLabours: "",
+      totalShifts: "",
+      ratePerShift: "",
+      labourTotalCost: 0,
+      labourBudgetPercentage: 0,
+      selectedDynamicOverheads: [],
+      dynamicOverheads: {},
+      activeOverheadTab: "material"
+    }
+  ]);
+  const [currentProjectionId, setCurrentProjectionId] = useState(1);
 
   // ALL EXISTING FUNCTIONS FROM ORIGINAL COMPONENT
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://103.118.158.127/api/admin/companies");
+      const response = await axios.get("http://localhost:5000/admin/companies");
       if (response.data.success) {
         const companyOptions = response.data.data.map((company) => ({
           value: company.company_id,
@@ -83,7 +95,7 @@ const ProjectProjectionOld = () => {
   const fetchProjects = async (companyId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.127/api/admin/projects/${companyId}`);
+      const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
       if (response.data.success) {
         const projectOptions = response.data.data.map((project) => ({
           value: project.pd_id,
@@ -104,7 +116,7 @@ const ProjectProjectionOld = () => {
   const fetchSites = async (projectId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.127/api/admin/sites/${projectId}`);
+      const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
       if (response.data.success) {
         const siteOptions = response.data.data.map((site) => ({
           value: site.site_id,
@@ -126,7 +138,7 @@ const ProjectProjectionOld = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.127/api/admin/work-descriptions-by-site/${siteId}`
+        `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
       );
       if (response.data.success) {
         const descOptions = response.data.data.map((desc) => ({
@@ -149,7 +161,7 @@ const ProjectProjectionOld = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.127/api/admin/po-total-budget/${siteId}/${descId}`
+        `http://localhost:5000/admin/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -170,7 +182,7 @@ const ProjectProjectionOld = () => {
 
   const checkBudgetExists = async (siteId, descId) => {
     try {
-      const response = await axios.get("http://103.118.158.127/api/admin/po-budget", {
+      const response = await axios.get("http://localhost:5000/admin/po-budget", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success && response.data.data) {
@@ -201,182 +213,214 @@ const ProjectProjectionOld = () => {
   };
 
   const fetchOverheads = async (po_budget_id) => {
-  try {
-    const response = await axios.get("http://103.118.158.127/api/admin/overheads", {
-      params: po_budget_id ? { po_budget_id } : {},
-    });
-    if (response.data.success) {
-      setOverheads(response.data.data);
-      const initialChecked = {};
-      const newEntries = {};
-      const initialDynamicOverheads = {};
-      response.data.data.forEach((overhead) => {
-        initialChecked[overhead.id] = overhead.is_default === 1;
-        newEntries[overhead.id] = {
-          splitted_budget: null,
-          percentage: null,
-          actual_value: null,
-          difference_value: null,
-          remarks: "",
-          edited: false,
-        };
-        if (overhead.is_default === 0) {
-          initialDynamicOverheads[overhead.id] = {
-            value: "",
-            budgetPercentage: 0,
-            expense_name: overhead.expense_name,
-          };
-        }
+    try {
+      const response = await axios.get("http://localhost:5000/admin/overheads", {
+        params: po_budget_id ? { po_budget_id } : {},
       });
-      setCheckedExpenses(initialChecked);
-      setActualBudgetEntries(newEntries);
-      setDynamicOverheads(initialDynamicOverheads);
-    } else {
-      setError("Failed to fetch overheads.");
+      if (response.data.success) {
+        setOverheads(response.data.data);
+        const initialChecked = {};
+        const newEntries = {};
+        const initialDynamicOverheads = {};
+        response.data.data.forEach((overhead) => {
+          initialChecked[overhead.id] = overhead.is_default === 1;
+          newEntries[overhead.id] = {
+            splitted_budget: null,
+            percentage: null,
+            actual_value: null,
+            difference_value: null,
+            remarks: "",
+            edited: false,
+          };
+          if (overhead.is_default === 0) {
+            initialDynamicOverheads[overhead.id] = {
+              value: "",
+              budgetPercentage: 0,
+              expense_name: overhead.expense_name,
+            };
+          }
+        });
+        setCheckedExpenses(initialChecked);
+        setActualBudgetEntries(newEntries);
+        setDynamicOverheads(initialDynamicOverheads);
+      } else {
+        setError("Failed to fetch overheads.");
+      }
+    } catch (error) {
+      console.error("Error fetching overheads:", error);
+      setError("Failed to load overheads. Please try again.");
     }
-  } catch (error) {
-    console.error("Error fetching overheads:", error);
-    setError("Failed to load overheads. Please try again.");
-  }
-};
-
+  };
 
   const fetchActualBudgetEntries = async (po_budget_id) => {
-  try {
-    const response = await axios.get(`http://103.118.158.127/api/admin/actual-budget/${po_budget_id}`);
-    if (response.data.success) {
-      const entries = response.data.data || {};
-      const processedEntries = {};
-      const selectedOverheads = [];
-      Object.keys(entries).forEach((overheadId) => {
-        const val = parseFloat(entries[overheadId].splitted_budget) || 0;
-        const perc = existingBudget?.total_budget_value > 0 ? (val / existingBudget.total_budget_value * 100).toFixed(2) : "0.00";
-        processedEntries[overheadId] = {
-          ...entries[overheadId],
-          percentage: perc,
-          edited: true,
-        };
-        const overhead = overheads.find((oh) => oh.id === parseInt(overheadId));
-        if (overhead && overhead.is_default === 0) {
-          selectedOverheads.push(overhead);
-          setDynamicOverheads((prev) => ({
-            ...prev,
-            [overheadId]: {
-              value: val.toString(),
-              budgetPercentage: parseFloat(perc),
-              expense_name: overhead.expense_name,
-            },
-          }));
-        }
-      });
-      setActualBudgetEntries(processedEntries);
-      setSelectedDynamicOverheads(selectedOverheads);
-      setIsAllocated(Object.keys(processedEntries).length > 0);
-      if (Object.keys(processedEntries).length > 0) {
-        const checked = {};
-        Object.keys(processedEntries).forEach((id) => {
-          checked[id] = true;
+    try {
+      const response = await axios.get(`http://localhost:5000/admin/actual-budget/${po_budget_id}`);
+      if (response.data.success) {
+        const entries = response.data.data || {};
+        const processedEntries = {};
+        const selectedOverheads = [];
+        Object.keys(entries).forEach((overheadId) => {
+          const val = parseFloat(entries[overheadId].splitted_budget) || 0;
+          const perc = existingBudget?.total_budget_value > 0 ? (val / existingBudget.total_budget_value * 100).toFixed(2) : "0.00";
+          processedEntries[overheadId] = {
+            ...entries[overheadId],
+            percentage: perc,
+            edited: true,
+          };
+          const overhead = overheads.find((oh) => oh.id === parseInt(overheadId));
+          if (overhead && overhead.is_default === 0) {
+            selectedOverheads.push(overhead);
+            setDynamicOverheads((prev) => ({
+              ...prev,
+              [overheadId]: {
+                value: val.toString(),
+                budgetPercentage: parseFloat(perc),
+                expense_name: overhead.expense_name,
+              },
+            }));
+          }
         });
-        setCheckedExpenses(checked);
+        setActualBudgetEntries(processedEntries);
+        setSelectedDynamicOverheads(selectedOverheads);
+        setIsAllocated(Object.keys(processedEntries).length > 0);
+        if (Object.keys(processedEntries).length > 0) {
+          const checked = {};
+          Object.keys(processedEntries).forEach((id) => {
+            checked[id] = true;
+          });
+          setCheckedExpenses(checked);
+        }
+      } else {
+        setError(response.data.message || "Failed to fetch actual budget entries.");
       }
-    } else {
-      setError(response.data.message || "Failed to fetch actual budget entries.");
+    } catch (error) {
+      console.error("Error fetching actual budget entries:", error);
+      setError("Failed to load actual budget entries. Please try again.");
     }
-  } catch (error) {
-    console.error("Error fetching actual budget entries:", error);
-    setError("Failed to load actual budget entries. Please try again.");
-  }
-};
+  };
+
+  // Projection management functions
+  const addNewProjection = () => {
+    const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
+    const newProjection = {
+      id: newProjectionId,
+      name: `Projection ${newProjectionId}`,
+      isOpen: false,
+      budgetAllocated: false,
+      materialTotalCost: 0,
+      materialBudgetPercentage: 0,
+      labourCalculationType: "",
+      noOfLabours: "",
+      totalShifts: "",
+      ratePerShift: "",
+      labourTotalCost: 0,
+      labourBudgetPercentage: 0,
+      selectedDynamicOverheads: [],
+      dynamicOverheads: {},
+      activeOverheadTab: "material"
+    };
+    setProjections([...projections, newProjection]);
+  };
+
+  const toggleProjection = (projectionId) => {
+    setProjections(projections.map(p => 
+      p.id === projectionId ? { ...p, isOpen: !p.isOpen } : p
+    ));
+  };
+
+  const updateProjectionField = (projectionId, field, value) => {
+    setProjections(projections.map(p => 
+      p.id === projectionId ? { ...p, [field]: value } : p
+    ));
+  };
+
+  const getCurrentProjection = () => {
+    return projections.find(p => p.id === currentProjectionId) || projections[0];
+  };
 
   const handleTotalCostChange = (totalCost) => {
     console.log("Received total cost from MaterialPlanning:", totalCost);
-    setMaterialTotalCost(Number(totalCost) || 0);
+    const currentProjection = getCurrentProjection();
+    const costValue = Number(totalCost) || 0;
+    
+    updateProjectionField(currentProjection.id, 'materialTotalCost', costValue);
     
     if (existingBudget?.total_budget_value) {
-      const percentage = (totalCost / existingBudget.total_budget_value) * 100;
-      setMaterialBudgetPercentage(percentage);
+      const percentage = (costValue / existingBudget.total_budget_value) * 100;
+      updateProjectionField(currentProjection.id, 'materialBudgetPercentage', percentage);
     }
   };
 
-  const calculateLabourTotalCost = () => {
+  const calculateLabourTotalCost = (projection) => {
     let total = 0;
-    const rate = parseFloat(ratePerShift) || 0;
+    const rate = parseFloat(projection.ratePerShift) || 0;
 
-    if (labourCalculationType === "no_of_labours") {
-      const labours = parseFloat(noOfLabours) || 0;
+    if (projection.labourCalculationType === "no_of_labours") {
+      const labours = parseFloat(projection.noOfLabours) || 0;
       total = labours * rate;
-    } else if (labourCalculationType === "total_shifts") {
-      const shifts = parseFloat(totalShifts) || 0;
+    } else if (projection.labourCalculationType === "total_shifts") {
+      const shifts = parseFloat(projection.totalShifts) || 0;
       total = shifts * rate;
     }
 
-    setLabourTotalCost(total);
+    updateProjectionField(projection.id, 'labourTotalCost', total);
     
     if (existingBudget?.total_budget_value) {
       const percentage = (total / existingBudget.total_budget_value) * 100;
-      setLabourBudgetPercentage(percentage);
+      updateProjectionField(projection.id, 'labourBudgetPercentage', percentage);
     }
   };
 
-  // const calculateConsumablesBudgetPercentage = () => {
-  //   const value = parseFloat(consumablesValue) || 0;
-  //   if (existingBudget?.total_budget_value) {
-  //     const percentage = (value / existingBudget.total_budget_value) * 100;
-  //     setConsumablesBudgetPercentage(percentage);
-  //   }
-  // };
+  const calculateDynamicOverheadBudgetPercentage = (projectionId, overheadId, value) => {
+    const parsedValue = parseFloat(value) || 0;
+    const projection = projections.find(p => p.id === projectionId);
+    
+    if (existingBudget?.total_budget_value && projection) {
+      const percentage = (parsedValue / existingBudget.total_budget_value) * 100;
+      const updatedDynamicOverheads = {
+        ...projection.dynamicOverheads,
+        [overheadId]: {
+          ...projection.dynamicOverheads[overheadId],
+          value: parsedValue,
+          budgetPercentage: percentage,
+        },
+      };
+      updateProjectionField(projectionId, 'dynamicOverheads', updatedDynamicOverheads);
+    }
+  };
 
-  // const calculateTransportationBudgetPercentage = () => {
-  //   const value = parseFloat(transportationValue) || 0;
-  //   if (existingBudget?.total_budget_value) {
-  //     const percentage = (value / existingBudget.total_budget_value) * 100;
-  //     setTransportationBudgetPercentage(percentage);
-  //   }
-  // };
- const calculateDynamicOverheadBudgetPercentage = (overheadId, value) => {
-  const parsedValue = parseFloat(value) || 0;
-  if (existingBudget?.total_budget_value) {
-    const percentage = (parsedValue / existingBudget.total_budget_value) * 100;
-    setDynamicOverheads((prev) => ({
-      ...prev,
-      [overheadId]: {
-        ...prev[overheadId],
-        value: parsedValue,
-        budgetPercentage: percentage,
-      },
-    }));
-  }
-};
-
- const calculateRemainingBudget = () => {
-  const dynamicOverheadTotal = Object.values(dynamicOverheads).reduce(
-    (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
-    0
-  );
-  const totalAllocated = materialTotalCost + labourTotalCost + dynamicOverheadTotal;
-  const budgetValue = existingBudget?.total_budget_value || 0;
-  return budgetValue - totalAllocated;
-};
+  const calculateRemainingBudget = (projection) => {
+    const dynamicOverheadTotal = Object.values(projection.dynamicOverheads || {}).reduce(
+      (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+      0
+    );
+    const totalAllocated = projection.materialTotalCost + projection.labourTotalCost + dynamicOverheadTotal;
+    const budgetValue = existingBudget?.total_budget_value || 0;
+    return budgetValue - totalAllocated;
+  };
 
   // SAVE FUNCTIONS FOR NEW OVERHEADS
- 
-  const saveLabourOverhead = async () => {
+  const saveLabourOverhead = async (projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection) return;
+
     try {
       const payload = {
         site_id: selectedSite.value,
         desc_id: selectedWorkDescription.value,
-        calculation_type: labourCalculationType,
-        no_of_labours: labourCalculationType === "no_of_labours" ? parseInt(noOfLabours) : null,
-        total_shifts: labourCalculationType === "total_shifts" ? parseInt(totalShifts) : null,
-        rate_per_shift: parseFloat(ratePerShift),
-        total_cost: labourTotalCost,
+        calculation_type: projection.labourCalculationType,
+        no_of_labours: projection.labourCalculationType === "no_of_labours" ? parseInt(projection.noOfLabours) : null,
+        total_shifts: projection.labourCalculationType === "total_shifts" ? parseInt(projection.totalShifts) : null,
+        rate_per_shift: parseFloat(projection.ratePerShift),
+        total_cost: projection.labourTotalCost,
         overhead_type: "labours",
-        labourBudgetPercentage: labourBudgetPercentage
+        labourBudgetPercentage: projection.labourBudgetPercentage,
+        projection_id: projectionId
       };
 
       console.log("Labour Overhead Payload:", payload);
 
-      const response = await axios.post("http://103.118.158.127/api/admin/save-labour-overhead", payload);
+      const response = await axios.post("http://localhost:5000/admin/save-labour-overhead", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -399,98 +443,100 @@ const ProjectProjectionOld = () => {
     }
   };
 
-  // const saveConsumablesOverhead = async () => {
-  //   try {
-  //     const payload = {
-  //       site_id: selectedSite.value,
-  //       desc_id: selectedWorkDescription.value,
-  //       value: parseFloat(consumablesValue),
-  //       overhead_type: "consumables"
-  //     };
+  const saveDynamicOverhead = async (projectionId, overheadId, overheadName) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection) return;
 
-  //     const response = await axios.post("http://103.118.158.127/api/admin/save-overhead-value", payload);
-      
-  //     if (response.data.success) {
-  //       Swal.fire({
-  //         icon: "success",
-  //         title: "Success",
-  //         text: "Consumables overhead saved successfully!",
-  //         confirmButtonColor: "#4f46e5",
-  //         timer: 3000,
-  //         timerProgressBar: true,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error saving consumables overhead:", error);
-  //   }
-  // };
+    try {
+      if (!selectedSite?.value || !selectedWorkDescription?.value) {
+        Swal.fire({
+          icon: "warning",
+          title: "Invalid Selection",
+          text: "Please select a site and work description before saving.",
+          confirmButtonColor: "#4f46e5",
+        });
+        return;
+      }
 
-  // const saveTransportationOverhead = async () => {
-  //   try {
-  //     const payload = {
-  //       site_id: selectedSite.value,
-  //       desc_id: selectedWorkDescription.value,
-  //       value: parseFloat(transportationValue),
-  //       overhead_type: "transportation"
-  //     };
+      const overheadEntry = projection.dynamicOverheads[overheadId];
+      if (!overheadEntry || typeof overheadEntry !== 'object') {
+        console.warn(`No valid data for overhead ID: ${overheadId}`);
+        Swal.fire({
+          icon: "error",
+          title: "Invalid Data",
+          text: `${overheadName} data is missing or invalid.`,
+          confirmButtonColor: "#4f46e5",
+        });
+        return;
+      }
 
-  //     const response = await axios.post("http://103.118.158.127/api/admin/save-overhead-value", payload);
-      
-  //     if (response.data.success) {
-  //       Swal.fire({
-  //         icon: "success",
-  //         title: "Success",
-  //         text: "Transportation overhead saved successfully!",
-  //         confirmButtonColor: "#4f46e5",
-  //         timer: 3000,
-  //         timerProgressBar: true,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error saving transportation overhead:", error);
-  //   }
-  // };
+      const rawValue = overheadEntry.value ?? 0;
+      const rawPercentage = overheadEntry.budgetPercentage ?? 0;
+      const value = parseFloat(rawValue);
+      const percentage = parseFloat(rawPercentage);
 
- const saveDynamicOverhead = async (overheadId, overheadName) => {
-  try {
-    const payload = {
-      site_id: selectedSite.value,
-      desc_id: selectedWorkDescription.value,
-      value: parseFloat(dynamicOverheads[overheadId]?.value) || 0,
-      overhead_type: overheadName,
-    };
+      if (isNaN(value) || isNaN(percentage)) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid Numbers",
+          text: `${overheadName} value or percentage is not a valid number.`,
+          confirmButtonColor: "#4f46e5",
+        });
+        return;
+      }
 
-    const response = await axios.post("http://103.118.158.127/api/admin/save-overhead-value", payload);
+      const payload = {
+        site_id: selectedSite.value,
+        desc_id: selectedWorkDescription.value,
+        value,
+        percentage,
+        overhead_type: overheadName,
+        projection_id: projectionId,
+      };
 
-    if (response.data.success) {
+      const response = await axios.post("http://localhost:5000/admin/save-dynamic-overhead-values", payload);
+
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `${overheadName} overhead saved successfully!`,
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      } else {
+        throw new Error(response.data.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error(`Error saving ${overheadName} overhead:`, error);
+
+      let errorMessage = "Failed to save. Please try again.";
+      if (error.response) {
+        errorMessage = error.response.data.message || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = "Network error: Unable to reach server. Check if backend is running.";
+      } else if (error.message.includes("Invalid")) {
+        errorMessage = error.message;
+      }
+
       Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: `${overheadName} overhead saved successfully!`,
+        icon: "error",
+        title: "Error",
+        text: errorMessage,
         confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
       });
     }
-  } catch (error) {
-    console.error(`Error saving ${overheadName} overhead:`, error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: `Failed to save ${overheadName} overhead. Please try again.`,
-      confirmButtonColor: "#4f46e5",
-    });
-  }
-};
+  };
 
-  // ALL REMAINING EXISTING FUNCTIONS (savePoBudget, saveOverhead, allocateBudget, etc.)
-  const savePoBudget = async () => {
+  const savePoBudget = async (projectionId) => {
     try {
-      const response = await axios.post("http://103.118.158.127/api/admin/save-po-budget", {
+      const response = await axios.post("http://localhost:5000/admin/save-po-budget", {
         site_id: selectedSite.value,
         desc_id: selectedWorkDescription.value,
         total_po_value: budgetData.total_po_value,
         total_budget_value: parseFloat(budgetValue) || 0,
+        projection_id: projectionId,
       });
       if (response.data.success) {
         await Swal.fire({
@@ -502,6 +548,7 @@ const ProjectProjectionOld = () => {
           timerProgressBar: true,
         });
         await checkBudgetExists(selectedSite.value, selectedWorkDescription.value);
+        updateProjectionField(projectionId, 'budgetAllocated', true);
       } else {
         await Swal.fire({
           icon: "error",
@@ -525,6 +572,46 @@ const ProjectProjectionOld = () => {
     }
   };
 
+  const finalSubmissionProjection = async (projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection) return;
+
+    try {
+      const response = await axios.post("http://localhost:5000/admin/final-projection-submission", {
+        site_id: selectedSite.value,
+        desc_id: selectedWorkDescription.value,
+        projection_id: projectionId,
+        projection_data: {
+          materialTotalCost: projection.materialTotalCost,
+          materialBudgetPercentage: projection.materialBudgetPercentage,
+          labourTotalCost: projection.labourTotalCost,
+          labourBudgetPercentage: projection.labourBudgetPercentage,
+          dynamicOverheads: projection.dynamicOverheads,
+        }
+      });
+
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `${projection.name} submitted successfully!`,
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error in final submission:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to submit projection. Please try again.",
+        confirmButtonColor: "#4f46e5",
+      });
+    }
+  };
+
+  // ALL REMAINING EXISTING FUNCTIONS (saveOverhead, allocateBudget, etc.)
   const saveOverhead = async () => {
     const { value: expense_name } = await Swal.fire({
       title: "Add New Overhead",
@@ -544,7 +631,7 @@ const ProjectProjectionOld = () => {
 
     if (expense_name) {
       try {
-        const response = await axios.post("http://103.118.158.127/api/admin/save-overhead", {
+        const response = await axios.post("http://localhost:5000/admin/save-overhead", {
           expense_name,
         });
         if (response.data.success) {
@@ -659,7 +746,7 @@ const ProjectProjectionOld = () => {
     }
 
     try {
-      const response = await axios.post("http://103.118.158.127/api/admin/save-actual-budget", {
+      const response = await axios.post("http://localhost:5000/admin/save-actual-budget", {
         po_budget_id: existingBudget.id,
         actual_budget_entries: entries,
       });
@@ -674,7 +761,7 @@ const ProjectProjectionOld = () => {
         });
         await fetchActualBudgetEntries(existingBudget.id);
         try {
-          await axios.get("http://103.118.158.127/api/site-incharge/calculate-labour-budget");
+          await axios.get("http://localhost:5000/site-incharge/calculate-labour-budget");
         } catch (error) {
           console.error("Error calling calculate-labour-budget API:", error.message);
         }
@@ -702,85 +789,85 @@ const ProjectProjectionOld = () => {
   };
 
   const addNewOverhead = async () => {
-  const { value: expense_name } = await Swal.fire({
-    title: "Add New Overhead",
-    input: "text",
-    inputLabel: "Expense Name",
-    inputPlaceholder: "Enter expense name",
-    showCancelButton: true,
-    confirmButtonText: "Save",
-    cancelButtonText: "Cancel",
-    confirmButtonColor: "#4f46e5",
-    inputValidator: (value) => {
-      if (!value) {
-        return "Expense name is required!";
-      }
-      if (overheads.some((oh) => oh.expense_name.toLowerCase() === value.toLowerCase())) {
-        return "Expense name already exists!";
-      }
-    },
-  });
+    const { value: expense_name } = await Swal.fire({
+      title: "Add New Overhead",
+      input: "text",
+      inputLabel: "Expense Name",
+      inputPlaceholder: "Enter expense name",
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#4f46e5",
+      inputValidator: (value) => {
+        if (!value) {
+          return "Expense name is required!";
+        }
+        if (overheads.some((oh) => oh.expense_name.toLowerCase() === value.toLowerCase())) {
+          return "Expense name already exists!";
+        }
+      },
+    });
 
-  if (expense_name) {
-    try {
-      const response = await axios.post("http://103.118.158.127/api/admin/save-overhead", {
-        expense_name,
-      });
-      if (response.data.success) {
-        const newOverhead = response.data.data;
-        setOverheads((prev) => [...prev, newOverhead]);
-        setDynamicOverheads((prev) => ({
-          ...prev,
-          [newOverhead.id]: {
-            value: "",
-            budgetPercentage: 0,
-            expense_name: newOverhead.expense_name,
-          },
-        }));
-        setCheckedExpenses((prev) => ({
-          ...prev,
-          [newOverhead.id]: false,
-        }));
-        setActualBudgetEntries((prev) => ({
-          ...prev,
-          [newOverhead.id]: {
-            splitted_budget: null,
-            percentage: null,
-            actual_value: null,
-            difference_value: null,
-            remarks: "",
-            edited: false,
-          },
-        }));
-        // Automatically select the new overhead
-        setSelectedDynamicOverheads((prev) => [...prev, newOverhead]);
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Overhead added successfully!",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
+    if (expense_name) {
+      try {
+        const response = await axios.post("http://localhost:5000/admin/save-overhead", {
+          expense_name,
         });
-      } else {
+        if (response.data.success) {
+          const newOverhead = response.data.data;
+          setOverheads((prev) => [...prev, newOverhead]);
+          setDynamicOverheads((prev) => ({
+            ...prev,
+            [newOverhead.id]: {
+              value: "",
+              budgetPercentage: 0,
+              expense_name: newOverhead.expense_name,
+            },
+          }));
+          setCheckedExpenses((prev) => ({
+            ...prev,
+            [newOverhead.id]: false,
+          }));
+          setActualBudgetEntries((prev) => ({
+            ...prev,
+            [newOverhead.id]: {
+              splitted_budget: null,
+              percentage: null,
+              actual_value: null,
+              difference_value: null,
+              remarks: "",
+              edited: false,
+            },
+          }));
+          setSelectedDynamicOverheads((prev) => [...prev, newOverhead]);
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Overhead added successfully!",
+            confirmButtonColor: "#4f46e5",
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: response.data.message,
+            confirmButtonColor: "#4f46e5",
+          });
+        }
+      } catch (error) {
+        console.error("Error adding new overhead:", error);
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: response.data.message,
+          text: "Failed to add overhead. Please try again.",
           confirmButtonColor: "#4f46e5",
         });
       }
-    } catch (error) {
-      console.error("Error adding new overhead:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to add overhead. Please try again.",
-        confirmButtonColor: "#4f46e5",
-      });
     }
-  }
-};
+  };
+
   // ALL EXISTING HANDLERS
   const handleBudgetPercentageChange = (e) => {
     let percentage = e.target.value;
@@ -952,24 +1039,28 @@ const ProjectProjectionOld = () => {
       },
     }));
   };
-  const handleSelectOverhead = (overhead) => {
-  if (!selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
-    setSelectedDynamicOverheads((prev) => [...prev, overhead]);
-  }
-};
-const handleRemoveOverhead = (overheadId) => {
-  setSelectedDynamicOverheads((prev) => prev.filter((oh) => oh.id !== overheadId));
-  setDynamicOverheads((prev) => {
-    const newOverheads = { ...prev };
-    newOverheads[overheadId] = {
-      ...newOverheads[overheadId],
+
+  const handleSelectOverhead = (overhead, projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection.selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
+      const updatedSelectedOverheads = [...projection.selectedDynamicOverheads, overhead];
+      updateProjectionField(projectionId, 'selectedDynamicOverheads', updatedSelectedOverheads);
+    }
+  };
+
+  const handleRemoveOverhead = (overheadId, projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    const updatedSelectedOverheads = projection.selectedDynamicOverheads.filter((oh) => oh.id !== overheadId);
+    updateProjectionField(projectionId, 'selectedDynamicOverheads', updatedSelectedOverheads);
+    
+    const updatedDynamicOverheads = { ...projection.dynamicOverheads };
+    updatedDynamicOverheads[overheadId] = {
+      ...updatedDynamicOverheads[overheadId],
       value: "",
       budgetPercentage: 0,
     };
-    return newOverheads;
-  });
-};
-
+    updateProjectionField(projectionId, 'dynamicOverheads', updatedDynamicOverheads);
+  };
 
   const computeSums = () => {
     let sumPerc = 0;
@@ -992,7 +1083,7 @@ const handleRemoveOverhead = (overheadId) => {
       budgetPercentage &&
       budgetValue
     ) {
-      await savePoBudget();
+      await savePoBudget(1);
     } else {
       await Swal.fire({
         icon: "error",
@@ -1005,24 +1096,16 @@ const handleRemoveOverhead = (overheadId) => {
     }
   };
 
-  const remainingBudget = calculateRemainingBudget();
-
   // ALL EXISTING USEEFFECTS PLUS NEW ONES
   useEffect(() => {
     fetchCompanies();
   }, []);
 
   useEffect(() => {
-    calculateLabourTotalCost();
-  }, [labourCalculationType, noOfLabours, totalShifts, ratePerShift, existingBudget]);
-
-  // useEffect(() => {
-  //   calculateConsumablesBudgetPercentage();
-  // }, [consumablesValue, existingBudget]);
-
-  // useEffect(() => {
-  //   calculateTransportationBudgetPercentage();
-  // }, [transportationValue, existingBudget]);
+    projections.forEach(projection => {
+      calculateLabourTotalCost(projection);
+    });
+  }, [projections.map(p => p.labourCalculationType + p.noOfLabours + p.totalShifts + p.ratePerShift).join(','), existingBudget]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -1133,19 +1216,19 @@ const handleRemoveOverhead = (overheadId) => {
     }
   }, [selectedSite, selectedWorkDescription]);
 
-useEffect(() => {
-  if (existingBudget && existingBudget.id) {
-    fetchOverheads(existingBudget.id);
-    fetchActualBudgetEntries(existingBudget.id);
-  } else {
-    setOverheads([]);
-    setCheckedExpenses({});
-    setActualBudgetEntries({});
-    setDynamicOverheads({});
-    setSelectedDynamicOverheads([]);
-    setIsAllocated(false);
-  }
-}, [existingBudget]);
+  useEffect(() => {
+    if (existingBudget && existingBudget.id) {
+      fetchOverheads(existingBudget.id);
+      fetchActualBudgetEntries(existingBudget.id);
+    } else {
+      setOverheads([]);
+      setCheckedExpenses({});
+      setActualBudgetEntries({});
+      setDynamicOverheads({});
+      setSelectedDynamicOverheads([]);
+      setIsAllocated(false);
+    }
+  }, [existingBudget]);
 
   // CHART CALCULATIONS
   const chartData = existingBudget && actualBudgetEntries ? (() => {
@@ -1306,300 +1389,395 @@ useEffect(() => {
               </span>
             </div>
 
-            {/* Budget Input Form */}
+            {/* Current Selection, Budget Info, Allocation Status */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Budget Percentage (%)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  max="100"
-                  min="0"
-                  value={budgetPercentage}
-                  onChange={handleBudgetPercentageChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  placeholder="Enter percentage"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Budget Percentage: {budgetPercentage}%
+                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Current Selection
+                </h4>
+                <p className="text-sm">
+                  Company: {selectedCompany?.label || "Not selected"}
+                </p>
+                <p className="text-sm">
+                  Project: {selectedProject?.label || "Not selected"}
+                </p>
+                <p className="text-sm">Site: {selectedSite?.label || "Not selected"}</p>
+                <p className="text-sm">
+                  Work Description: {selectedWorkDescription?.label || "Not selected"}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Budget Value (Rs.)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={budgetValue}
-                  onChange={handleBudgetValueChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  placeholder="Enter budget value"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Budget Value: Rs.{budgetValue}
+                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Budget Information
+                </h4>
+                <p className="text-sm">
+                  PO Value: {budgetData ? `Rs.${budgetData.total_po_value.toFixed(2)}` : "Not available"}
+                </p>
+                <p className="text-sm">
+                  Budget Value: {existingBudget ? `Rs.${existingBudget.total_budget_value.toFixed(2)}` : "Not set"}
+                </p>
+                <p className="text-sm">
+                  Budget Percentage: {existingBudget ? `${budgetPercentage}%` : "Not set"}
                 </p>
               </div>
 
-              <div className="flex items-end">
-                <button
-                  onClick={handleSubmit}
-                  className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="animate-spin inline-block mr-2" size={16} />
-                  ) : null}
-                  Save Budget
-                </button>
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Allocation Status
+                </h4>
+                <p className="text-sm">
+                  Status: {isAllocated ? "Budget Allocated" : "Pending Allocation"}
+                </p>
+                <p className="text-sm">
+                  Total Overheads: {overheads.length}
+                </p>
+                <p className="text-sm">
+                  Selected Overheads: {Object.values(checkedExpenses).filter(Boolean).length}
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* New Overhead Allocation Section */}
+        {/* New Overhead Allocation Section - Projection-wise */}
         {existingBudget && (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Overhead Allocation</h2>
-
-            {/* Tab Navigation */}
-            <div className="flex space-x-2 mb-6 border-b overflow-x-auto">
-              {[
-                { key: "material", label: "Material" },
-                { key: "labour", label: "Labour" },
-                ...selectedDynamicOverheads.map((overhead) => ({
-                  key: `overhead-${overhead.id}`,
-                  label: overhead.expense_name,
-                })),
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  className={`px-4 py-2 font-medium whitespace-nowrap ${
-                    activeOverheadTab === tab.key
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-indigo-600"
-                  }`}
-                  onClick={() => setActiveOverheadTab(tab.key)}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">New Overhead Allocation Section</h2>
               <button
-                onClick={() => {
-                  Swal.fire({
-                    title: "Select Overhead",
-                    input: "select",
-                    inputOptions: overheads
-                      .filter((oh) => oh.is_default === 0)
-                      .filter((oh) => !selectedDynamicOverheads.some((selected) => selected.id === oh.id))
-                      .reduce((options, overhead) => {
-                        options[overhead.id] = overhead.expense_name;
-                        return options;
-                      }, {}),
-                    inputPlaceholder: "Select an overhead",
-                    showCancelButton: true,
-                    confirmButtonText: "Add",
-                    confirmButtonColor: "#4f46e5",
-                    showDenyButton: true,
-                    denyButtonText: "Add New Overhead",
-                    denyButtonColor: "#22c55e",
-                    inputValidator: (value) => {
-                      if (!value) {
-                        return "Please select an overhead!";
-                      }
-                    },
-                  }).then((result) => {
-                    if (result.isConfirmed) {
-                      const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
-                      handleSelectOverhead(selectedOverhead);
-                      setActiveOverheadTab(`overhead-${selectedOverhead.id}`); // Switch to new tab
-                    } else if (result.isDenied) {
-                      addNewOverhead();
-                    }
-                  });
-                }}
+                onClick={addNewProjection}
                 className="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
               >
                 <PlusCircle className="mr-2" size={16} />
-                Add Overhead
+                Add Projection
               </button>
             </div>
 
-            {/* Material Overhead Tab */}
-            {activeOverheadTab === "material" && (
-              <div>
-                <h3 className="text-lg font-medium mb-4">Material Overhead</h3>
-                <MaterialPlanning
-                  selectedCompany={selectedCompany}
-                  selectedProject={selectedProject}
-                  selectedSite={selectedSite}
-                  selectedWorkDesc={selectedWorkDescription}
-                  existingBudget={existingBudget}
-                  onTotalCostChange={handleTotalCostChange}
-                />
-              </div>
-            )}
-
-            {/* Labour Overhead Tab */}
-            {activeOverheadTab === "labour" && (
-              <div>
-                <h3 className="text-lg font-medium mb-4">Labour Overhead</h3>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Calculation Type</label>
-                    <select
-                      value={labourCalculationType}
-                      onChange={(e) => setLabourCalculationType(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="">Select Type</option>
-                      <option value="no_of_labours">No of Labours</option>
-                      <option value="total_shifts">Total Estimated Shifts</option>
-                    </select>
+            {/* Projection Accordions */}
+            {projections.map((projection) => (
+              <div key={projection.id} className="border border-gray-200 rounded-lg mb-4">
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                  onClick={() => toggleProjection(projection.id)}
+                >
+                  <h3 className="text-lg font-medium">{projection.name}</h3>
+                  <div className="flex items-center space-x-2">
+                    {projection.budgetAllocated && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        Budget Allocated
+                      </span>
+                    )}
+                    {projection.isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                   </div>
                 </div>
-                {labourCalculationType && (
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    {labourCalculationType === "no_of_labours" && (
-                      <div>
-                        <label className="block text-sm font-medium mb-2">No of Labours</label>
-                        <input
-                          type="number"
-                          value={noOfLabours}
-                          onChange={(e) => setNoOfLabours(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="Enter number of labours"
-                        />
+
+                {projection.isOpen && (
+                  <div className="p-4 border-t border-gray-200">
+                    {/* Budget Allocation for this projection */}
+                    {!projection.budgetAllocated && (
+                      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                        <h4 className="text-lg font-medium mb-3">Budget Allocation</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Budget Percentage (%)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              max="100"
+                              min="0"
+                              value={budgetPercentage}
+                              onChange={handleBudgetPercentageChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              placeholder="Enter percentage"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Budget Value (Rs.)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={budgetValue}
+                              onChange={handleBudgetValueChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              placeholder="Enter budget value"
+                            />
+                          </div>
+
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => savePoBudget(projection.id)}
+                              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <Loader2 className="animate-spin inline-block mr-2" size={16} />
+                              ) : null}
+                              Save Budget
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
-                    {labourCalculationType === "total_shifts" && (
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
-                        <input
-                          type="number"
-                          value={totalShifts}
-                          onChange={(e) => setTotalShifts(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          placeholder="Enter total shifts"
-                        />
-                      </div>
+
+                    {/* Overhead Allocation Tabs */}
+                    {projection.budgetAllocated && (
+                      <>
+                        <div className="flex space-x-2 mb-6 border-b overflow-x-auto">
+                          {[
+                            { key: "material", label: "Material" },
+                            { key: "labour", label: "Labour" },
+                            ...projection.selectedDynamicOverheads.map((overhead) => ({
+                              key: `overhead-${overhead.id}`,
+                              label: overhead.expense_name,
+                            })),
+                          ].map((tab) => (
+                            <button
+                              key={tab.key}
+                              className={`px-4 py-2 font-medium whitespace-nowrap ${
+                                projection.activeOverheadTab === tab.key
+                                  ? "text-indigo-600 border-b-2 border-indigo-600"
+                                  : "text-gray-600 hover:text-indigo-600"
+                              }`}
+                              onClick={() => updateProjectionField(projection.id, 'activeOverheadTab', tab.key)}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => {
+                              Swal.fire({
+                                title: "Select Overhead",
+                                input: "select",
+                                inputOptions: overheads
+                                  .filter((oh) => oh.is_default === 0)
+                                  .filter((oh) => !projection.selectedDynamicOverheads.some((selected) => selected.id === oh.id))
+                                  .reduce((options, overhead) => {
+                                    options[overhead.id] = overhead.expense_name;
+                                    return options;
+                                  }, {}),
+                                inputPlaceholder: "Select an overhead",
+                                showCancelButton: true,
+                                confirmButtonText: "Add",
+                                confirmButtonColor: "#4f46e5",
+                                showDenyButton: true,
+                                denyButtonText: "Add New Overhead",
+                                denyButtonColor: "#22c55e",
+                                inputValidator: (value) => {
+                                  if (!value) {
+                                    return "Please select an overhead!";
+                                  }
+                                },
+                              }).then((result) => {
+                                if (result.isConfirmed) {
+                                  const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
+                                  handleSelectOverhead(selectedOverhead, projection.id);
+                                  updateProjectionField(projection.id, 'activeOverheadTab', `overhead-${selectedOverhead.id}`);
+                                } else if (result.isDenied) {
+                                  addNewOverhead();
+                                }
+                              });
+                            }}
+                            className="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
+                          >
+                            <PlusCircle className="mr-2" size={16} />
+                            Add Overhead
+                          </button>
+                        </div>
+
+                        {/* Material Overhead Tab */}
+                        {projection.activeOverheadTab === "material" && (
+                          <div>
+                            <h4 className="text-lg font-medium mb-4">Material Overhead</h4>
+                            <MaterialPlanning
+                              selectedCompany={selectedCompany}
+                              selectedProject={selectedProject}
+                              selectedSite={selectedSite}
+                              selectedWorkDesc={selectedWorkDescription}
+                              existingBudget={existingBudget}
+                              onTotalCostChange={handleTotalCostChange}
+                            />
+                          </div>
+                        )}
+
+                        {/* Labour Overhead Tab */}
+                        {projection.activeOverheadTab === "labour" && (
+                          <div>
+                            <h4 className="text-lg font-medium mb-4">Labour Overhead</h4>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Calculation Type</label>
+                                <select
+                                  value={projection.labourCalculationType}
+                                  onChange={(e) => updateProjectionField(projection.id, 'labourCalculationType', e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded-lg"
+                                >
+                                  <option value="">Select Type</option>
+                                  <option value="no_of_labours">No of Labours</option>
+                                  <option value="total_shifts">Total Estimated Shifts</option>
+                                </select>
+                              </div>
+                            </div>
+                            {projection.labourCalculationType && (
+                              <div className="grid grid-cols-3 gap-4 mb-4">
+                                {projection.labourCalculationType === "no_of_labours" && (
+                                  <div>
+                                    <label className="block text-sm font-medium mb-2">No of Labours</label>
+                                    <input
+                                      type="number"
+                                      value={projection.noOfLabours}
+                                      onChange={(e) => updateProjectionField(projection.id, 'noOfLabours', e.target.value)}
+                                      className="w-full p-2 border border-gray-300 rounded-lg"
+                                      placeholder="Enter number of labours"
+                                    />
+                                  </div>
+                                )}
+                                {projection.labourCalculationType === "total_shifts" && (
+                                  <div>
+                                    <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
+                                    <input
+                                      type="number"
+                                      value={projection.totalShifts}
+                                      onChange={(e) => updateProjectionField(projection.id, 'totalShifts', e.target.value)}
+                                      className="w-full p-2 border border-gray-300 rounded-lg"
+                                      placeholder="Enter total shifts"
+                                    />
+                                  </div>
+                                )}
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Rate per Shift</label>
+                                  <input
+                                    type="number"
+                                    value={projection.ratePerShift}
+                                    onChange={(e) => updateProjectionField(projection.id, 'ratePerShift', e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded-lg"
+                                    placeholder="Enter rate per shift"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <div className="flex justify-between items-center mb-2">
+                                <span className="font-medium">Total Labour Cost:</span>
+                                <span className="text-lg font-semibold">Rs. {projection.labourTotalCost.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">Budget Percentage:</span>
+                                <span className="text-lg font-semibold">{projection.labourBudgetPercentage.toFixed(2)}%</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => saveLabourOverhead(projection.id)}
+                              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                              Save Labour Overhead
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Dynamic Overhead Tabs */}
+                        {projection.selectedDynamicOverheads.map((overhead) => (
+                          projection.activeOverheadTab === `overhead-${overhead.id}` && (
+                            <div key={overhead.id} className="relative">
+                              <h4 className="text-lg font-medium mb-4">{overhead.expense_name} Overhead</h4>
+                              <button
+                                onClick={() => handleRemoveOverhead(overhead.id, projection.id)}
+                                className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                                title={`Remove ${overhead.expense_name}`}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">
+                                    {overhead.expense_name} Value
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={projection.dynamicOverheads[overhead.id]?.value || ""}
+                                    onChange={(e) =>
+                                      calculateDynamicOverheadBudgetPercentage(projection.id, overhead.id, e.target.value)
+                                    }
+                                    max={calculateRemainingBudget(projection)}
+                                    className="w-full p-2 border border-gray-300 rounded-lg"
+                                    placeholder={`Enter ${overhead.expense_name} value`}
+                                  />
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    Remaining Budget: Rs. {calculateRemainingBudget(projection).toFixed(2)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Budget Percentage</label>
+                                  <input
+                                    type="text"
+                                    value={`${(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
+                                    readOnly
+                                    className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => saveDynamicOverhead(projection.id, overhead.id, overhead.expense_name)}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                              >
+                                Save {overhead.expense_name} Overhead
+                              </button>
+                            </div>
+                          )
+                        ))}
+
+                        {/* Budget Allocation Summary for Projection 1 */}
+                        {projection.id === 1 && (
+                          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                            <h4 className="text-lg font-medium mb-3">Budget Allocation Summary</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p>Material: Rs. {projection.materialTotalCost.toFixed(2)} ({projection.materialBudgetPercentage.toFixed(2)}%)</p>
+                                <p>Labour: Rs. {projection.labourTotalCost.toFixed(2)} ({projection.labourBudgetPercentage.toFixed(2)}%)</p>
+                              </div>
+                              <div>
+                                {projection.selectedDynamicOverheads.map((overhead) => (
+                                  <p key={overhead.id}>
+                                    {overhead.expense_name}: Rs. {(parseFloat(projection.dynamicOverheads[overhead.id]?.value) || 0).toFixed(2)} (
+                                    {(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%)
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t">
+                              <p className="font-semibold">
+                                Total Allocated: Rs.{' '}
+                                {(projection.materialTotalCost +
+                                  projection.labourTotalCost +
+                                  Object.values(projection.dynamicOverheads || {}).reduce(
+                                    (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+                                    0
+                                  )).toFixed(2)}
+                              </p>
+                              <p className="font-semibold">Remaining Budget: Rs. {calculateRemainingBudget(projection).toFixed(2)}</p>
+                            </div>
+                            <div className="mt-4">
+                              <button
+                                onClick={() => finalSubmissionProjection(projection.id)}
+                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                              >
+                                Final Submission (Save Projection 1)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Rate per Shift</label>
-                      <input
-                        type="number"
-                        value={ratePerShift}
-                        onChange={(e) => setRatePerShift(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        placeholder="Enter rate per shift"
-                      />
-                    </div>
                   </div>
                 )}
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">Total Labour Cost:</span>
-                    <span className="text-lg font-semibold">Rs. {labourTotalCost.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Budget Percentage:</span>
-                    <span className="text-lg font-semibold">{labourBudgetPercentage.toFixed(2)}%</span>
-                  </div>
-                </div>
-                <button
-                  onClick={saveLabourOverhead}
-                  className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                >
-                  Save Labour Overhead
-                </button>
               </div>
-            )}
-
-            {/* Dynamic Overhead Tabs */}
-            {selectedDynamicOverheads.map((overhead) => (
-              activeOverheadTab === `overhead-${overhead.id}` && (
-                <div key={overhead.id} className="relative">
-                  <h3 className="text-lg font-medium mb-4">{overhead.expense_name} Overhead</h3>
-                  <button
-                    onClick={() => handleRemoveOverhead(overhead.id)}
-                    className="absolute top-2 right-2 text-red-600 hover:text-red-800"
-                    title={`Remove ${overhead.expense_name}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        {overhead.expense_name} Value
-                      </label>
-                      <input
-                        type="number"
-                        value={dynamicOverheads[overhead.id]?.value || ""}
-                        onChange={(e) =>
-                          calculateDynamicOverheadBudgetPercentage(overhead.id, e.target.value)
-                        }
-                        max={remainingBudget}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        placeholder={`Enter ${overhead.expense_name} value`}
-                      />
-                      <p className="text-sm text-gray-600 mt-1">
-                        Remaining Budget: Rs. {remainingBudget.toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Budget Percentage</label>
-                      <input
-                        type="text"
-                        value={`${(dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
-                        readOnly
-                        className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => saveDynamicOverhead(overhead.id, overhead.expense_name)}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    Save {overhead.expense_name} Overhead
-                  </button>
-                </div>
-              )
             ))}
-
-            {/* Budget Allocation Summary */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-lg font-medium mb-3">Budget Allocation Summary</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p>Material: Rs. {materialTotalCost.toFixed(2)} ({materialBudgetPercentage.toFixed(2)}%)</p>
-                  <p>Labour: Rs. {labourTotalCost.toFixed(2)} ({labourBudgetPercentage.toFixed(2)}%)</p>
-                </div>
-                <div>
-                  {selectedDynamicOverheads.map((overhead) => (
-                    <p key={overhead.id}>
-                      {overhead.expense_name}: Rs. {(parseFloat(dynamicOverheads[overhead.id]?.value) || 0).toFixed(2)} (
-                      {(dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%)
-                    </p>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t">
-                <p className="font-semibold">
-                  Total Allocated: Rs.{' '}
-                  {(materialTotalCost +
-                    labourTotalCost +
-                    Object.values(dynamicOverheads).reduce(
-                      (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
-                      0
-                    )).toFixed(2)}
-                </p>
-                <p className="font-semibold">Remaining Budget: Rs. {remainingBudget.toFixed(2)}</p>
-              </div>
-            </div>
           </div>
         )}
         
@@ -1916,59 +2094,6 @@ useEffect(() => {
             </div>
           </div>
         )}
-
-        {/* Footer Information */}
-        <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Current Selection
-              </h4>
-              <p className="text-sm">
-                Company: {selectedCompany?.label || "Not selected"}
-              </p>
-              <p className="text-sm">
-                Project: {selectedProject?.label || "Not selected"}
-              </p>
-              <p className="text-sm">Site: {selectedSite?.label || "Not selected"}</p>
-              <p className="text-sm">
-                Work Description: {selectedWorkDescription?.label || "Not selected"}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Budget Information
-              </h4>
-              <p className="text-sm">
-                PO Value: {budgetData ? `Rs.${budgetData.total_po_value.toFixed(2)}` : "Not available"}
-              </p>
-              <p className="text-sm">
-                Budget Value: {existingBudget ? `Rs.${existingBudget.total_budget_value.toFixed(2)}` : "Not set"}
-              </p>
-              <p className="text-sm">
-                Budget Percentage: {existingBudget ? `${budgetPercentage}%` : "Not set"}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
-                Allocation Status
-              </h4>
-              <p className="text-sm">
-                Status: {isAllocated ? "Budget Allocated" : "Pending Allocation"}
-              </p>
-              <p className="text-sm">
-                Total Overheads: {overheads.length}
-              </p>
-              <p className="text-sm">
-                Selected Overheads: {Object.values(checkedExpenses).filter(Boolean).length}
-              </p>
-            </div>
-
-          </div>
-        </div>
         
       </div>
     </div>

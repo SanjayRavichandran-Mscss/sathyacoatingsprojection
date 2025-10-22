@@ -39,6 +39,8 @@ router.get('/overheads', adminController.getOverheads);
 router.post('/save-overhead', adminController.saveOverhead);
 router.post('/save-overhead-values', adminController.saveOverheadValue);
 
+router.post('/save-dynamic-overhead-values', adminController.saveDynamicOverheadValues);
+
 // Route to save actual budget entries
 router.post('/save-actual-budget', adminController.saveActualBudget);
 

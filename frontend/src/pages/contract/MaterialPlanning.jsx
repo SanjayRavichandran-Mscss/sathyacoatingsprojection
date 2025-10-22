@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { PlusCircle, Trash2, Loader2, CheckCircle } from "lucide-react";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { useParams } from "react-router-dom";
 
 const MaterialPlanning = ({
   selectedCompany,
@@ -14,6 +15,7 @@ const MaterialPlanning = ({
   onTotalCostChange,
   onMaterialsChange,
 }) => {
+  const { encodedUserId } = useParams(); 
   const [materials, setMaterials] = useState([]);
   const [uoms, setUoms] = useState([]);
   const [materialAssignments, setMaterialAssignments] = useState({});
@@ -35,7 +37,7 @@ const MaterialPlanning = ({
   const fetchMaterials = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://103.118.158.127/api/material/materials");
+      const response = await axios.get("http://localhost:5000/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -50,7 +52,7 @@ const MaterialPlanning = ({
   const fetchUoms = async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://103.118.158.127/api/material/uom");
+      const response = await axios.get("http://localhost:5000/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -65,7 +67,7 @@ const MaterialPlanning = ({
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://103.118.158.127/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
+        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -79,6 +81,7 @@ const MaterialPlanning = ({
             comp_ratio_b: "",
             comp_ratio_c: "",
             rate: "",
+            projection_id: "",
           },
         ],
       });
@@ -96,6 +99,7 @@ const MaterialPlanning = ({
             comp_ratio_b: "",
             comp_ratio_c: "",
             rate: "",
+            projection_id: "",
           },
         ],
       });
@@ -234,7 +238,7 @@ const MaterialPlanning = ({
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
+      const response = await axios.post("http://localhost:5000/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -272,9 +276,22 @@ const MaterialPlanning = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+
     try {
       setLoading((prev) => ({ ...prev, submitting: true }));
       setError(null);
+
+      // Decode and validate created_by from URL
+      let created_by;
+      try {
+        created_by = atob(encodedUserId);
+        if (!/^\d+$/.test(created_by) || created_by.length > 30) {
+          throw new Error("Invalid User ID format or length exceeds 30 characters");
+        }
+      } catch {
+        throw new Error("Invalid User ID in URL");
+      }
 
       if (!selectedCompany?.value) {
         setError("Please select a company.");
@@ -362,6 +379,7 @@ const MaterialPlanning = ({
         materialTotalCost: materialTotalCost.toFixed(2),
         materialBudgetPercentage: materialBudgetPercentage.toFixed(2),
         overhead_type: "materials",
+        created_by: created_by,
       }));
 
       if (payload.length === 0) {
@@ -369,7 +387,7 @@ const MaterialPlanning = ({
         return;
       }
 
-      await axios.post("http://103.118.158.127/api/material/assign-material", payload);
+      await axios.post("http://localhost:5000/material/assign-material", payload);
 
       Swal.fire({
         position: "top-end",
