@@ -98,7 +98,7 @@ const [percentage, setPercentage] = useState(0);
       try {
         setLoading((p) => ({ ...p, companies: true }));
         setError(null);
-        const response = await axios.get("http://103.118.158.127/api/admin/companies");
+        const response = await axios.get("http://localhost:5000/admin/companies");
         const companiesData = response.data.data || [];
         setCompanies(companiesData);
         if (companiesData.length > 0) {
@@ -121,7 +121,7 @@ const [percentage, setPercentage] = useState(0);
         try {
           setLoading((p) => ({ ...p, projects: true }));
           setError(null);
-          const response = await axios.get(`http://103.118.158.127/api/admin/projects/${selectedCompany.value}`);
+          const response = await axios.get(`http://localhost:5000/admin/projects/${selectedCompany.value}`);
           const projectsData = response.data.data || [];
           setProjects(projectsData);
           if (projectsData.length > 0) {
@@ -163,7 +163,7 @@ const [percentage, setPercentage] = useState(0);
         try {
           setLoading((p) => ({ ...p, sites: true }));
           setError(null);
-          const response = await axios.get(`http://103.118.158.127/api/admin/sites/${selectedProject.value}`);
+          const response = await axios.get(`http://localhost:5000/admin/sites/${selectedProject.value}`);
           const sitesData = response.data.data || [];
           setSites(sitesData);
           if (sitesData.length > 0) {
@@ -203,7 +203,7 @@ const [percentage, setPercentage] = useState(0);
         try {
           setLoading((p) => ({ ...p, workDescriptions: true }));
           setError(null);
-          const response = await axios.get(`http://103.118.158.127/api/admin/work-descriptions/${selectedSite.value}`);
+          const response = await axios.get(`http://localhost:5000/admin/work-descriptions/${selectedSite.value}`);
           const descriptionsData = response.data.data || [];
           setWorkDescriptions(descriptionsData);
           if (descriptionsData.length > 0) {
@@ -236,11 +236,11 @@ useEffect(() => {
         
         // Add materialResponse to Promise.all
         const [completionResponse, poTotalsResponse, expenseResponse, labourResponse, materialResponse] = await Promise.all([
-          axios.get(`http://103.118.158.127/api/admin/completion-entries-by-site/${selectedSite.value}/${selectedDescription.value}`),
-          axios.get(`http://103.118.158.127/api/admin/po-reckoner-totals/${selectedSite.value}/${selectedDescription.value}`),
-          axios.get(`http://103.118.158.127/api/admin/expense-details/${selectedSite.value}/${selectedDescription.value}`),
-          axios.get(`http://103.118.158.127/api/site-incharge/calculate-labour-budget`),
-          axios.get(`http://103.118.158.127/api/admin/material-graph/${selectedSite.value}/${selectedDescription.value}`) // Add this line
+          axios.get(`http://localhost:5000/admin/completion-entries-by-site/${selectedSite.value}/${selectedDescription.value}`),
+          axios.get(`http://localhost:5000/admin/po-reckoner-totals/${selectedSite.value}/${selectedDescription.value}`),
+          axios.get(`http://localhost:5000/admin/expense-details/${selectedSite.value}/${selectedDescription.value}`),
+          axios.get(`http://localhost:5000/site-incharge/calculate-labour-budget`),
+          axios.get(`http://localhost:5000/admin/material-graph/${selectedSite.value}/${selectedDescription.value}`) // Add this line
         ]);
         
 

@@ -1188,7 +1188,7 @@ exports.updateOverhead = async (req, res) => {
 exports.deleteOverhead = async (req, res) => {
   const { site_id, desc_id, projection_id, overhead_type_id, overhead_type } = req.body;
 
-  if (!site_id || !desc_id || !projection_id || !overhead_type_id || !overhead_type) {
+  if (!site_id || !desc_id || !projection_id || !overhead_type) {
     return res.status(400).json({ success: false, message: 'Missing required fields' });
   }
 
@@ -1197,10 +1197,21 @@ exports.deleteOverhead = async (req, res) => {
     conn = await db.getConnection();
     await conn.beginTransaction();
 
-    // Check if submitted
+    // Step 1: Get actual overhead_type_id from expense_name (robust against invalid frontend id)
+    const [overheadRows] = await conn.query(
+      'SELECT id FROM overhead WHERE expense_name = ? LIMIT 1',
+      [overhead_type]
+    );
+    if (overheadRows.length === 0) {
+      await conn.rollback();
+      return res.status(400).json({ success: false, message: 'Invalid overhead type' });
+    }
+    const actual_overhead_type_id = overheadRows[0].id;
+
+    // Step 2: Check if submitted
     const [poBudgetRows] = await conn.query(
       'SELECT id FROM po_budget WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
-      [site_id, desc_id, projection_id]
+      [site_id, desc_id, parseInt(projection_id)]
     );
     if (poBudgetRows.length === 0) {
       await conn.rollback();
@@ -1217,17 +1228,17 @@ exports.deleteOverhead = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot delete after submission' });
     }
 
-    // Delete from projection_allocated
+    // Step 3: Delete from projection_allocated using actual_overhead_type_id
     await conn.query(
       'DELETE FROM projection_allocated WHERE site_id = ? AND desc_id = ? AND overhead_type_id = ? AND projection_id = ?',
-      [site_id, desc_id, overhead_type_id, projection_id]
+      [site_id, desc_id, actual_overhead_type_id, parseInt(projection_id)]
     );
 
-    // If labour, delete from labour_overhead
+    // Step 4: If labour, delete from labour_overhead
     if (overhead_type === 'labours') {
       await conn.query(
         'DELETE FROM labour_overhead WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
-        [site_id, desc_id, projection_id]
+        [site_id, desc_id, parseInt(projection_id)]
       );
     }
 
