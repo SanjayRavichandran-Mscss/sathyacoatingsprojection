@@ -46,7 +46,7 @@ const DispatchedMaterials = () => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://localhost:5000/project/companies");
+      const response = await axios.get("http://103.118.158.127/api/project/companies");
       setCompanies(response.data || []);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -60,7 +60,7 @@ const DispatchedMaterials = () => {
   const fetchMasterDcNo = async (company_id) => {
     if (!company_id) return;
     try {
-      const response = await axios.get(`http://localhost:5000/material/master-dc-no`, {
+      const response = await axios.get(`http://103.118.158.127/api/material/master-dc-no`, {
         params: { company_id },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -82,7 +82,7 @@ const DispatchedMaterials = () => {
   const fetchProjects = async () => {
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("http://localhost:5000/project/projects-with-sites");
+      const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
       setAllProjects(response.data || []);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -112,7 +112,7 @@ const DispatchedMaterials = () => {
   const fetchWorkDescriptions = async (site_id) => {
     try {
       setLoading((prev) => ({ ...prev, workDescriptions: true }));
-      const response = await axios.get("http://localhost:5000/material/work-descriptions", {
+      const response = await axios.get("http://103.118.158.127/api/material/work-descriptions", {
         params: { site_id },
       });
       setWorkDescriptions(response.data.data || []);
@@ -129,7 +129,7 @@ const DispatchedMaterials = () => {
   const fetchNextDcNo = async (site_id) => {
     if (!site_id) return;
     try {
-      const response = await axios.get("http://localhost:5000/material/next-dc-no", {
+      const response = await axios.get("http://103.118.158.127/api/material/next-dc-no", {
         params: { site_id },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -153,7 +153,7 @@ const DispatchedMaterials = () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
       setError(null);
-      const response = await axios.get("http://localhost:5000/material/dispatch-details", {
+      const response = await axios.get("http://103.118.158.127/api/material/dispatch-details", {
         params: { pd_id: selectedProject, site_id: selectedSite, desc_id: selectedWorkDescription },
       });
       const materials = response.data.data || [];

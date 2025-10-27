@@ -13,7 +13,7 @@ const POMasterMain = () => {
 
       const fetchCompanies = async () => {
         try {
-        const response = await axios.get("http://localhost:5000/project/companies");
+        const response = await axios.get("http://103.118.158.127/api/project/companies");
         setCompanies(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
         console.error("Error fetching companies:", error);

@@ -15,7 +15,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/auth/login", {
+      const response = await axios.post("http://103.118.158.127/api/auth/login", {
         email,
         password,
       });
@@ -36,7 +36,7 @@ const Login = () => {
       localStorage.setItem("loginTime", Date.now().toString());
 
       try {
-        const response = await axios.post("http://localhost:5000/auth/verify-token", { token });
+        const response = await axios.post("http://103.118.158.127/api/auth/verify-token", { token });
         // setUser(response.data);
         sessionStorage.setItem('user', JSON.stringify(response.data));
         console.log('Verified user data:', response.data);

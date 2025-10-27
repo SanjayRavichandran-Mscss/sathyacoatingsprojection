@@ -67,7 +67,7 @@
 //   const fetchCompanies = async () => {
 //     try {
 //       setLoadingCompanies(true);
-//       const res = await axios.get("http://localhost:5000/project/companies");
+//       const res = await axios.get("http://103.118.158.127/api/project/companies");
 //       if (Array.isArray(res.data) && res.data.length > 0) {
 //         setCompanyOptions(res.data);
 //       } else {
@@ -83,7 +83,7 @@
 //   const fetchProjects = async () => {
 //     try {
 //       setLoadingProjects(true);
-//       const res = await axios.get("http://localhost:5000/project/projects-with-sites");
+//       const res = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
 //       if (Array.isArray(res.data) && res.data.length > 0) {
 //         const filteredProjects = res.data.filter((p) => p.company_id === selectedCompany);
 //         setProjectOptions(filteredProjects);
@@ -143,7 +143,7 @@
 //   const fetchReckonerData = async () => {
 //     try {
 //       setLoading(true);
-//       const res = await axios.get("http://localhost:5000/reckoner/reckoner/");
+//       const res = await axios.get("http://103.118.158.127/api/reckoner/reckoner/");
 //       const data =
 //         res.data.success && Array.isArray(res.data.data) ? res.data.data : [];
 //       const uniqueData = Array.from(
@@ -164,7 +164,7 @@
 
 //   const fetchHistoryData = async (rec_id) => {
 //     try {
-//       const res = await axios.get("http://localhost:5000/site-incharge/completion-entries", {
+//       const res = await axios.get("http://103.118.158.127/api/site-incharge/completion-entries", {
 //         params: { rec_id, date: selectedDate },
 //       });
 //       if (res.data.status === 'success') {
@@ -280,7 +280,7 @@
 //       };
 
 //       await axios.post(
-//         "http://localhost:5000/site-incharge/completion-status",
+//         "http://103.118.158.127/api/site-incharge/completion-status",
 //         payload
 //       );
 
@@ -643,7 +643,7 @@ const WorkCompletionEntry = () => {
   const fetchCompanies = async () => {
     try {
       setLoadingCompanies(true);
-      const res = await axios.get("http://localhost:5000/project/companies");
+      const res = await axios.get("http://103.118.158.127/api/project/companies");
       if (Array.isArray(res.data) && res.data.length > 0) {
         setCompanyOptions(res.data);
       } else {
@@ -659,7 +659,7 @@ const WorkCompletionEntry = () => {
   const fetchProjects = async () => {
     try {
       setLoadingProjects(true);
-      const res = await axios.get("http://localhost:5000/project/projects-with-sites");
+      const res = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
       if (Array.isArray(res.data) && res.data.length > 0) {
         const filteredProjects = res.data.filter((p) => p.company_id === selectedCompany);
         setProjectOptions(filteredProjects);
@@ -719,7 +719,7 @@ const WorkCompletionEntry = () => {
   const fetchReckonerData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/reckoner/reckoner/");
+      const res = await axios.get("http://103.118.158.127/api/reckoner/reckoner/");
       const data =
         res.data.success && Array.isArray(res.data.data) ? res.data.data : [];
       const uniqueData = Array.from(
@@ -740,7 +740,7 @@ const WorkCompletionEntry = () => {
 
   const fetchHistoryData = async (rec_id) => {
     try {
-      const res = await axios.get("http://localhost:5000/site-incharge/completion-entries", {
+      const res = await axios.get("http://103.118.158.127/api/site-incharge/completion-entries", {
         params: { rec_id, date: selectedDate },
       });
       if (res.data.status === 'success') {
@@ -888,7 +888,7 @@ const WorkCompletionEntry = () => {
       };
 
       await axios.put(
-        "http://localhost:5000/site-incharge/update-completion-entry",
+        "http://103.118.158.127/api/site-incharge/update-completion-entry",
         payload
       );
 
@@ -963,7 +963,7 @@ const WorkCompletionEntry = () => {
       };
 
       await axios.post(
-        "http://localhost:5000/site-incharge/completion-status",
+        "http://103.118.158.127/api/site-incharge/completion-status",
         payload
       );
 

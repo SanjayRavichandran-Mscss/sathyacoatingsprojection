@@ -115,10 +115,10 @@ const CompanyCreationSupply = ({ onCompanyCreated, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statesRes = await axios.get("http://localhost:5000/supply/states");
+        const statesRes = await axios.get("http://103.118.158.127/api/supply/states");
         setStates(statesRes.data.data.map(s => ({ id: s.id, name: s.state_name })));
         
-        const citiesRes = await axios.get("http://localhost:5000/supply/cities");
+        const citiesRes = await axios.get("http://103.118.158.127/api/supply/cities");
         setCities(citiesRes.data.data.map(c => ({ id: c.id, name: c.city_name })));
       } catch (err) {
         setError("Failed to load cities and states.");
@@ -133,7 +133,7 @@ const CompanyCreationSupply = ({ onCompanyCreated, onClose }) => {
 
   const addNewState = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/supply/create-state", { state_name: name });
+      const res = await axios.post("http://103.118.158.127/api/supply/create-state", { state_name: name });
       const newId = res.data.id;
       setStates(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -145,7 +145,7 @@ const CompanyCreationSupply = ({ onCompanyCreated, onClose }) => {
 
   const addNewCity = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/supply/create-city", { city_name: name });
+      const res = await axios.post("http://103.118.158.127/api/supply/create-city", { city_name: name });
       const newId = res.data.id;
       setCities(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -179,7 +179,7 @@ const CompanyCreationSupply = ({ onCompanyCreated, onClose }) => {
 
     try {
       const payload = { ...formData, created_by: userId }; // Include created_by
-      await axios.post("http://localhost:5000/supply/create-company", payload);
+      await axios.post("http://103.118.158.127/api/supply/create-company", payload);
       setFormData({
         company_name: "",
         address: "",

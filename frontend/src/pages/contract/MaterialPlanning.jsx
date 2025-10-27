@@ -38,7 +38,7 @@
 //   const fetchMaterials = async () => {
 //     try {
 //       setLoading((prev) => ({ ...prev, materials: true }));
-//       const response = await axios.get("http://localhost:5000/material/materials");
+//       const response = await axios.get("http://103.118.158.127/api/material/materials");
 //       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
 //     } catch (error) {
 //       console.error("Error fetching materials:", error);
@@ -53,7 +53,7 @@
 //   const fetchUoms = async () => {
 //     try {
 //       setLoading((prev) => ({ ...prev, uoms: true }));
-//       const response = await axios.get("http://localhost:5000/material/uom");
+//       const response = await axios.get("http://103.118.158.127/api/material/uom");
 //       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
 //     } catch (error) {
 //       console.error("Error fetching UOMs:", error);
@@ -68,7 +68,7 @@
 //     try {
 //       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
 //       const response = await axios.get(
-//         `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
+//         `http://103.118.158.127/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
 //       );
 //       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
 //       setExistingAssignments(assignedMaterials);
@@ -241,7 +241,7 @@
 
 //     try {
 //       setAddingMaterial(true);
-//       const response = await axios.post("http://localhost:5000/material/add-material", {
+//       const response = await axios.post("http://103.118.158.127/api/material/add-material", {
 //         item_name: inputValue.trim(),
 //       });
 
@@ -390,7 +390,7 @@
 //         return;
 //       }
 
-//       await axios.post("http://localhost:5000/material/assign-material", payload);
+//       await axios.post("http://103.118.158.127/api/material/assign-material", payload);
 
 //       Swal.fire({
 //         position: "top-end",
@@ -797,7 +797,7 @@ const MaterialPlanning = ({
   const fetchMaterials = useCallback(async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("http://103.118.158.127/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -812,7 +812,7 @@ const MaterialPlanning = ({
   const fetchUoms = useCallback(async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("http://103.118.158.127/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -829,7 +829,7 @@ const MaterialPlanning = ({
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
+        `http://103.118.158.127/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -1024,7 +1024,7 @@ const MaterialPlanning = ({
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -1101,7 +1101,7 @@ const MaterialPlanning = ({
 
     try {
       // FIXED: Fetch full single assignment details via query param
-      const response = await axios.get(`http://localhost:5000/material/assigned-materials?assignment_id=${assignment.id}`);
+      const response = await axios.get(`http://103.118.158.127/api/material/assigned-materials?assignment_id=${assignment.id}`);
       const fullAssignment = response.data.data;
       
       if (!fullAssignment || !fullAssignment.id) {
@@ -1194,7 +1194,7 @@ const MaterialPlanning = ({
       console.log("Payload:", payload);
 
       // FIXED: PUT with body including assignment_id
-      await axios.put("http://localhost:5000/material/assigned-materials", payload);
+      await axios.put("http://103.118.158.127/api/material/assigned-materials", payload);
 
       Swal.fire({
         position: "top-end",
@@ -1276,7 +1276,7 @@ const MaterialPlanning = ({
         console.log("Sending DELETE request for assignment ID:", assignmentId);
         
         // FIXED: DELETE with body { assignment_id: id }
-        await axios.delete("http://localhost:5000/material/assigned-materials", { 
+        await axios.delete("http://103.118.158.127/api/material/assigned-materials", { 
           data: { assignment_id: assignmentId } 
         });
         
@@ -1317,7 +1317,7 @@ const MaterialPlanning = ({
         materialBudgetPercentage: overallPercentage,
         projection_id: projectionId,
       };
-      await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
+      await axios.post("http://103.118.158.127/api/projection/save-material-allocation", payload);
       
       Swal.fire({
         position: "top-end",
@@ -1426,7 +1426,7 @@ const MaterialPlanning = ({
         return;
       }
 
-      await axios.post("http://localhost:5000/material/assign-material", payload);
+      await axios.post("http://103.118.158.127/api/material/assign-material", payload);
 
       Swal.fire({
         position: "top-end",
