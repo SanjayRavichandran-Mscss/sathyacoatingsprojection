@@ -75,7 +75,7 @@ const ProjectProjectionOld = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/admin/companies");
+      const response = await axios.get("http://103.118.158.127/api/admin/companies");
       if (response.data.success) {
         const companyOptions = response.data.data.map((company) => ({
           value: company.company_id,
@@ -96,7 +96,7 @@ const ProjectProjectionOld = () => {
   const fetchProjects = async (companyId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
+      const response = await axios.get(`http://103.118.158.127/api/admin/projects/${companyId}`);
       if (response.data.success) {
         const projectOptions = response.data.data.map((project) => ({
           value: project.pd_id,
@@ -117,7 +117,7 @@ const ProjectProjectionOld = () => {
   const fetchSites = async (projectId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
+      const response = await axios.get(`http://103.118.158.127/api/admin/sites/${projectId}`);
       if (response.data.success) {
         const siteOptions = response.data.data.map((site) => ({
           value: site.site_id,
@@ -139,7 +139,7 @@ const ProjectProjectionOld = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
+        `http://103.118.158.127/api/admin/work-descriptions-by-site/${siteId}`
       );
       if (response.data.success) {
         const descOptions = response.data.data.map((desc) => ({
@@ -162,7 +162,7 @@ const ProjectProjectionOld = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/admin/po-total-budget/${siteId}/${descId}`
+        `http://103.118.158.127/api/admin/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -183,7 +183,7 @@ const ProjectProjectionOld = () => {
 
   const checkBudgetExists = async (siteId, descId) => {
     try {
-      const response = await axios.get("http://localhost:5000/admin/po-budget", {
+      const response = await axios.get("http://103.118.158.127/api/admin/po-budget", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success && response.data.data) {
@@ -215,7 +215,7 @@ const ProjectProjectionOld = () => {
 
   const fetchOverheads = async (po_budget_id) => {
     try {
-      const response = await axios.get("http://localhost:5000/admin/overheads", {
+      const response = await axios.get("http://103.118.158.127/api/admin/overheads", {
         params: po_budget_id ? { po_budget_id } : {},
       });
       if (response.data.success) {
@@ -246,7 +246,7 @@ const ProjectProjectionOld = () => {
 
   const fetchActualBudgetEntries = async (po_budget_id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/admin/actual-budget/${po_budget_id}`);
+      const response = await axios.get(`http://103.118.158.127/api/admin/actual-budget/${po_budget_id}`);
       if (response.data.success) {
         const entries = response.data.data || {};
         const processedEntries = {};
@@ -280,7 +280,7 @@ const ProjectProjectionOld = () => {
   // NEW FUNCTIONS FOR OVERHEAD MANAGEMENT
   const fetchMaterials = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("http://103.118.158.127/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -290,7 +290,7 @@ const ProjectProjectionOld = () => {
 
   const fetchUoms = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("http://103.118.158.127/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -365,7 +365,7 @@ const ProjectProjectionOld = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -412,7 +412,7 @@ const ProjectProjectionOld = () => {
 
       console.log("Labour Overhead Payload:", payload);
 
-      const response = await axios.post("http://localhost:5000/admin/save-labour-overhead", payload);
+      const response = await axios.post("http://103.118.158.127/api/admin/save-labour-overhead", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -444,7 +444,7 @@ const ProjectProjectionOld = () => {
         overhead_type: "consumables"
       };
 
-      const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
+      const response = await axios.post("http://103.118.158.127/api/admin/save-overhead-value", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -470,7 +470,7 @@ const ProjectProjectionOld = () => {
         overhead_type: "transportation"
       };
 
-      const response = await axios.post("http://localhost:5000/admin/save-overhead-value", payload);
+      const response = await axios.post("http://103.118.158.127/api/admin/save-overhead-value", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -490,7 +490,7 @@ const ProjectProjectionOld = () => {
   // ALL REMAINING EXISTING FUNCTIONS (savePoBudget, saveOverhead, allocateBudget, etc.)
   const savePoBudget = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/admin/save-po-budget", {
+      const response = await axios.post("http://103.118.158.127/api/admin/save-po-budget", {
         site_id: selectedSite.value,
         desc_id: selectedWorkDescription.value,
         total_po_value: budgetData.total_po_value,
@@ -548,7 +548,7 @@ const ProjectProjectionOld = () => {
 
     if (expense_name) {
       try {
-        const response = await axios.post("http://localhost:5000/admin/save-overhead", {
+        const response = await axios.post("http://103.118.158.127/api/admin/save-overhead", {
           expense_name,
         });
         if (response.data.success) {
@@ -663,7 +663,7 @@ const ProjectProjectionOld = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/admin/save-actual-budget", {
+      const response = await axios.post("http://103.118.158.127/api/admin/save-actual-budget", {
         po_budget_id: existingBudget.id,
         actual_budget_entries: entries,
       });
@@ -678,7 +678,7 @@ const ProjectProjectionOld = () => {
         });
         await fetchActualBudgetEntries(existingBudget.id);
         try {
-          await axios.get("http://localhost:5000/site-incharge/calculate-labour-budget");
+          await axios.get("http://103.118.158.127/api/site-incharge/calculate-labour-budget");
         } catch (error) {
           console.error("Error calling calculate-labour-budget API:", error.message);
         }

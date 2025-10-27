@@ -42,7 +42,7 @@ const MaterialAcknowledgement = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/project/companies");
+      const response = await axios.get("http://103.118.158.127/api/project/companies");
       setCompanies(response.data || []);
     } catch (err) {
       console.error("Failed to fetch companies:", err);
@@ -56,7 +56,7 @@ const MaterialAcknowledgement = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/project/projects-with-sites");
+      const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
       setAllProjects(response.data || []);
     } catch (err) {
       console.error("Failed to fetch projects:", err);
@@ -70,7 +70,7 @@ const MaterialAcknowledgement = () => {
   const fetchWorkDescriptions = async (site_id) => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/material/work-descriptions", {
+      const response = await axios.get("http://103.118.158.127/api/material/work-descriptions", {
         params: { site_id },
       });
       setWorkDescriptions(response.data.data || []);
@@ -140,7 +140,7 @@ const MaterialAcknowledgement = () => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `http://localhost:5000/material/dispatch-details/?pd_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDescription.value}`
+            `http://103.118.158.127/api/material/dispatch-details/?pd_id=${selectedProject.value}&site_id=${selectedSite.value}&desc_id=${selectedWorkDescription.value}`
           );
 
           const dispatchMap = new Map();
@@ -155,7 +155,7 @@ const MaterialAcknowledgement = () => {
 
           const ackPromises = uniqueDispatches.map(dispatch =>
             axios.get(
-              `http://localhost:5000/site-incharge/acknowledgement-details?material_dispatch_id=${dispatch.id}`
+              `http://103.118.158.127/api/site-incharge/acknowledgement-details?material_dispatch_id=${dispatch.id}`
             ).catch(err => {
               console.error(`Error fetching acknowledgement for dispatch ${dispatch.id}:`, err);
               return { data: { data: [] } };
@@ -211,7 +211,7 @@ const MaterialAcknowledgement = () => {
     try {
       console.log('Saving acknowledgement for dispatch:', dispatchId, 'with data:', ackData);
       
-      const response = await axios.post("http://localhost:5000/site-incharge/acknowledge-material", {
+      const response = await axios.post("http://103.118.158.127/api/site-incharge/acknowledge-material", {
         material_dispatch_id: parseInt(dispatchId),
         overall_quantity: overallQuantityStr !== "" ? parseInt(overallQuantityStr) : null,
         remarks: ackData.remarks || null,
@@ -222,7 +222,7 @@ const MaterialAcknowledgement = () => {
       
       // Refresh acknowledgement details
       const responseRefresh = await axios.get(
-        `http://localhost:5000/site-incharge/acknowledgement-details?material_dispatch_id=${dispatchId}`
+        `http://103.118.158.127/api/site-incharge/acknowledgement-details?material_dispatch_id=${dispatchId}`
       );
       
       setAckDetails(prev => ({
@@ -259,7 +259,7 @@ const MaterialAcknowledgement = () => {
     try {
       console.log('Updating acknowledgement:', ackId, 'for dispatch:', dispatchId, 'with data:', ackData);
       
-      const response = await axios.put("http://localhost:5000/site-incharge/update-acknowledgement", {
+      const response = await axios.put("http://103.118.158.127/api/site-incharge/update-acknowledgement", {
         ack_id: parseInt(ackId),
         overall_quantity: overallQuantityStr !== "" ? parseInt(overallQuantityStr) : null,
         remarks: ackData.remarks || null,
@@ -270,7 +270,7 @@ const MaterialAcknowledgement = () => {
       
       // Refresh acknowledgement details
       const responseRefresh = await axios.get(
-        `http://localhost:5000/site-incharge/acknowledgement-details?material_dispatch_id=${dispatchId}`
+        `http://103.118.158.127/api/site-incharge/acknowledgement-details?material_dispatch_id=${dispatchId}`
       );
       
       setAckDetails(prev => ({

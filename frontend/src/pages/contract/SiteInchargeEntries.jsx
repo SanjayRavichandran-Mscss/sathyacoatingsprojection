@@ -67,12 +67,12 @@ const SiteInchargeEntries = () => {
             assignmentResponse,
             attendanceResponse
           ] = await Promise.all([
-            axios.get(`http://localhost:5000/site-incharge/all-acknowledgements`),
-            axios.get(`http://localhost:5000/site-incharge/all-material-usage`),
-            axios.get(`http://localhost:5000/site-incharge/all-expense`),
-            axios.get(`http://localhost:5000/site-incharge/all-completion`),
-            axios.get(`http://localhost:5000/site-incharge/all-labour-assignment`),
-            axios.get(`http://localhost:5000/site-incharge/all-labour-attendance`)
+            axios.get(`http://103.118.158.127/api/site-incharge/all-acknowledgements`),
+            axios.get(`http://103.118.158.127/api/site-incharge/all-material-usage`),
+            axios.get(`http://103.118.158.127/api/site-incharge/all-expense`),
+            axios.get(`http://103.118.158.127/api/site-incharge/all-completion`),
+            axios.get(`http://103.118.158.127/api/site-incharge/all-labour-assignment`),
+            axios.get(`http://103.118.158.127/api/site-incharge/all-labour-attendance`)
           ]);
 
           setAllAckData(ackResponse.data.data || []);
@@ -215,7 +215,7 @@ const SiteInchargeEntries = () => {
 
   const handleUpdateEntry = async (updateData, endpoint) => {
     try {
-      const response = await axios.put(`http://localhost:5000/site-incharge/${endpoint}`, updateData);
+      const response = await axios.put(`http://103.118.158.127/api/site-incharge/${endpoint}`, updateData);
       toast.success(response.data.message);
       // Refresh data after update
       window.location.reload();

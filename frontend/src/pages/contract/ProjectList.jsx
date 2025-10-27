@@ -167,7 +167,7 @@ const ProjectList = () => {
 
   const fetchCompanies = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/project/companies");
+      const res = await axios.get("http://103.118.158.127/api/project/companies");
       setCompanies(res.data || []);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -177,7 +177,7 @@ const ProjectList = () => {
 
   const fetchProjectsForCompany = async (companyId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/project/projects-with-sites/${companyId}`);
+      const res = await axios.get(`http://103.118.158.127/api/project/projects-with-sites/${companyId}`);
       setProjects(res.data || []);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -187,7 +187,7 @@ const ProjectList = () => {
 
   const fetchWorkDescriptions = async (siteId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/project/work-descriptions-by-site/${siteId}`);
+      const res = await axios.get(`http://103.118.158.127/api/project/work-descriptions-by-site/${siteId}`);
       setWorkDescOptions(res.data || []);
     } catch (error) {
       console.error("Error fetching work descriptions:", error);
@@ -198,7 +198,7 @@ const ProjectList = () => {
   const fetchReckonerData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/reckoner/reckoner/");
+      const res = await axios.get("http://103.118.158.127/api/reckoner/reckoner/");
       const data = res.data.success ? res.data.data : [];
       const updatedData = data.map((item) => {
         const completedQty = parseFloat(item.area_completed) || 0;
@@ -258,7 +258,7 @@ const ProjectList = () => {
   const fetchSiteInfo = async (poNumber) => {
     try {
       setLoadingSite(true);
-      const res = await axios.get(`http://localhost:5000/reckoner/sites/${poNumber}`);
+      const res = await axios.get(`http://103.118.158.127/api/reckoner/sites/${poNumber}`);
       if (res.data.success) {
         setSiteInfo(res.data.data);
       } else {
@@ -405,7 +405,7 @@ const ProjectList = () => {
         billing_status: "Not Billed", // Default value, adjust if needed
         created_by: createdBy, // Include decoded created_by
       };
-      await axios.put(`http://localhost:5000/reckoner/completion_status/${rec_id}`, payload);
+      await axios.put(`http://103.118.158.127/api/reckoner/completion_status/${rec_id}`, payload);
       showAlert("success", "Data updated successfully");
       await fetchReckonerData();
       setEditingId(null);

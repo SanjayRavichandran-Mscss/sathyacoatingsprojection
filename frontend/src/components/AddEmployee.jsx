@@ -63,7 +63,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
       (async () => {
         try {
           setLoading((l) => ({ ...l, genders: true }));
-          const { data } = await axios.get("http://localhost:5000/material/genders");
+          const { data } = await axios.get("http://103.118.158.127/api/material/genders");
           setGenders(data.data || []);
         } catch (error) {
           console.error("Error fetching genders:", error);
@@ -73,7 +73,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
         }
         try {
           setLoading((l) => ({ ...l, departments: true }));
-          const { data } = await axios.get("http://localhost:5000/material/departments");
+          const { data } = await axios.get("http://103.118.158.127/api/material/departments");
           setDepartments(data.data || []);
         } catch (error) {
           console.error("Error fetching departments:", error);
@@ -83,7 +83,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
         }
         try {
           setLoading((l) => ({ ...l, employmentTypes: true }));
-          const { data } = await axios.get("http://localhost:5000/material/employment-types");
+          const { data } = await axios.get("http://103.118.158.127/api/material/employment-types");
           setEmploymentTypes(data.data || []);
         } catch (error) {
           console.error("Error fetching employment types:", error);
@@ -93,7 +93,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
         }
         try {
           setLoading((l) => ({ ...l, designations: true }));
-          const { data } = await axios.get("http://localhost:5000/material/designations");
+          const { data } = await axios.get("http://103.118.158.127/api/material/designations");
           setDesignations(data.data || []);
         } catch (error) {
           console.error("Error fetching designations:", error);
@@ -103,7 +103,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
         }
         try {
           setLoading((l) => ({ ...l, statuses: true }));
-          const { data } = await axios.get("http://localhost:5000/material/statuses");
+          const { data } = await axios.get("http://103.118.158.127/api/material/statuses");
           setStatuses(data.data || []);
         } catch (error) {
           console.error("Error fetching statuses:", error);
@@ -173,7 +173,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
 
       if (saveToDatabase) {
         console.log("Submitting payload to API:", employeeData);
-        const response = await axios.post("http://localhost:5000/material/add-employee", employeeData);
+        const response = await axios.post("http://103.118.158.127/api/material/add-employee", employeeData);
         console.log("API response:", response.data);
         employeeData = response.data.data;
         designation = designations.find((d) => d.id === parseInt(employeeData.designation_id))?.designation || "";
