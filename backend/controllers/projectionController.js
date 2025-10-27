@@ -1252,3 +1252,56 @@ exports.deleteOverhead = async (req, res) => {
     if (conn) conn.release();
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add this to projectionController.js
+exports.getActualMaterial = async (req, res) => {
+  const { siteId, descId } = req.params;
+
+  if (!siteId || !descId) {
+    return res.status(400).json({
+      success: false,
+      message: "siteId and descId are required parameters",
+    });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT IFNULL(SUM(mu.overall_qty * ma.rate), 0) AS material_used_actual_value
+       FROM material_usage mu
+       JOIN material_acknowledgement mak ON mu.material_ack_id = mak.id
+       JOIN material_dispatch md ON mak.material_dispatch_id = md.id
+       JOIN material_assign ma ON md.material_assign_id = ma.id
+       WHERE ma.site_id = ? AND ma.desc_id = ?`,
+      [siteId, descId]
+    );
+
+    const material_used_actual_value = parseFloat(rows[0].material_used_actual_value) || 0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        material_used_actual_value: material_used_actual_value.toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching actual material value:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch actual material value",
+      error: error.message,
+    });
+  }
+};

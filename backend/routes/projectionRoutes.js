@@ -45,4 +45,8 @@ router.post('/update-overhead', projectionController.updateOverhead);
 router.delete('/delete-overhead', projectionController.deleteOverhead);
 
 
+
+// Add this to projectionRoutes.js
+router.get('/actual-material/:siteId/:descId', projectionController.getActualMaterial);
+
 module.exports = router;
