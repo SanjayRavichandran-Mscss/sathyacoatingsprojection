@@ -1,77 +1,2448 @@
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect, useCallback, useMemo } from "react";
+// import axios from "axios";
+// import Select from "react-select";
+// import Swal from "sweetalert2";
+// import { Plus, PlusCircle, Trash2, Loader2, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Edit2 } from "lucide-react";
+// import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+// import MaterialPlanning from "./MaterialPlanning";
+
+// const ProjectProjectionOld = () => {
+//   // Existing state (unchanged except add submitted to projections)
+//   const [companies, setCompanies] = useState([]);
+//   const [projects, setProjects] = useState([]);
+//   const [sites, setSites] = useState([]);
+//   const [workDescriptions, setWorkDescriptions] = useState([]);
+//   const [selectedCompany, setSelectedCompany] = useState(null);
+//   const [selectedProject, setSelectedProject] = useState(null);
+//   const [selectedSite, setSelectedSite] = useState(null);
+//   const [selectedWorkDescription, setSelectedWorkDescription] = useState(null);
+//   const [budgetData, setBudgetData] = useState(null);
+//   const [existingBudget, setExistingBudget] = useState(null);
+//   const [overheads, setOverheads] = useState([]);
+//   const [actualBudgetEntries, setActualBudgetEntries] = useState({});
+//   const [isAllocated, setIsAllocated] = useState(false);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   // Updated projections state with submitted flag
+//   const [projections, setProjections] = useState([
+//     {
+//       id: 1,
+//       name: "Projection 1",
+//       isOpen: true,
+//       budgetAllocated: false,
+//       submitted: false, // New: track submission
+//       budgetPercentage: "",
+//       additionalPercentage: 0,
+//       budgetValue: "",
+//       materialTotalCost: 0,
+//       materialBudgetPercentage: 0,
+//       labourTotalCost: 0,
+//       labourBudgetPercentage: 0,
+//       remainingBudget: 0,
+//       remainingPercentage: 0,
+//       labourCalculationType: "",
+//       noOfLabours: "",
+//       totalShifts: "",
+//       ratePerShift: "",
+//       selectedDynamicOverheads: [],
+//       dynamicOverheads: {},
+//       allocatedOverheads: [], // New: store fetched allocated
+//       activeOverheadTab: "material",
+//       prevRemainingBudget: 0, // New: previous remaining added to this
+//       prevRemainingPercentage: 0 // New: previous remaining percentage for display
+//     }
+//   ]);
+
+//   // New: submission statuses fetched from backend (now includes po_budget_id)
+//   const [submissionStatuses, setSubmissionStatuses] = useState({});
+
+//   // Memoized chart data (updated: use last projection's budgetValue only, no + prevRem)
+//   const lastProjection = useMemo(() => projections[projections.length - 1], [projections]);
+//   const effectiveBudgetValue = useMemo(() => {
+//     const lastBudget = parseFloat(lastProjection.budgetValue) || 0;
+//     return lastBudget;
+//   }, [lastProjection]);
+//   const chartData = useMemo(() => {
+//     if (!existingBudget || !actualBudgetEntries || Object.keys(actualBudgetEntries).length === 0) {
+//       return [];
+//     }
+//     const budgetedValue = effectiveBudgetValue;
+//     const actualValue = Object.values(actualBudgetEntries)
+//       .filter((entry) => entry.actual_value !== null)
+//       .reduce((sum, entry) => sum + parseFloat(entry.actual_value || 0), 0);
+//     const balanceValue = budgetedValue - actualValue;
+//     return [
+//       { name: "Budgeted Value", value: budgetedValue, fill: "#10b981" },
+//       { name: "Actual Value", value: actualValue, fill: "#3b82f6" },
+//       { name: "Balance", value: Math.abs(balanceValue), fill: balanceValue < 0 ? "#ef4444" : "#f59e0b" },
+//     ];
+//   }, [existingBudget, actualBudgetEntries, effectiveBudgetValue]);
+//   const expenseChartData = useMemo(() => {
+//     if (!isAllocated || Object.keys(actualBudgetEntries).length === 0) {
+//       return [];
+//     }
+//     return Object.values(actualBudgetEntries).map((entry) => {
+//       const budgeted = parseFloat(entry.splitted_budget) || 0;
+//       const actual = parseFloat(entry.actual_value) || 0;
+//       const actualExceedsBudget = actual > budgeted;
+//       return {
+//         name: entry.expense_name,
+//         budgeted: budgeted,
+//         actual: actual,
+//         actualFill: actualExceedsBudget ? "#ef4444" : "#3b82f6",
+//       };
+//     });
+//   }, [actualBudgetEntries, isAllocated]);
+//   // Memoized allocated overheads from actual_budget entries
+//  const allocatedOverheads = useMemo(() => 
+//   Object.values(actualBudgetEntries).map(entry => ({
+//     id: entry.overhead_id || Math.random(),
+//     expense_name: entry.expense_name,
+//     percentage: entry.percentage,
+//     splitted_budget: entry.splitted_budget,
+//     actual_value: entry.actual_value,
+//     difference_value: entry.difference_value,
+//     remarks: entry.remarks,
+//   })), [actualBudgetEntries]
+// );
+
+//   // Memoized sums for allocated data (updated to effective)
+//   const { sumPerc, sumBudget } = useMemo(() => {
+//     const percSum = allocatedOverheads.reduce((sum, oh) => sum + parseFloat(oh.percentage || 0), 0);
+//     const budgetSum = allocatedOverheads.reduce((sum, oh) => sum + parseFloat(oh.splitted_budget || 0), 0);
+//     return { sumPerc: percSum, sumBudget: budgetSum };
+//   }, [allocatedOverheads]);
+
+//   const total = useMemo(() => effectiveBudgetValue, [effectiveBudgetValue]);
+//   const percDiff = useMemo(() => sumPerc - 100, [sumPerc]);
+//   const budgetDiff = useMemo(() => sumBudget - total, [sumBudget, total]);
+//   const percError = useMemo(() => 
+//     percDiff > 0.01 ? `Excess by ${percDiff.toFixed(2)}%` : percDiff < -0.01 ? `Short by ${Math.abs(percDiff).toFixed(2)}%` : "",
+//     [percDiff]
+//   );
+//   const budgetError = useMemo(() => 
+//     budgetDiff > 0.01 ? `Excess by Rs.${budgetDiff.toFixed(2)}` : budgetDiff < -0.01 ? `Short by Rs.${Math.abs(budgetDiff).toFixed(2)}` : "",
+//     [budgetDiff]
+//   );
+
+//   // New: Fetch submission statuses from backend
+//   const fetchSubmissionStatuses = useCallback(async () => {
+//     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/submission-statuses", {
+//         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
+//       });
+//       if (response.data.success) {
+//         const statuses = {};
+//         response.data.data.forEach(status => {
+//           statuses[status.projection_id] = { submitted: status.submitted, po_budget_id: status.po_budget_id };
+//         });
+//         setSubmissionStatuses(statuses);
+//         // Update projections
+//         setProjections(prev => prev.map(p => ({
+//           ...p,
+//           submitted: statuses[p.id]?.submitted || false
+//         })));
+//       }
+//     } catch (error) {
+//       console.error("Error fetching submission statuses:", error);
+//     }
+//   }, [selectedSite, selectedWorkDescription]);
+
+//   // New: Fetch allocated for projection
+//   const fetchAllocatedOverheads = useCallback(async (projId) => {
+//     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/allocated", {
+//         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
+//       });
+//       if (response.data.success) {
+//         setProjections(prev => prev.map(p => 
+//           p.id === projId ? { ...p, allocatedOverheads: response.data.data, prevRemainingBudget: response.data.prev_remaining.prev_remaining_budget, prevRemainingPercentage: response.data.prev_remaining.prev_remaining_percentage } : p
+//         ));
+//       }
+//     } catch (error) {
+//       console.error("Error fetching allocated:", error);
+//     }
+//   }, [selectedSite, selectedWorkDescription]);
+
+//   // New: Fetch remaining for projection
+//   const fetchRemainingBudget = useCallback(async (projId) => {
+//     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/remaining", {
+//         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
+//       });
+//       if (response.data.success) {
+//         setProjections(prev => prev.map(p => 
+//           p.id === projId ? { ...p, remainingBudget: response.data.data.remaining_budget, remainingPercentage: response.data.data.remaining_percentage, effectiveBudget: response.data.data.effective_budget } : p
+//         ));
+//       }
+//     } catch (error) {
+//       console.error("Error fetching remaining:", error);
+//     }
+//   }, [selectedSite, selectedWorkDescription]);
+
+//   // Updated: canAddProjection - check if previous is submitted
+//   const canAddProjection = useMemo(() => {
+//     if (projections.length === 1) return projections[0].submitted; // First must be submitted
+//     const last = projections[projections.length - 1];
+//     return last.submitted;
+//   }, [projections]);
+
+//   // Updated default template
+//   const defaultProjectionTemplate = useCallback((id) => ({
+//     id,
+//     name: `Projection ${id}`,
+//     isOpen: id === 1,
+//     budgetAllocated: false,
+//     submitted: false,
+//     budgetPercentage: "",
+//     additionalPercentage: 0,
+//     budgetValue: "",
+//     materialTotalCost: 0,
+//     materialBudgetPercentage: 0,
+//     labourTotalCost: 0,
+//     labourBudgetPercentage: 0,
+//     remainingBudget: 0,
+//     remainingPercentage: 0,
+//     labourCalculationType: "",
+//     noOfLabours: "",
+//     totalShifts: "",
+//     ratePerShift: "",
+//     selectedDynamicOverheads: [],
+//     dynamicOverheads: {},
+//     allocatedOverheads: [],
+//     activeOverheadTab: "material",
+//     prevRemainingBudget: 0,
+//     prevRemainingPercentage: 0,
+//     effectiveBudget: 0
+//   }), []);
+
+//   // Fetch functions (unchanged)
+//   const fetchCompanies = useCallback(async () => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get("http://localhost:5000/admin/companies");
+//       if (response.data.success) {
+//         const companyOptions = response.data.data.map((company) => ({
+//           value: company.company_id,
+//           label: company.company_name,
+//         }));
+//         setCompanies(companyOptions);
+//       } else {
+//         setError("Failed to fetch companies.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching companies:", error);
+//       setError("Failed to load companies. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const fetchProjects = useCallback(async (companyId) => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
+//       if (response.data.success) {
+//         const projectOptions = response.data.data.map((project) => ({
+//           value: project.pd_id,
+//           label: project.project_name,
+//         }));
+//         setProjects(projectOptions);
+//       } else {
+//         setError("Failed to fetch projects.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching projects:", error);
+//       setError("Failed to load projects. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const fetchSites = useCallback(async (projectId) => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
+//       if (response.data.success) {
+//         const siteOptions = response.data.data.map((site) => ({
+//           value: site.site_id,
+//           label: `${site.site_name} (PO: ${site.po_number})`,
+//         }));
+//         setSites(siteOptions);
+//       } else {
+//         setError("Failed to fetch sites.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching sites:", error);
+//       setError("Failed to load sites. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const fetchWorkDescriptions = useCallback(async (siteId) => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get(
+//         `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
+//       );
+//       if (response.data.success) {
+//         const descOptions = response.data.data.map((desc) => ({
+//           value: desc.desc_id,
+//           label: desc.desc_name,
+//         }));
+//         setWorkDescriptions(descOptions);
+//       } else {
+//         setError("Failed to fetch work descriptions.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching work descriptions:", error);
+//       setError("Failed to load work descriptions. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const fetchBudgetDetails = useCallback(async (siteId, descId) => {
+//     try {
+//       setLoading(true);
+//       const response = await axios.get(
+//         `http://localhost:5000/projection/po-total-budget/${siteId}/${descId}`
+//       );
+//       if (response.data.success) {
+//         setBudgetData({
+//           ...response.data.data,
+//           total_po_value: parseFloat(response.data.data.total_po_value) || 0,
+//           total_rate: parseFloat(response.data.data.total_rate) || 0,
+//         });
+//       } else {
+//         setError("Failed to fetch budget details.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching budget details:", error);
+//       setError("Failed to load budget details. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }, []);
+
+//   const checkBudgetExists = useCallback(async (siteId, descId) => {
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
+//         params: { site_id: siteId, desc_id: descId },
+//       });
+//       if (response.data.success && response.data.data.length > 0) {
+//         // Updated: Select the budget with the maximum projection_id (latest)
+//         const lastBudget = response.data.data.reduce((prev, curr) => 
+//           (prev.projection_id || 0) > (curr.projection_id || 0) ? prev : curr
+//         );
+//         const parsedBudget = {
+//           ...lastBudget,
+//           total_po_value: parseFloat(lastBudget.total_po_value) || 0,
+//           total_budget_value: parseFloat(lastBudget.total_budget_value) || 0,
+//         };
+//         setExistingBudget(parsedBudget);
+//       } else {
+//         setExistingBudget(null);
+//       }
+//     } catch (error) {
+//       console.error("Error checking budget existence:", error);
+//       setError("Failed to check budget existence. Please try again.");
+//       setExistingBudget(null);
+//     }
+//   }, []);
+
+//   // Updated fetchAllPoBudgets to include submitted and prev remaining
+//   const fetchAllPoBudgets = useCallback(async (siteId, descId) => {
+//     if (!siteId || !descId) return;
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
+//         params: { site_id: siteId, desc_id: descId },
+//       });
+//       if (response.data.success) {
+//         const savedBudgets = response.data.data;
+//         const maxId = Math.max(...savedBudgets.map(b => b.projection_id || 0), 1);
+
+//         setProjections(prevProjs => {
+//           let currentProjs = [...prevProjs];
+
+//           // Ensure projections up to maxId exist
+//           for (let i = 1; i <= maxId; i++) {
+//             let projIndex = currentProjs.findIndex(p => p.id === i);
+//             if (projIndex === -1) {
+//               const newProjection = defaultProjectionTemplate(i);
+//               currentProjs.push(newProjection);
+//             }
+//             // Sort to ensure order
+//             currentProjs.sort((a, b) => a.id - b.id);
+//           }
+
+//           // Update projections with saved data or set defaults based on previous
+//           return currentProjs.map((p, index) => {
+//             const saved = savedBudgets.find(b => b.projection_id === p.id);
+//             if (saved) {
+//               // Calculate prev remaining if index > 0
+//               const prevRemBudget = index > 0 ? currentProjs[index - 1].remainingBudget || 0 : 0;
+//               const prevRemPerc = index > 0 ? currentProjs[index - 1].remainingPercentage || 0 : 0;
+//               return {
+//                 ...p,
+//                 poBudgetId: saved.id,
+//                 budgetPercentage: saved.total_percentage,
+//                 additionalPercentage: saved.additional_percentage,
+//                 budgetValue: parseFloat(saved.total_budget_value).toFixed(2),
+//                 budgetAllocated: true,
+//                 submitted: saved.projection_status === 1, // Use backend status (1 for first, but overridden by submission)
+//                 prevRemainingBudget: prevRemBudget,
+//                 prevRemainingPercentage: prevRemPerc
+//               };
+//             } else {
+//               // For unsaved projections, set based on previous projection's cumulative
+//               if (index > 0) {
+//                 const prevProj = currentProjs[index - 1];
+//                 const prevRemBudget = prevProj.remainingBudget || 0;
+//                 const prevRemPerc = prevProj.remainingPercentage || 0;
+//                 return {
+//                   ...p,
+//                   budgetPercentage: prevProj.budgetPercentage || "0.00",
+//                   additionalPercentage: "0.00",
+//                   budgetValue: ((parseFloat(prevProj.budgetPercentage || 0) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
+//                   prevRemainingBudget: prevRemBudget,
+//                   prevRemainingPercentage: prevRemPerc
+//                 };
+//               }
+//               return p;
+//             }
+//           });
+//         });
+//       }
+//     } catch (error) {
+//       console.error("Error fetching saved budgets:", error);
+//       setError("Failed to load saved budgets. Please try again.");
+//     }
+//   }, [budgetData, defaultProjectionTemplate]);
+
+//   const fetchOverheads = useCallback(async (po_budget_id) => {
+//     try {
+//       const response = await axios.get("http://localhost:5000/projection/overheads", {
+//         params: po_budget_id ? { po_budget_id } : {},
+//       });
+//       if (response.data.success) {
+//         setOverheads(response.data.data);
+//       } else {
+//         setError("Failed to fetch overheads.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching overheads:", error);
+//       setError("Failed to load overheads. Please try again.");
+//     }
+//   }, []);
+
+//   const fetchActualBudgetEntries = useCallback(async (po_budget_id) => {
+//     try {
+//       const response = await axios.get(`http://localhost:5000/projection/actual-budget/${po_budget_id}`);
+//       if (response.data.success) {
+//         const entries = response.data.data || {};
+//         setActualBudgetEntries(entries);
+//         setIsAllocated(Object.keys(entries).length > 0);
+//       } else {
+//         setError(response.data.message || "Failed to fetch actual budget entries.");
+//         setIsAllocated(false);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching actual budget entries:", error);
+//       setError("Failed to load actual budget entries. Please try again.");
+//       setIsAllocated(false);
+//     }
+//   }, []);
+
+//   // Projection management functions (unchanged except addNewProjection uses submitted)
+//   const addNewProjection = useCallback(() => {
+//     if (!canAddProjection) {
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Complete Current Projection",
+//         text: "Please submit the current projection before adding a new one.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//       return;
+//     }
+//     const prevProjection = projections[projections.length - 1];
+//     const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
+//     const initialPerc = prevProjection.budgetAllocated ? prevProjection.budgetPercentage : "0.00";
+//     const newProjection = {
+//       ...defaultProjectionTemplate(newProjectionId),
+//       budgetPercentage: initialPerc,
+//       budgetValue: ((parseFloat(initialPerc) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
+//       isOpen: false,
+//       prevRemainingBudget: prevProjection.remainingBudget || 0,
+//       prevRemainingPercentage: prevProjection.remainingPercentage || 0
+//     };
+//     setProjections(prev => [...prev, newProjection]);
+//   }, [projections, budgetData, defaultProjectionTemplate, canAddProjection]);
+
+//   const toggleProjection = useCallback((projectionId) => {
+//     setProjections(prev => prev.map(p => 
+//       p.id === projectionId ? { ...p, isOpen: !p.isOpen } : p
+//     ));
+//   }, []);
+
+//   const updateProjectionField = useCallback((projectionId, field, value) => {
+//     setProjections(prev => prev.map(p => 
+//       p.id === projectionId ? { ...p, [field]: value } : p
+//     ));
+//   }, []);
+
+//   const calculateLabourTotalCost = useCallback((projection) => {
+//     let total = 0;
+//     const rate = parseFloat(projection.ratePerShift) || 0;
+
+//     if (projection.labourCalculationType === "no_of_labours") {
+//       const labours = parseFloat(projection.noOfLabours) || 0;
+//       total = labours * rate;
+//     } else if (projection.labourCalculationType === "total_shifts") {
+//       const shifts = parseFloat(projection.totalShifts) || 0;
+//       total = shifts * rate;
+//     }
+
+//     const bv = parseFloat(projection.budgetValue) || 0;
+//     const percentage = bv > 0 ? (total / bv * 100) : 0;
+//     return { total, percentage };
+//   }, []);
+
+//   const recalculateAllPercentages = useCallback((projectionId) => {
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex] };
+//       const bv = parseFloat(proj.budgetValue) || 0;
+
+//       proj.materialBudgetPercentage = bv > 0 ? (proj.materialTotalCost / bv * 100) : 0;
+
+//       const { percentage: labourPerc } = calculateLabourTotalCost(proj);
+//       proj.labourBudgetPercentage = labourPerc;
+
+//       const updatedDynamic = { ...proj.dynamicOverheads };
+//       Object.keys(updatedDynamic).forEach(oid => {
+//         const val = parseFloat(updatedDynamic[oid].value) || 0;
+//         updatedDynamic[oid] = {
+//           ...updatedDynamic[oid],
+//           budgetPercentage: bv > 0 ? (val / bv * 100) : 0,
+//         };
+//       });
+//       proj.dynamicOverheads = updatedDynamic;
+
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, [calculateLabourTotalCost]);
+
+//   const handleTotalCostChangeForProjection = useCallback((projectionId) => (totalCost) => {
+//     console.log("Received total cost from MaterialPlanning:", totalCost);
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = prev[projIndex];
+//       const cost = Number(totalCost) || 0;
+//       if (proj.materialTotalCost === cost) return prev; // Prevent unnecessary update if value hasn't changed
+//       const newProj = { ...proj, materialTotalCost: cost };
+//       const bv = parseFloat(newProj.budgetValue) || 0;
+//       const perc = bv > 0 ? (cost / bv * 100) : 0;
+//       newProj.materialBudgetPercentage = perc;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = newProj;
+//       return newProjs;
+//     });
+//     // Fetch updated allocated
+//     fetchAllocatedOverheads(projectionId);
+//   }, [fetchAllocatedOverheads]);
+
+//   const handleLabourCalculationTypeChange = useCallback((projectionId, newType) => {
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex], labourCalculationType: newType };
+//       const { total, percentage } = calculateLabourTotalCost(proj);
+//       proj.labourTotalCost = total;
+//       proj.labourBudgetPercentage = percentage;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, [calculateLabourTotalCost]);
+
+//   const handleNoOfLaboursChange = useCallback((projectionId, newValue) => {
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex], noOfLabours: newValue };
+//       const { total, percentage } = calculateLabourTotalCost(proj);
+//       proj.labourTotalCost = total;
+//       proj.labourBudgetPercentage = percentage;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, [calculateLabourTotalCost]);
+
+//   const handleTotalShiftsChange = useCallback((projectionId, newValue) => {
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex], totalShifts: newValue };
+//       const { total, percentage } = calculateLabourTotalCost(proj);
+//       proj.labourTotalCost = total;
+//       proj.labourBudgetPercentage = percentage;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, [calculateLabourTotalCost]);
+
+//   const handleRatePerShiftChange = useCallback((projectionId, newValue) => {
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex], ratePerShift: newValue };
+//       const { total, percentage } = calculateLabourTotalCost(proj);
+//       proj.labourTotalCost = total;
+//       proj.labourBudgetPercentage = percentage;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, [calculateLabourTotalCost]);
+
+//   const calculateDynamicOverheadBudgetPercentage = useCallback((projectionId, overheadId, value) => {
+//     const parsedValue = parseFloat(value) || 0;
+//     setProjections(prev => {
+//       const projIndex = prev.findIndex(p => p.id === projectionId);
+//       if (projIndex === -1) return prev;
+//       const proj = { ...prev[projIndex] };
+//       const bv = parseFloat(proj.budgetValue) || 0;
+//       const percentage = bv > 0 ? (parsedValue / bv * 100) : 0;
+//       const currentDyn = proj.dynamicOverheads[overheadId] || {};
+//       const updatedDynamic = {
+//         ...proj.dynamicOverheads,
+//         [overheadId]: {
+//           ...currentDyn,
+//           value: parsedValue,
+//           budgetPercentage: percentage,
+//         },
+//       };
+//       proj.dynamicOverheads = updatedDynamic;
+//       const newProjs = [...prev];
+//       newProjs[projIndex] = proj;
+//       return newProjs;
+//     });
+//   }, []);
+
+// const calculateRemainingBudget = useCallback((projection) => {
+//   const dynamicOverheadTotal = Object.values(projection.dynamicOverheads || {}).reduce(
+//     (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+//     0
+//   );
+//   const totalAllocated = projection.materialTotalCost + projection.labourTotalCost + dynamicOverheadTotal;
+//   const budgetValue = parseFloat(projection.budgetValue) || 0;
+//   const remaining = budgetValue - totalAllocated;
+//   const percentage = budgetValue > 0 ? (remaining / budgetValue * 100) : 0;
+//   return { remainingBudget: remaining, remainingPercentage: percentage };
+// }, []);
+
+//   const handleBudgetPercentageChangeForProjection = useCallback((projectionId, e) => {
+//     let percentage = e.target.value;
+//     if (percentage && parseFloat(percentage) > 100) {
+//       percentage = "100";
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "Budget percentage cannot exceed 100%.",
+//         confirmButtonColor: "#4f46e5",
+//         timer: 3000,
+//         timerProgressBar: true,
+//       });
+//     }
+//     const projection = projections.find(p => p.id === projectionId);
+//     const prevProjection = projections.find(p => p.id === projectionId - 1);
+//     const prevPerc = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetPercentage) : 0;
+//     const newPerc = parseFloat(percentage) || 0;
+//     if (newPerc < prevPerc) {
+//       percentage = prevPerc.toFixed(2);
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Upgrade Required",
+//         text: `New projection must be >= previous (${prevPerc}%). Set to ${prevPerc}%.`,
+//         confirmButtonColor: "#4f46e5",
+//         timer: 3000,
+//         timerProgressBar: true,
+//       });
+//     }
+//     if (!budgetData) return;
+//     const percentageValue = parseFloat(percentage) || 0;
+//     const calculatedValue = (percentageValue / 100) * budgetData.total_po_value;
+//     const additionalPerc = (percentageValue - prevPerc).toFixed(2);
+//     setProjections(prev => prev.map(p => 
+//       p.id === projectionId ? { ...p, budgetPercentage: percentage, additionalPercentage: parseFloat(additionalPerc), budgetValue: calculatedValue.toFixed(2) } : p
+//     ));
+//     setTimeout(() => recalculateAllPercentages(projectionId), 0);
+//   }, [budgetData, projections, recalculateAllPercentages]);
+
+//   const handleBudgetValueChangeForProjection = useCallback((projectionId, e) => {
+//     let value = e.target.value;
+//     if (value && budgetData && parseFloat(value) > budgetData.total_po_value) {
+//       value = budgetData.total_po_value.toFixed(2);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: `Budget value cannot exceed Rs.${budgetData.total_po_value.toFixed(2)}.`,
+//         confirmButtonColor: "#4f46e5",
+//         timer: 3000,
+//         timerProgressBar: true,
+//       });
+//     }
+//     if (!budgetData) return;
+//     const valueNumber = parseFloat(value) || 0;
+//     const calculatedPercentage = budgetData.total_po_value > 0 ? (valueNumber / budgetData.total_po_value * 100).toFixed(2) : "";
+//     const prevProjection = projections.find(p => p.id === projectionId - 1);
+//     const prevValue = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetValue) : 0;
+//     if (valueNumber < prevValue) {
+//       value = prevValue.toFixed(2);
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Upgrade Required",
+//         text: `New projection value must be >= previous (Rs.${prevValue.toFixed(2)}).`,
+//         confirmButtonColor: "#4f46e5",
+//         timer: 3000,
+//         timerProgressBar: true,
+//       });
+//     }
+//     const additionalPerc = budgetData.total_po_value > 0 ? ((valueNumber - prevValue) / budgetData.total_po_value * 100).toFixed(2) : "0.00";
+//     setProjections(prev => prev.map(p => 
+//       p.id === projectionId ? { ...p, budgetValue: value, budgetPercentage: calculatedPercentage, additionalPercentage: parseFloat(additionalPerc) } : p
+//     ));
+//     setTimeout(() => recalculateAllPercentages(projectionId), 0);
+//   }, [budgetData, projections, recalculateAllPercentages]);
+
+//   const savePoBudget = useCallback(async (projectionId) => {
+//     const projection = projections.find(p => p.id === projectionId);
+//     if (!projection || !budgetData) return;
+//     try {
+//       const response = await axios.post("http://localhost:5000/projection/save-po-budget", {
+//         site_id: selectedSite?.value,
+//         desc_id: selectedWorkDescription?.value,
+//         total_po_value: budgetData.total_po_value,
+//         total_budget_value: parseFloat(projection.budgetValue) || 0,
+//         projection_id: projectionId,
+//       });
+//       if (response.data.success) {
+//         await Swal.fire({
+//           icon: "success",
+//           title: "Success",
+//           text: response.data.message,
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//         // Updated: Set poBudgetId and budgetAllocated
+//         updateProjectionField(projectionId, 'poBudgetId', response.data.data.id);
+//         updateProjectionField(projectionId, 'budgetAllocated', true);
+//         if (selectedSite?.value && selectedWorkDescription?.value) {
+//           await fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+//         }
+//         await checkBudgetExists(selectedSite?.value, selectedWorkDescription?.value);
+//       } else {
+//         await Swal.fire({
+//           icon: "error",
+//           title: "Error",
+//           text: response.data.message,
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//       }
+//     } catch (error) {
+//       console.error("Error saving PO budget:", error);
+//       await Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "Failed to save budget. Please try again.",
+//         confirmButtonColor: "#4f46e5",
+//         timer: 3000,
+//         timerProgressBar: true,
+//       });
+//     }
+//   }, [projections, budgetData, selectedSite, selectedWorkDescription, checkBudgetExists, updateProjectionField, fetchAllPoBudgets]);
+
+//   const saveMaterialAllocation = useCallback(async (projectionId) => {
+//     const projection = projections.find(p => p.id === projectionId);
+//     if (!projection) return;
+
+//     try {
+//       const payload = {
+//         site_id: selectedSite?.value,
+//         desc_id: selectedWorkDescription?.value,
+//         total_cost: projection.materialTotalCost,
+//         materialBudgetPercentage: projection.materialBudgetPercentage,
+//         projection_id: projectionId
+//       };
+
+//       console.log("Material Allocation Payload:", payload);
+
+//       const response = await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
+      
+//       if (response.data.success) {
+//         Swal.fire({
+//           icon: "success",
+//           title: "Success",
+//           text: "Material allocation saved successfully!",
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//         // Fetch updated allocated
+//         fetchAllocatedOverheads(projectionId);
+//       }
+//     } catch (error) {
+//       console.error("Error saving material allocation:", error);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "Failed to save material allocation. Please try again.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//     }
+//   }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
+
+//   const saveLabourOverhead = useCallback(async (projectionId) => {
+//     const projection = projections.find(p => p.id === projectionId);
+//     if (!projection) return;
+
+//     try {
+//       const payload = {
+//         site_id: selectedSite?.value,
+//         desc_id: selectedWorkDescription?.value,
+//         calculation_type: projection.labourCalculationType,
+//         no_of_labours: projection.labourCalculationType === "no_of_labours" ? parseInt(projection.noOfLabours) : null,
+//         total_shifts: projection.labourCalculationType === "total_shifts" ? parseInt(projection.totalShifts) : null,
+//         rate_per_shift: parseFloat(projection.ratePerShift),
+//         total_cost: projection.labourTotalCost,
+//         overhead_type: "labours",
+//         labourBudgetPercentage: projection.labourBudgetPercentage,
+//         projection_id: projectionId
+//       };
+
+//       console.log("Labour Overhead Payload:", payload);
+
+//       const response = await axios.post("http://localhost:5000/projection/save-labour-overhead", payload);
+      
+//       if (response.data.success) {
+//         Swal.fire({
+//           icon: "success",
+//           title: "Success",
+//           text: "Labour overhead saved successfully!",
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//         // Fetch updated allocated
+//         fetchAllocatedOverheads(projectionId);
+//       }
+//     } catch (error) {
+//       console.error("Error saving labour overhead:", error);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "Failed to save labour overhead. Please try again.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//     }
+//   }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
+
+//   // Updated: Edit overhead handler
+//   const editOverhead = useCallback(async (projectionId, type, id, overheadName, currentData) => {
+//     if (type === 'material') return; // Handled in MaterialPlanning
+//     const projection = projections.find(p => p.id === projectionId);
+//     const isSubmitted = submissionStatuses[projectionId]?.submitted || projection.submitted;
+//     if (isSubmitted) {
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Cannot Edit",
+//         text: "Editing disabled after submission.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//       return;
+//     }
+
+//     // Open edit modal (simplified; use Swal for form)
+//     const result = await Swal.fire({
+//       title: `Edit ${overheadName}`,
+//       html: `
+//         <input id="editValue" class="swal2-input" placeholder="Total Cost" value="${currentData.totalCost || ''}">
+//         <input id="editPerc" class="swal2-input" placeholder="Budget %" value="${currentData.budgetPercentage || ''}">
+//       `,
+//       focusConfirm: false,
+//       preConfirm: () => {
+//         return {
+//           totalCost: document.getElementById('editValue').value,
+//           budgetPercentage: document.getElementById('editPerc').value
+//         };
+//       },
+//       showCancelButton: true,
+//       confirmButtonText: "Save Changes",
+//       confirmButtonColor: "#4f46e5",
+//     });
+
+//     if (result.isConfirmed) {
+//       const { totalCost, budgetPercentage } = result.value;
+//       if (!totalCost || !budgetPercentage) {
+//         Swal.fire({ icon: "error", text: "All fields required" });
+//         return;
+//       }
+//       try {
+//         const response = await axios.post("http://localhost:5000/projection/update-overhead", {
+//           site_id: selectedSite.value,
+//           desc_id: selectedWorkDescription.value,
+//           projection_id: projectionId,
+//           overhead_type_id: id,
+//           total_cost: parseFloat(totalCost),
+//           budget_percentage: parseFloat(budgetPercentage),
+//           overhead_type: overheadName
+//         });
+//         if (response.data.success) {
+//           Swal.fire({ icon: "success", text: response.data.message });
+//           fetchAllocatedOverheads(projectionId);
+//           // Update local state
+//           if (type === 'labours') {
+//             updateProjectionField(projectionId, 'labourTotalCost', parseFloat(totalCost));
+//             updateProjectionField(projectionId, 'labourBudgetPercentage', parseFloat(budgetPercentage));
+//           } else {
+//             updateProjectionField(projectionId, `dynamicOverheads.${id}.value`, parseFloat(totalCost));
+//             updateProjectionField(projectionId, `dynamicOverheads.${id}.budgetPercentage`, parseFloat(budgetPercentage));
+//           }
+//         }
+//       } catch (error) {
+//         Swal.fire({ icon: "error", text: error.response?.data?.message || "Edit failed" });
+//       }
+//     }
+//   }, [projections, submissionStatuses, selectedSite, selectedWorkDescription, fetchAllocatedOverheads, updateProjectionField]);
+
+//   // Updated: Delete overhead handler
+//   const deleteOverhead = useCallback(async (projectionId, type, id, overheadName) => {
+//     if (type === 'material') return; // Handled in MaterialPlanning
+//     const projection = projections.find(p => p.id === projectionId);
+//     const isSubmitted = submissionStatuses[projectionId]?.submitted || projection.submitted;
+//     if (isSubmitted) {
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Cannot Delete",
+//         text: "Deletion disabled after submission.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//       return;
+//     }
+
+//     const result = await Swal.fire({
+//       title: `Delete ${overheadName}?`,
+//       text: `Are you sure you want to delete ${overheadName}?`,
+//       icon: 'warning',
+//       showCancelButton: true,
+//       confirmButtonColor: "#ef4444",
+//       cancelButtonColor: "#6b7280",
+//       confirmButtonText: 'Yes, delete!',
+//     });
+//     if (result.isConfirmed) {
+//       try {
+//         const response = await axios.delete("http://localhost:5000/projection/delete-overhead", {
+//           data: { 
+//             site_id: selectedSite.value,
+//             desc_id: selectedWorkDescription.value,
+//             projection_id: projectionId,
+//             overhead_type_id: id,
+//             overhead_type: overheadName
+//           }
+//         });
+//         if (response.data.success) {
+//           Swal.fire({
+//             icon: 'success',
+//             title: 'Deleted!',
+//             text: `${overheadName} deleted successfully.`,
+//             confirmButtonColor: "#4f46e5",
+//           });
+//           // Refresh allocated
+//           fetchAllocatedOverheads(projectionId);
+//           // Update local state
+//           if (type === 'labours') {
+//             updateProjectionField(projectionId, 'labourTotalCost', 0);
+//             updateProjectionField(projectionId, 'labourBudgetPercentage', 0);
+//           } else {
+//             updateProjectionField(projectionId, `dynamicOverheads.${id}.value`, 0);
+//             updateProjectionField(projectionId, `dynamicOverheads.${id}.budgetPercentage`, 0);
+//           }
+//         }
+//       } catch (error) {
+//         Swal.fire({
+//           icon: 'error',
+//           title: 'Error!',
+//           text: error.response?.data?.message || 'Failed to delete.',
+//           confirmButtonColor: "#4f46e5",
+//         });
+//       }
+//     }
+//   }, [projections, submissionStatuses, selectedSite, selectedWorkDescription, fetchAllocatedOverheads, updateProjectionField]);
+
+//   // Updated finalSubmissionProjection - removed call to save-actual-budget (handled in backend final submission with aggregation)
+//   const finalSubmissionProjection = useCallback(async (projectionId) => {
+//     const projection = projections.find(p => p.id === projectionId);
+//     if (!projection) return;
+
+//     let po_budget_id = projection.poBudgetId;
+
+//     // If no po_budget_id, save po_budget first
+//     if (!po_budget_id) {
+//       try {
+//         const saveResponse = await axios.post("http://localhost:5000/projection/save-po-budget", {
+//           site_id: selectedSite?.value,
+//           desc_id: selectedWorkDescription?.value,
+//           total_po_value: budgetData.total_po_value,
+//           total_budget_value: parseFloat(projection.budgetValue) || 0,
+//           projection_id: projectionId,
+//         });
+//         if (saveResponse.data.success) {
+//           po_budget_id = saveResponse.data.data.id;
+//           // Update projection state
+//           setProjections(prev => prev.map(p => 
+//             p.id === projectionId ? { ...p, poBudgetId: po_budget_id, budgetAllocated: true } : p
+//           ));
+//           // Refresh budgets
+//           if (selectedSite?.value && selectedWorkDescription?.value) {
+//             await fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+//           }
+//           await checkBudgetExists(selectedSite?.value, selectedWorkDescription?.value);
+//         } else {
+//           Swal.fire({
+//             icon: "error",
+//             title: "Budget Save Error",
+//             text: saveResponse.data.message || "Failed to save budget before submission.",
+//             confirmButtonColor: "#4f46e5",
+//           });
+//           return;
+//         }
+//       } catch (saveError) {
+//         console.error("Error saving PO budget for submission:", saveError);
+//         Swal.fire({
+//           icon: "error",
+//           title: "Budget Save Error",
+//           text: "Failed to save budget before submission. Please try again.",
+//           confirmButtonColor: "#4f46e5",
+//         });
+//         return;
+//       }
+//     }
+
+//     // Removed: Collect entries and call save-actual-budget (now handled in backend final submission with aggregation)
+
+//     try {
+//       const response = await axios.post("http://localhost:5000/projection/final-projection-submission", {
+//         site_id: selectedSite?.value,
+//         desc_id: selectedWorkDescription?.value,
+//         projection_id: projectionId,
+//         projection_data: {
+//           budgetValue: projection.budgetValue,
+//           additionalPercentage: projection.additionalPercentage,
+//           materialTotalCost: projection.materialTotalCost,
+//           materialBudgetPercentage: projection.materialBudgetPercentage,
+//           labourTotalCost: projection.labourTotalCost,
+//           labourBudgetPercentage: projection.labourBudgetPercentage,
+//           dynamicOverheads: projection.dynamicOverheads,
+//         }
+//       });
+
+//       if (response.data.success) {
+//         // Set submitted
+//         setProjections(prev => prev.map(p => p.id === projectionId ? { ...p, submitted: true } : p));
+//         setSubmissionStatuses(prev => ({ ...prev, [projectionId]: { ...prev[projectionId], submitted: true } }));
+//         // Fetch remaining
+//         await fetchRemainingBudget(projectionId);
+//         // Fetch updated allocated (now in actual_budget, but since transferred, refetch)
+//         await fetchAllocatedOverheads(projectionId);
+//         // Refresh actual_budget for the latest po_budget_id (aggregated)
+//         if (existingBudget) {
+//           await fetchActualBudgetEntries(existingBudget.id);
+//         }
+//         Swal.fire({
+//           icon: "success",
+//           title: "Success",
+//           text: `${projection.name} submitted successfully! Remaining: ₹${response.data.data.remaining_budget}`,
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//       }
+//     } catch (error) {
+//       console.error("Error in final submission:", error);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "Failed to submit projection. Please try again.",
+//         confirmButtonColor: "#4f46e5",
+//       });
+//     }
+//   }, [projections, selectedSite, selectedWorkDescription, existingBudget, fetchActualBudgetEntries, budgetData, fetchAllPoBudgets, checkBudgetExists, fetchRemainingBudget, fetchAllocatedOverheads]);
+
+//   const saveDynamicOverhead = useCallback(async (projectionId, overheadId, overheadName) => {
+//     const projection = projections.find(p => p.id === projectionId);
+//     if (!projection) return;
+
+//     try {
+//       if (!selectedSite?.value || !selectedWorkDescription?.value) {
+//         Swal.fire({
+//           icon: "warning",
+//           title: "Invalid Selection",
+//           text: "Please select a site and work description before saving.",
+//           confirmButtonColor: "#4f46e5",
+//         });
+//         return;
+//       }
+
+//       const overheadEntry = projection.dynamicOverheads[overheadId];
+//       if (!overheadEntry || typeof overheadEntry !== 'object') {
+//         console.warn(`No valid data for overhead ID: ${overheadId}`);
+//         Swal.fire({
+//           icon: "error",
+//           title: "Invalid Data",
+//           text: `${overheadName} data is missing or invalid.`,
+//           confirmButtonColor: "#4f46e5",
+//         });
+//         return;
+//       }
+
+//       const rawValue = overheadEntry.value ?? 0;
+//       const rawPercentage = overheadEntry.budgetPercentage ?? 0;
+//       const value = parseFloat(rawValue);
+//       const percentage = parseFloat(rawPercentage);
+
+//       if (isNaN(value) || isNaN(percentage)) {
+//         Swal.fire({
+//           icon: "error",
+//           title: "Invalid Numbers",
+//           text: `${overheadName} value or percentage is not a valid number.`,
+//           confirmButtonColor: "#4f46e5",
+//         });
+//         return;
+//       }
+
+//       const payload = {
+//         site_id: selectedSite.value,
+//         desc_id: selectedWorkDescription.value,
+//         value,
+//         percentage,
+//         overhead_type: overheadName,
+//         projection_id: projectionId,
+//       };
+
+//       const response = await axios.post("http://localhost:5000/projection/save-dynamic-overhead-values", payload);
+
+//       if (response.data.success) {
+//         Swal.fire({
+//           icon: "success",
+//           title: "Success",
+//           text: `${overheadName} overhead saved successfully!`,
+//           confirmButtonColor: "#4f46e5",
+//           timer: 3000,
+//           timerProgressBar: true,
+//         });
+//         // Fetch updated allocated
+//         fetchAllocatedOverheads(projectionId);
+//       } else {
+//         throw new Error(response.data.message || "Unknown error");
+//       }
+//     } catch (error) {
+//       console.error(`Error saving ${overheadName} overhead:`, error);
+
+//       let errorMessage = "Failed to save. Please try again.";
+//       if (error.response) {
+//         errorMessage = error.response.data.message || `Server error: ${error.response.status}`;
+//       } else if (error.request) {
+//         errorMessage = "Network error: Unable to reach server. Check if backend is running.";
+//       } else if (error.message.includes("Invalid")) {
+//         errorMessage = error.message;
+//       }
+
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: errorMessage,
+//         confirmButtonColor: "#4f46e5",
+//       });
+//     }
+//   }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
+
+//   const addNewOverhead = useCallback(async () => {
+//     const { value: expense_name } = await Swal.fire({
+//       title: "Add New Overhead",
+//       input: "text",
+//       inputLabel: "Expense Name",
+//       inputPlaceholder: "Enter expense name",
+//       showCancelButton: true,
+//       confirmButtonText: "Save",
+//       cancelButtonText: "Cancel",
+//       confirmButtonColor: "#4f46e5",
+//       inputValidator: (value) => {
+//         if (!value) {
+//           return "Expense name is required!";
+//         }
+//         if (overheads.some((oh) => oh.expense_name.toLowerCase() === value.toLowerCase())) {
+//           return "Expense name already exists!";
+//         }
+//       },
+//     });
+
+//     if (expense_name) {
+//       try {
+//         const response = await axios.post("http://localhost:5000/projection/save-overhead", {
+//           expense_name,
+//         });
+//         if (response.data.success) {
+//           const newOverhead = response.data.data;
+//           setOverheads((prev) => [...prev, newOverhead]);
+//           Swal.fire({
+//             icon: "success",
+//             title: "Success",
+//             text: "Overhead added successfully!",
+//             confirmButtonColor: "#4f46e5",
+//             timer: 3000,
+//             timerProgressBar: true,
+//           });
+//         } else {
+//           Swal.fire({
+//             icon: "error",
+//             title: "Error",
+//             text: response.data.message,
+//             confirmButtonColor: "#4f46e5",
+//           });
+//         }
+//       } catch (error) {
+//         console.error("Error adding new overhead:", error);
+//         Swal.fire({
+//           icon: "error",
+//           title: "Error",
+//           text: "Failed to add overhead. Please try again.",
+//           confirmButtonColor: "#4f46e5",
+//         });
+//       }
+//     }
+//   }, [overheads]);
+
+//   const handleSelectOverhead = useCallback((overhead, projectionId) => {
+//     setProjections(prev => prev.map(p => {
+//       if (p.id !== projectionId) return p;
+//       if (!p.selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
+//         return {
+//           ...p,
+//           selectedDynamicOverheads: [...p.selectedDynamicOverheads, overhead]
+//         };
+//       }
+//       return p;
+//     }));
+//   }, []);
+
+//   const handleRemoveOverhead = useCallback((overheadId, projectionId) => {
+//     setProjections(prev => prev.map(p => {
+//       if (p.id !== projectionId) return p;
+//       const updatedSelected = p.selectedDynamicOverheads.filter((oh) => oh.id !== overheadId);
+//       const updatedDynamic = { ...p.dynamicOverheads };
+//       if (updatedDynamic[overheadId]) {
+//         updatedDynamic[overheadId] = {
+//           ...updatedDynamic[overheadId],
+//           value: "",
+//           budgetPercentage: 0,
+//         };
+//       }
+//       return { ...p, selectedDynamicOverheads: updatedSelected, dynamicOverheads: updatedDynamic };
+//     }));
+//   }, []);
+
+//   // UseEffects (unchanged except add fetchAllocatedOverheads and fetchRemainingBudget on projection change)
+//   useEffect(() => {
+//     fetchCompanies();
+//   }, [fetchCompanies]);
+
+//   useEffect(() => {
+//     if (selectedCompany?.value) {
+//       fetchProjects(selectedCompany.value);
+//     } else {
+//       setProjects([]);
+//     }
+//     setSites([]);
+//     setWorkDescriptions([]);
+//     setSelectedProject(null);
+//     setSelectedSite(null);
+//     setSelectedWorkDescription(null);
+//     setBudgetData(null);
+//     setExistingBudget(null);
+//     setOverheads([]);
+//     setActualBudgetEntries({});
+//     setIsAllocated(false);
+//     setSubmissionStatuses({});
+//     setProjections(prev => prev.map(p => ({
+//       ...p,
+//       budgetPercentage: "",
+//       budgetValue: "",
+//       budgetAllocated: false,
+//       additionalPercentage: 0,
+//       materialTotalCost: 0,
+//       materialBudgetPercentage: 0,
+//       labourTotalCost: 0,
+//       labourBudgetPercentage: 0,
+//       dynamicOverheads: {},
+//       selectedDynamicOverheads: [],
+//       submitted: false,
+//       prevRemainingBudget: 0,
+//       prevRemainingPercentage: 0
+//     })));
+//   }, [selectedCompany, fetchProjects]);
+
+//   useEffect(() => {
+//     if (selectedProject?.value) {
+//       fetchSites(selectedProject.value);
+//     } else {
+//       setSites([]);
+//     }
+//     setWorkDescriptions([]);
+//     setSelectedSite(null);
+//     setSelectedWorkDescription(null);
+//     setBudgetData(null);
+//     setExistingBudget(null);
+//     setOverheads([]);
+//     setActualBudgetEntries({});
+//     setIsAllocated(false);
+//     setSubmissionStatuses({});
+//     setProjections([defaultProjectionTemplate(1)]);
+//   }, [selectedProject, fetchSites, defaultProjectionTemplate]);
+
+//   useEffect(() => {
+//     if (selectedSite?.value) {
+//       fetchWorkDescriptions(selectedSite.value);
+//     } else {
+//       setWorkDescriptions([]);
+//     }
+//     setSelectedWorkDescription(null);
+//     setBudgetData(null);
+//     setExistingBudget(null);
+//     setOverheads([]);
+//     setActualBudgetEntries({});
+//     setIsAllocated(false);
+//     setSubmissionStatuses({});
+//     setProjections([defaultProjectionTemplate(1)]);
+//   }, [selectedSite, fetchWorkDescriptions, defaultProjectionTemplate]);
+
+//   useEffect(() => {
+//     if (selectedSite?.value && selectedWorkDescription?.value) {
+//       fetchBudgetDetails(selectedSite.value, selectedWorkDescription.value);
+//       checkBudgetExists(selectedSite.value, selectedWorkDescription.value);
+//     } else {
+//       setBudgetData(null);
+//       setExistingBudget(null);
+//       setOverheads([]);
+//       setActualBudgetEntries({});
+//       setIsAllocated(false);
+//       setSubmissionStatuses({});
+//       setProjections([defaultProjectionTemplate(1)]);
+//     }
+//   }, [selectedSite, selectedWorkDescription, fetchBudgetDetails, checkBudgetExists, defaultProjectionTemplate]);
+
+//   useEffect(() => {
+//     if (selectedSite?.value && selectedWorkDescription?.value && budgetData) {
+//       fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+//       fetchSubmissionStatuses();
+//     }
+//   }, [selectedSite, selectedWorkDescription, budgetData, fetchAllPoBudgets, fetchSubmissionStatuses]);
+
+//   useEffect(() => {
+//     if (existingBudget?.id) {
+//       fetchOverheads(existingBudget.id);
+//       fetchActualBudgetEntries(existingBudget.id);
+//     } else {
+//       setOverheads([]);
+//       setActualBudgetEntries({});
+//       setIsAllocated(false);
+//     }
+//   }, [existingBudget, fetchOverheads, fetchActualBudgetEntries]);
+
+//   // Existing useEffects (add fetchAllocatedOverheads and fetchRemainingBudget on projection change)
+//   useEffect(() => {
+//     projections.forEach(proj => {
+//       fetchAllocatedOverheads(proj.id);
+//       if (proj.submitted) fetchRemainingBudget(proj.id);
+//     });
+//   }, [selectedSite, selectedWorkDescription, projections, fetchAllocatedOverheads, fetchRemainingBudget]);
+
+// // Updated ProjectionAccordion useMemo (add prev remaining display, edit/delete handlers with disable, hide final sub if submitted, per-proj remaining out of effective)
+// const ProjectionAccordion = useMemo(() => 
+//   projections.map((projection) => {
+//     const prevProjection = projections.find(p => p.id === projection.id - 1);
+//     const prevPerc = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetPercentage) : 0;
+//     const progressWidth = (parseFloat(projection.budgetPercentage || 0) / 100) * 100;
+//     const isSubmitted = submissionStatuses[projection.id]?.submitted || projection.submitted;
+//     const { remainingBudget: calcRemBudget, remainingPercentage: calcRemPerc } = calculateRemainingBudget(projection);
+//     const effectiveBudget = projection.effectiveBudget || parseFloat(projection.budgetValue);
+//     const effectiveRemPerc = effectiveBudget > 0 ? ((isSubmitted ? projection.remainingBudget : calcRemBudget) / effectiveBudget * 100) : 0;
+//     const allocOverhead = projection.allocatedOverheads.find(oh => oh.expense_name.toLowerCase() === 'labours') || {};
+//     const dynOverhead = projection.allocatedOverheads.find(oh => oh.id === parseInt(projection.activeOverheadTab?.split('-')[1]));
+//     return (
+//       <div key={projection.id} className="border border-gray-200 rounded-xl mb-6 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
+//         <div
+//           className="flex items-center justify-between p-6 cursor-pointer hover:bg-gradient-to-r hover:from-gray-50 to-white rounded-t-xl"
+//           onClick={() => toggleProjection(projection.id)}
+//         >
+//           <div className="flex items-center space-x-3">
+//             <div className={`w-3 h-3 rounded-full ${projection.budgetAllocated ? 'bg-green-500' : 'bg-yellow-500'}`} />
+//             <h3 className="text-xl font-semibold text-gray-800">{projection.name}</h3>
+//           </div>
+//           <div className="flex items-center space-x-3">
+//             {projection.budgetAllocated ? (
+//               <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full flex items-center space-x-1">
+//                 <CheckCircle size={14} /> Allocated
+//               </span>
+//             ) : (
+//               <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full flex items-center space-x-1">
+//                 <AlertCircle size={14} /> Pending
+//               </span>
+//             )}
+//             {projection.isOpen ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
+//           </div>
+//         </div>
+
+//         {projection.isOpen && (
+//           <div className="p-6">
+//             {!projection.budgetAllocated && (
+//               <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+//                 <h4 className="text-xl font-semibold mb-4 text-blue-800 flex items-center space-x-2">
+//                   <span>Budget Allocation</span>
+//                   <span className="text-sm text-blue-600">(Cumulative Total %)</span>
+//                 </h4>
+//                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//                   <div>
+//                     <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                       Total % (Upgrade from {prevPerc.toFixed(2)}%)
+//                     </label>
+//                     <input
+//                       type="number"
+//                       step="0.01"
+//                       max="100"
+//                       min={prevPerc}
+//                       value={projection.budgetPercentage}
+//                       onChange={(e) => handleBudgetPercentageChangeForProjection(projection.id, e)}
+//                       className="w-full p-4 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+//                       placeholder="Enter total %"
+//                     />
+//                   </div>
+
+//                   <div>
+//                     <label className="block text-sm font-semibold text-gray-700 mb-2">
+//                       Total Value (Rs.)
+//                     </label>
+//                     <input
+//                       type="number"
+//                       step="0.01"
+//                       min={prevProjection?.budgetValue || 0}
+//                       value={projection.budgetValue}
+//                       onChange={(e) => handleBudgetValueChangeForProjection(projection.id, e)}
+//                       className="w-full p-4 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+//                       placeholder="Enter total value"
+//                     />
+//                   </div>
+
+//                   <div className="flex items-end">
+//                     <button
+//                       onClick={() => savePoBudget(projection.id)}
+//                       className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+//                       disabled={loading || !projection.budgetPercentage || !projection.budgetValue || parseFloat(projection.budgetPercentage) <= prevPerc}
+//                     >
+//                       {loading ? (
+//                         <Loader2 className="animate-spin inline-block mr-2" size={20} />
+//                       ) : null}
+//                       Save Budget
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+
+//             {projection.budgetAllocated && (
+//               <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+//                 <h4 className="text-xl font-semibold mb-4 text-green-800 flex items-center space-x-2">
+//                   <CheckCircle size={20} className="text-green-500" />
+//                   Allocated Budget (Fixed)
+//                 </h4>
+//                 <div className="space-y-4">
+//                   {projection.prevRemainingBudget > 0 && (
+//                     <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+//                       <span className="text-sm font-medium text-yellow-800">Previous Remaining Added:</span>
+//                       <span className="text-lg font-bold text-yellow-700">₹{parseFloat(projection.prevRemainingBudget).toLocaleString()} ({projection.prevRemainingPercentage.toFixed(2)}%)</span>
+//                     </div>
+//                   )}
+//                   <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+//                     <span className="text-sm font-medium text-gray-700">Additional %:</span>
+//                     <span className="text-lg font-bold text-green-700">{projection.additionalPercentage}%</span>
+//                   </div>
+//                   <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+//                     <span className="text-sm font-medium text-gray-700">Total %:</span>
+//                     <span className="text-lg font-bold text-green-700">{projection.budgetPercentage}%</span>
+//                   </div>
+//                   <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+//                     <span className="text-sm font-medium text-gray-700">Total Value (Rs.):</span>
+//                     <span className="text-lg font-bold text-green-700">₹{parseFloat(projection.budgetValue).toLocaleString()}</span>
+//                   </div>
+//                   <div className="relative pt-1">
+//                     <div className="flex mb-2 items-center justify-between">
+//                       <div>
+//                         <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-800 bg-green-200">
+//                           Cumulative Progress
+//                         </span>
+//                       </div>
+//                       <div className="text-right">
+//                         <span className="text-xs font-semibold inline-block text-green-800">{progressWidth.toFixed(1)}%</span>
+//                       </div>
+//                     </div>
+//                     <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-200">
+//                       <div
+//                         style={{ width: `${progressWidth}%` }}
+//                         className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"
+//                       ></div>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+
+//             {projection.budgetAllocated && (
+//               <>
+//                 <div className="flex flex-wrap gap-2 mb-8 pb-4 border-b border-gray-200 overflow-x-auto bg-gray-50 rounded-lg p-4">
+//                   {[
+//                     { key: "material", label: "Material", icon: "📦" },
+//                     { key: "labour", label: "Labour", icon: "👥" },
+//                     ...projection.selectedDynamicOverheads.map((overhead) => ({
+//                       key: `overhead-${overhead.id}`,
+//                       label: overhead.expense_name,
+//                       icon: "⚙️",
+//                     })),
+//                   ].map((tab) => (
+//                     <button
+//                       key={tab.key}
+//                       className={`flex items-center px-6 py-3 font-semibold whitespace-nowrap rounded-full transition-all duration-200 ${
+//                         projection.activeOverheadTab === tab.key
+//                           ? "bg-indigo-600 text-white shadow-lg"
+//                           : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+//                       }`}
+//                       onClick={() => updateProjectionField(projection.id, 'activeOverheadTab', tab.key)}
+//                     >
+//                       <span className="mr-2 text-sm">{tab.icon}</span>
+//                       {tab.label}
+//                     </button>
+//                   ))}
+//                   <button
+//                     onClick={() => {
+//                       Swal.fire({
+//                         title: "Select Overhead",
+//                         input: "select",
+//                         inputOptions: overheads
+//                           .filter((oh) => oh.is_default === 0)
+//                           .filter((oh) => !projection.selectedDynamicOverheads.some((selected) => selected.id === oh.id))
+//                           .reduce((options, overhead) => {
+//                             options[overhead.id] = overhead.expense_name;
+//                             return options;
+//                           }, {}),
+//                         inputPlaceholder: "Select an overhead",
+//                         showCancelButton: true,
+//                         confirmButtonText: "Add",
+//                         confirmButtonColor: "#4f46e5",
+//                         showDenyButton: true,
+//                         denyButtonText: "Add New Overhead",
+//                         denyButtonColor: "#22c55e",
+//                         inputValidator: (value) => {
+//                           if (!value) {
+//                             return "Please select an overhead!";
+//                           }
+//                         },
+//                       }).then((result) => {
+//                         if (result.isConfirmed) {
+//                           const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
+//                           handleSelectOverhead(selectedOverhead, projection.id);
+//                           updateProjectionField(projection.id, 'activeOverheadTab', `overhead-${selectedOverhead.id}`);
+//                         } else if (result.isDenied) {
+//                           addNewOverhead();
+//                         }
+//                       });
+//                     }}
+//                     className="flex items-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-full hover:from-emerald-600 hover:to-green-700 shadow-lg transition-all duration-200 ml-2"
+//                   >
+//                     <PlusCircle className="mr-2" size={18} />
+//                     Add Overhead
+//                   </button>
+//                 </div>
+
+//                 {projection.activeOverheadTab === "material" && (
+//                   <div className="p-6 bg-gray-50 rounded-xl mb-6">
+//                     <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+//                       <span>📦</span>
+//                       <span>Material Overhead</span>
+//                     </h4>
+//                     <MaterialPlanning
+//                       selectedCompany={selectedCompany}
+//                       selectedProject={selectedProject}
+//                       selectedSite={selectedSite}
+//                       selectedWorkDesc={selectedWorkDescription}
+//                       existingBudget={existingBudget}
+//                       projectionBudgetValue={projection.budgetValue}
+//                       projectionId={projection.id}
+//                       isSubmitted={isSubmitted}
+//                       onTotalCostChange={handleTotalCostChangeForProjection(projection.id)}
+//                     />
+//                     {!isSubmitted && (
+//                       <button
+//                         onClick={() => saveMaterialAllocation(projection.id)}
+//                         className="mt-4 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//                       >
+//                         Save Material Allocation
+//                       </button>
+//                     )}
+//                   </div>
+//                 )}
+
+//                 {projection.activeOverheadTab === "labour" && (
+//                   <div className="p-6 bg-gray-50 rounded-xl mb-6">
+//                     <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+//                       <span>👥</span>
+//                       <span>Labour Overhead</span>
+//                     </h4>
+//                     <div className="grid grid-cols-2 gap-4 mb-4">
+//                       <div>
+//                         <label className="block text-sm font-medium mb-2">Calculation Type</label>
+//                         <select
+//                           value={projection.labourCalculationType}
+//                           onChange={(e) => handleLabourCalculationTypeChange(projection.id, e.target.value)}
+//                           disabled={isSubmitted}
+//                           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+//                         >
+//                           <option value="">Select Type</option>
+//                           <option value="no_of_labours">No of Labours</option>
+//                           <option value="total_shifts">Total Estimated Shifts</option>
+//                         </select>
+//                       </div>
+//                     </div>
+//                     {projection.labourCalculationType && (
+//                       <div className="grid grid-cols-3 gap-4 mb-4">
+//                         {projection.labourCalculationType === "no_of_labours" && (
+//                           <div>
+//                             <label className="block text-sm font-medium mb-2">No of Labours</label>
+//                             <input
+//                               type="number"
+//                               value={projection.noOfLabours}
+//                               onChange={(e) => handleNoOfLaboursChange(projection.id, e.target.value)}
+//                               disabled={isSubmitted}
+//                               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+//                               placeholder="Enter number of labours"
+//                             />
+//                           </div>
+//                         )}
+//                         {projection.labourCalculationType === "total_shifts" && (
+//                           <div>
+//                             <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
+//                             <input
+//                               type="number"
+//                               value={projection.totalShifts}
+//                               onChange={(e) => handleTotalShiftsChange(projection.id, e.target.value)}
+//                               disabled={isSubmitted}
+//                               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+//                               placeholder="Enter total shifts"
+//                             />
+//                           </div>
+//                         )}
+//                         <div>
+//                           <label className="block text-sm font-medium mb-2">Rate per Shift</label>
+//                           <input
+//                             type="number"
+//                             value={projection.ratePerShift}
+//                             onChange={(e) => handleRatePerShiftChange(projection.id, e.target.value)}
+//                             disabled={isSubmitted}
+//                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+//                             placeholder="Enter rate per shift"
+//                           />
+//                         </div>
+//                       </div>
+//                     )}
+//                     <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
+//                       <div className="flex justify-between items-center mb-2">
+//                         <span className="font-medium">Total Labour Cost:</span>
+//                         <span className="text-lg font-semibold text-indigo-700">₹{projection.labourTotalCost.toLocaleString()}</span>
+//                       </div>
+//                       <div className="flex justify-between items-center">
+//                         <span className="font-medium">Budget Percentage:</span>
+//                         <span className="text-lg font-semibold text-indigo-700">{projection.labourBudgetPercentage.toFixed(2)}%</span>
+//                       </div>
+//                     </div>
+//                     {!isSubmitted && (
+//                       <button
+//                         onClick={() => saveLabourOverhead(projection.id)}
+//                         className="mt-4 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//                       >
+//                         Save Labour Overhead
+//                       </button>
+//                     )}
+//                     <div className="mt-4 flex space-x-2">
+//                       <button 
+//                         onClick={() => editOverhead(projection.id, 'labours', 'labour-id', 'Labour', { totalCost: projection.labourTotalCost, budgetPercentage: projection.labourBudgetPercentage })}
+//                         className={`p-2 rounded ${isSubmitted ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-blue-600 hover:text-blue-800'}`} 
+//                         disabled={isSubmitted}
+//                         title={isSubmitted ? "Edit Disabled" : "Edit Labour"}
+//                       >
+//                         <Edit2 size={16} />
+//                       </button>
+//                       <button 
+//                         onClick={() => deleteOverhead(projection.id, 'labours', 'labour-id', 'Labour Overhead')}
+//                         className={`p-2 rounded ${isSubmitted ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-red-600 hover:text-red-800'}`} 
+//                         disabled={isSubmitted}
+//                         title={isSubmitted ? "Delete Disabled" : "Delete Labour"}
+//                       >
+//                         <Trash2 size={16} />
+//                       </button>
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {projection.selectedDynamicOverheads.map((overhead) => (
+//                   projection.activeOverheadTab === `overhead-${overhead.id}` && (
+//                     <div key={overhead.id} className="p-6 bg-gray-50 rounded-xl mb-6 relative">
+//                       <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+//                         <span>⚙️</span>
+//                         <span>{overhead.expense_name} Overhead</span>
+//                       </h4>
+//                       {!isSubmitted && (
+//                         <button
+//                           onClick={() => handleRemoveOverhead(overhead.id, projection.id)}
+//                           className="absolute top-4 right-4 text-red-600 hover:text-red-800 transition-colors duration-200"
+//                           title={`Remove ${overhead.expense_name}`}
+//                         >
+//                           <Trash2 size={18} />
+//                         </button>
+//                       )}
+//                       <div className="grid grid-cols-2 gap-4 mb-4">
+//                         <div>
+//                           <label className="block text-sm font-medium mb-2">
+//                             {overhead.expense_name} Value
+//                           </label>
+//                           <input
+//                             type="number"
+//                             value={projection.dynamicOverheads[overhead.id]?.value || ""}
+//                             onChange={(e) =>
+//                               calculateDynamicOverheadBudgetPercentage(projection.id, overhead.id, e.target.value)
+//                             }
+//                             disabled={isSubmitted}
+//                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+//                             placeholder={`Enter ${overhead.expense_name} value`}
+//                           />
+//                           <p className="text-sm text-gray-600 mt-1">
+//                             Remaining Budget: ₹{calcRemBudget.toLocaleString()}
+//                           </p>
+//                         </div>
+//                         <div>
+//                           <label className="block text-sm font-medium mb-2">Budget Percentage</label>
+//                           <input
+//                             type="text"
+//                             value={`${(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
+//                             readOnly
+//                             className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+//                           />
+//                         </div>
+//                       </div>
+//                       {!isSubmitted && (
+//                         <button
+//                           onClick={() => saveDynamicOverhead(projection.id, overhead.id, overhead.expense_name)}
+//                           className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//                         >
+//                           Save {overhead.expense_name} Overhead
+//                         </button>
+//                       )}
+//                       <div className="mt-4 flex space-x-2">
+//                         <button 
+//                           onClick={() => editOverhead(projection.id, overhead.expense_name, overhead.id, overhead.expense_name, { totalCost: projection.dynamicOverheads[overhead.id]?.value || 0, budgetPercentage: projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0 })}
+//                           className={`p-2 rounded ${isSubmitted ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-blue-600 hover:text-blue-800'}`} 
+//                           disabled={isSubmitted}
+//                           title={isSubmitted ? "Edit Disabled" : `Edit ${overhead.expense_name}`}
+//                         >
+//                           <Edit2 size={16} />
+//                         </button>
+//                         <button 
+//                           onClick={() => deleteOverhead(projection.id, overhead.expense_name, overhead.id, overhead.expense_name)}
+//                           className={`p-2 rounded ${isSubmitted ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-red-600 hover:text-red-800'}`} 
+//                           disabled={isSubmitted}
+//                           title={isSubmitted ? "Delete Disabled" : `Delete ${overhead.expense_name}`}
+//                         >
+//                           <Trash2 size={16} />
+//                         </button>
+//                       </div>
+//                     </div>
+//                   )
+//                 ))}
+
+//             <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
+//   <h4 className="text-xl font-semibold mb-6 text-indigo-800">Budget Allocation Summary</h4>
+//   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+//     {/* Display from allocatedOverheads */}
+//     {projection.allocatedOverheads.map((alloc) => (
+//       <div key={alloc.id} className="p-4 bg-white rounded-lg shadow-sm">
+//         <p className="text-sm text-gray-600">{alloc.expense_name}</p>
+//         <p className="text-lg font-bold text-indigo-700">₹{parseFloat(alloc.total_cost || 0).toLocaleString()}</p>
+//         <p className="text-sm text-indigo-600">{parseFloat(alloc.budget_percentage || 0).toFixed(2)}%</p>
+//         {!isSubmitted && (
+//           <div className="mt-2 flex space-x-2">
+//             <button className="text-blue-600" title="Edit"><Edit2 size={16} /></button>
+//             <button className="text-red-600" title="Delete"><Trash2 size={16} /></button>
+//           </div>
+//         )}
+//       </div>
+//     ))}
+//   </div>
+//   {/* Always display calculated remaining (override with fetched if submitted) */}
+//   <div className="pt-4 border-t border-indigo-200">
+//     <p className="text-lg font-bold text-green-700">
+//       Remaining Budget: ₹{isSubmitted ? parseFloat(projection.remainingBudget || 0).toLocaleString() : calcRemBudget.toLocaleString()} ({effectiveRemPerc.toFixed(2)}% of ₹{effectiveBudget.toLocaleString()})
+//     </p>
+//   </div>
+//   <div className="mt-6 flex justify-end">
+//     {!isSubmitted && (
+//       <button
+//         onClick={() => finalSubmissionProjection(projection.id)}
+//         className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+//       >
+//         Final Submission ({projection.name})
+//       </button>
+//     )}
+//   </div>
+// </div>
+//               </>
+//             )}
+//           </div>
+//         )}
+//       </div>
+//     );
+//   }), [projections, toggleProjection, budgetData, loading, savePoBudget, updateProjectionField, overheads, handleSelectOverhead, addNewOverhead, handleTotalCostChangeForProjection, handleLabourCalculationTypeChange, handleNoOfLaboursChange, handleTotalShiftsChange, handleRatePerShiftChange, saveLabourOverhead, handleRemoveOverhead, calculateDynamicOverheadBudgetPercentage, calculateRemainingBudget, saveDynamicOverhead, finalSubmissionProjection, selectedCompany, selectedProject, selectedSite, selectedWorkDescription, existingBudget, saveMaterialAllocation, calculateLabourTotalCost, recalculateAllPercentages, fetchAllocatedOverheads, fetchRemainingBudget, submissionStatuses, editOverhead, deleteOverhead]
+// );
+
+//   const addedOverheads = useMemo(() => overheads.filter(o => o.is_default === 0), [overheads]);
+
+//   return (
+//     <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+//       <div className="max-w-7xl mx-auto">
+//         <div className="text-center mb-8">
+//           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+//             Project Budget Allocation
+//           </h1>
+//           <p className="text-gray-600">Manage cumulative projections under PO budgets professionally</p>
+//         </div>
+
+//         {error && (
+//           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center space-x-2">
+//             <AlertCircle size={20} />
+//             <span>{error}</span>
+//           </div>
+//         )}
+
+//         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+//           <h2 className="text-2xl font-semibold mb-6 text-gray-800">Project Selection</h2>
+//           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">
+//                 Company
+//               </label>
+//               <Select
+//                 value={selectedCompany}
+//                 onChange={setSelectedCompany}
+//                 options={companies}
+//                 placeholder="Select a company..."
+//                 isLoading={loading}
+//                 isClearable
+//                 classNamePrefix="text-sm"
+//                 className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">
+//                 Project
+//               </label>
+//               <Select
+//                 value={selectedProject}
+//                 onChange={setSelectedProject}
+//                 options={projects}
+//                 placeholder="Select a project..."
+//                 isLoading={loading}
+//                 isDisabled={!selectedCompany}
+//                 isClearable
+//                 classNamePrefix="text-sm"
+//                 className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">
+//                 Site
+//               </label>
+//               <Select
+//                 value={selectedSite}
+//                 onChange={setSelectedSite}
+//                 options={sites}
+//                 placeholder="Select a site..."
+//                 isLoading={loading}
+//                 isDisabled={!selectedProject}
+//                 isClearable
+//                 classNamePrefix="text-sm"
+//                 className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//               />
+//             </div>
+
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">
+//                 Work Description
+//               </label>
+//               <Select
+//                 value={selectedWorkDescription}
+//                 onChange={setSelectedWorkDescription}
+//                 options={workDescriptions}
+//                 placeholder="Select work description..."
+//                 isLoading={loading}
+//                 isDisabled={!selectedSite}
+//                 isClearable
+//                 classNamePrefix="text-sm"
+//                 className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+//               />
+//             </div>
+//           </div>
+//         </div>
+
+//         {budgetData && (
+//           <div className="bg-white rounded-xl shadow-lg p-8 mb-8 overflow-hidden">
+//             <h2 className="text-2xl font-semibold mb-6 text-gray-800">PO Budget Details</h2>
+//             <div className="overflow-x-auto rounded-lg border border-gray-200">
+//               <table className="min-w-full divide-y divide-gray-200">
+//                 <thead className="bg-gray-50">
+//                   <tr>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Total PO Quantity
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Unit of Measure
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Total Rate
+//                     </th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-gray-200">
+//                   <tr className="hover:bg-gray-50">
+//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                       {budgetData.total_po_qty}
+//                     </td>
+//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                       {budgetData.uom}
+//                     </td>
+//                     <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-700">
+//                       ₹{budgetData.total_rate.toLocaleString()}
+//                     </td>
+//                   </tr>
+//                 </tbody>
+//               </table>
+//             </div>
+//             <div className="mt-4 text-center">
+//               <span className="text-2xl font-bold text-indigo-600">
+//                 Total PO Value: ₹{budgetData.total_po_value.toLocaleString()}
+//               </span>
+//             </div>
+
+//             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+//               <div className="p-4 bg-gray-50 rounded-lg">
+//                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+//                   Current Selection
+//                 </h4>
+//                 <p className="text-sm text-gray-900">Company: {selectedCompany?.label || "Not selected"}</p>
+//                 <p className="text-sm text-gray-900">Project: {selectedProject?.label || "Not selected"}</p>
+//                 <p className="text-sm text-gray-900">Site: {selectedSite?.label || "Not selected"}</p>
+//                 <p className="text-sm text-gray-900">Work Description: {selectedWorkDescription?.label || "Not selected"}</p>
+//               </div>
+
+//               <div className="p-4 bg-gray-50 rounded-lg">
+//                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+//                   Budget Information
+//                 </h4>
+//                 <p className="text-sm text-gray-900">PO Value: ₹{budgetData.total_po_value.toLocaleString()}</p>
+//                 <p className="text-sm text-gray-900">Existing Budget Value: {existingBudget ? `₹${parseFloat(existingBudget.total_budget_value).toLocaleString()}` : "Not set"}</p>
+//               </div>
+
+//               <div className="p-4 bg-gray-50 rounded-lg">
+//                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+//                   Allocation Status
+//                 </h4>
+//                 <p className="text-sm text-gray-900">Status: {isAllocated ? "Budget Allocated" : "Pending Allocation"}</p>
+//                 <p className="text-sm text-gray-900">Allocated Overheads: {allocatedOverheads.length}</p>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+
+//         {budgetData && (
+//           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+//             <div className="flex items-center justify-between mb-6">
+//               <h2 className="text-2xl font-semibold text-gray-800">Overhead Allocation Projections</h2>
+//               <button
+//                 onClick={addNewProjection}
+//                 disabled={!canAddProjection}
+//                 className={`flex items-center px-6 py-3 font-semibold rounded-full transition-all duration-200 ${
+//                   canAddProjection
+//                     ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105"
+//                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
+//                 }`}
+//               >
+//                 <PlusCircle className="mr-2" size={20} />
+//                 Add New Projection
+//               </button>
+//             </div>
+
+//             {ProjectionAccordion}
+//           </div>
+//         )}
+        
+//         {existingBudget && (
+//           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+//             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+//               Budget Allocated
+//             </h2>
+//             {isAllocated ? (
+//               <>
+//                 {percError && (
+//                   <div className="mb-4 p-3 bg-red-100 rounded-lg text-red-800 font-medium flex items-center space-x-2">
+//                     <AlertCircle size={16} />
+//                     <span>{percError} | {budgetError}</span>
+//                   </div>
+//                 )}
+//                 {lastProjection.prevRemainingBudget > 0 && (
+//                   <div className="mb-4 p-3 bg-yellow-100 rounded-lg text-yellow-800 font-medium flex items-center space-x-2">
+//                     <AlertCircle size={16} />
+//                     <span>Previous Remaining Added to Target: ₹{parseFloat(lastProjection.prevRemainingBudget).toLocaleString()} ({lastProjection.prevRemainingPercentage.toFixed(2)}%)</span>
+//                   </div>
+//                 )}
+//                 <div className="overflow-x-auto rounded-lg border border-gray-200">
+//                   <table className="min-w-full divide-y divide-gray-200">
+//                     <thead className="bg-gray-50">
+//                       <tr>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           S.No
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           List of Expense
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           Budget Percentage (%)
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           Budgeted Value (Rs.)
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           Actual Value (Rs.)
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           Balance (Rs.)
+//                         </th>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                           Remarks
+//                         </th>
+//                       </tr>
+//                     </thead>
+//                     <tbody className="bg-white divide-y divide-gray-200">
+//                       {allocatedOverheads.map((overhead, index) => (
+//                         <tr key={overhead.id} className="hover:bg-gray-50">
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                             {index + 1}
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+//                             {overhead.expense_name}
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                             {overhead.percentage || "N/A"}
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                             {overhead.splitted_budget || "N/A"}
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                             {overhead.actual_value || "N/A"}
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap">
+//                             <span
+//                               className={
+//                                 parseFloat(overhead.difference_value || 0) >= 0 
+//                                   ? "text-green-600 font-medium" 
+//                                   : "text-red-600 font-medium"
+//                               }
+//                             >
+//                               {overhead.difference_value || "N/A"}
+//                             </span>
+//                           </td>
+//                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+//                             {overhead.remarks || "N/A"}
+//                           </td>
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+
+//                 <div className="mt-6 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+//                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//                     <div>
+//                       <span className="font-medium text-gray-700">Total Percentage:</span>
+//                       <span className="ml-2 text-lg font-bold text-green-600">
+//                         {sumPerc.toFixed(2)}%
+//                       </span>
+//                     </div>
+//                     <div>
+//                       <span className="font-medium text-gray-700">Total Budget:</span>
+//                       <span className="ml-2 text-lg font-bold text-green-600">
+//                         ₹{sumBudget.toLocaleString()}
+//                       </span>
+//                     </div>
+//                     <div>
+//                       <span className="font-medium text-gray-700">Target Budget (Last Proj):</span>
+//                       <span className="ml-2 text-lg font-bold text-indigo-600">
+//                         ₹{total.toLocaleString()}
+//                       </span>
+//                     </div>
+//                   </div>
+//                 </div>
+
+             
+//               </>
+//             ) : (
+//               <div className="text-center py-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+//                 <AlertCircle className="mx-auto h-12 w-12 text-blue-400 mb-4" />
+//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Budget Allocation Pending</h3>
+//                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
+//                   No budget has been allocated yet for this PO. Please complete the projection and allocation process to view and track expense breakdowns professionally.
+//                 </p>
+//               </div>
+//             )}
+//           </div>
+//         )}
+
+//         {isAllocated && chartData.length > 0 && (
+//           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+//             <div className="bg-white rounded-xl shadow-lg p-8">
+//               <h3 className="text-xl font-semibold mb-6 text-gray-800">Budget Overview (Budgeted vs Actual vs Balance)</h3>
+//               {lastProjection.prevRemainingBudget > 0 && (
+//                 <div className="mb-4 p-3 bg-yellow-100 rounded-lg text-yellow-800 font-medium flex items-center space-x-2">
+//                   <AlertCircle size={16} />
+//                   <span>Previous Remaining Added: ₹{parseFloat(lastProjection.prevRemainingBudget).toLocaleString()} ({lastProjection.prevRemainingPercentage.toFixed(2)}%)</span>
+//                 </div>
+//               )}
+//               <div className="h-80">
+//                 <ResponsiveContainer width="100%" height="100%">
+//                   <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+//                     <XAxis dataKey="name" className="text-sm" />
+//                     <YAxis className="text-sm" />
+//                     <Tooltip
+//                       formatter={(value) => [`₹${value.toLocaleString()}`, "Amount"]}
+//                       labelStyle={{ color: "#374151" }}
+//                       contentStyle={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
+//                     />
+//                     <Bar dataKey="value" barSize={30}>
+//                       {chartData.map((entry, index) => (
+//                         <Cell key={`cell-${index}`} fill={entry.fill} />
+//                       ))}
+//                     </Bar>
+//                   </BarChart>
+//                 </ResponsiveContainer>
+//               </div>
+//             </div>
+
+//             <div className="bg-white rounded-xl shadow-lg p-8">
+//               <h3 className="text-xl font-semibold mb-6 text-gray-800">
+//                 Expense-wise Allocation (Budgeted vs Actual)
+//               </h3>
+//               <div className="h-80">
+//                 <ResponsiveContainer width="100%" height="100%">
+//                   <BarChart data={expenseChartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+//                     <XAxis dataKey="name" className="text-sm" angle={-45} textAnchor="end" height={80} />
+//                     <YAxis className="text-sm" />
+//                     <Tooltip
+//                       formatter={(value) => [`₹${value.toLocaleString()}`, "Amount"]}
+//                       labelStyle={{ color: "#374151" }}
+//                       contentStyle={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
+//                     />
+//                     <Bar dataKey="budgeted" fill="#10b981" name="Budgeted" barSize={30} />
+//                     <Bar dataKey="actual" name="Actual" barSize={30}>
+//                       {expenseChartData.map((entry, index) => (
+//                         <Cell key={`cell-${index}`} fill={entry.actualFill} />
+//                       ))}
+//                     </Bar>
+//                   </BarChart>
+//                 </ResponsiveContainer>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ProjectProjectionOld;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import Select from "react-select";
 import Swal from "sweetalert2";
-import { Plus, PlusCircle, Trash2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, PlusCircle, Trash2, Loader2, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Edit2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import MaterialPlanning from "./MaterialPlanning";
 
 const ProjectProjectionOld = () => {
-  // Existing state variables
+  // Existing state (unchanged except add submitted to projections)
   const [companies, setCompanies] = useState([]);
   const [projects, setProjects] = useState([]);
   const [sites, setSites] = useState([]);
   const [workDescriptions, setWorkDescriptions] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  console.log("Selected Company:", selectedCompany);
   const [selectedProject, setSelectedProject] = useState(null);
-  console.log("Selected Project:", selectedProject);
   const [selectedSite, setSelectedSite] = useState(null);
-  console.log("Selected Site:", selectedSite);  
   const [selectedWorkDescription, setSelectedWorkDescription] = useState(null);
-  console.log("Selected Work Description:", selectedWorkDescription);
   const [budgetData, setBudgetData] = useState(null);
-  const [budgetPercentage, setBudgetPercentage] = useState("");
-  const [budgetValue, setBudgetValue] = useState("");
   const [existingBudget, setExistingBudget] = useState(null);
   const [overheads, setOverheads] = useState([]);
-  const [checkedExpenses, setCheckedExpenses] = useState({});
   const [actualBudgetEntries, setActualBudgetEntries] = useState({});
   const [isAllocated, setIsAllocated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [materialTotalCost, setMaterialTotalCost] = useState(0);
-  const [materialBudgetPercentage, setMaterialBudgetPercentage] = useState(0);
-
-  // New state for labour overhead
-  const [labourCalculationType, setLabourCalculationType] = useState("");
-  const [noOfLabours, setNoOfLabours] = useState("");
-  const [totalShifts, setTotalShifts] = useState("");
-  const [ratePerShift, setRatePerShift] = useState("");
-  const [labourTotalCost, setLabourTotalCost] = useState(0);
-  const [labourBudgetPercentage, setLabourBudgetPercentage] = useState(0);
-
-  // Active overhead tab
-  const [activeOverheadTab, setActiveOverheadTab] = useState("material");
-  const [dynamicOverheads, setDynamicOverheads] = useState({});
-  console.log("Dynamic Overheads:", dynamicOverheads);
-  const [selectedDynamicOverheads, setSelectedDynamicOverheads] = useState([]);
-
-  // New state for projection management
+  // Updated projections state with submitted flag
   const [projections, setProjections] = useState([
     {
       id: 1,
       name: "Projection 1",
       isOpen: true,
       budgetAllocated: false,
+      submitted: false, // New: track submission
+      budgetPercentage: "",
+      additionalPercentage: 0,
+      budgetValue: "",
       materialTotalCost: 0,
       materialBudgetPercentage: 0,
+      labourTotalCost: 0,
+      labourBudgetPercentage: 0,
+      remainingBudget: 0,
+      remainingPercentage: 0,
       labourCalculationType: "",
       noOfLabours: "",
       totalShifts: "",
       ratePerShift: "",
-      labourTotalCost: 0,
-      labourBudgetPercentage: 0,
       selectedDynamicOverheads: [],
       dynamicOverheads: {},
-      activeOverheadTab: "material"
+      allocatedOverheads: [], // New: store fetched allocated
+      activeOverheadTab: "material",
+      prevRemainingBudget: 0, // New: previous remaining added to this
+      prevRemainingPercentage: 0 // New: previous remaining percentage for display
     }
   ]);
-  const [currentProjectionId, setCurrentProjectionId] = useState(1);
 
-  // ALL EXISTING FUNCTIONS FROM ORIGINAL COMPONENT
-  const fetchCompanies = async () => {
+  // New: submission statuses fetched from backend (now includes po_budget_id)
+  const [submissionStatuses, setSubmissionStatuses] = useState({});
+
+  // Memoized chart data (updated: use last projection's budgetValue only, no + prevRem)
+  const lastProjection = useMemo(() => projections[projections.length - 1], [projections]);
+  const effectiveBudgetValue = useMemo(() => {
+    const lastBudget = parseFloat(lastProjection.budgetValue) || 0;
+    return lastBudget;
+  }, [lastProjection]);
+  const chartData = useMemo(() => {
+    if (!existingBudget || !actualBudgetEntries || Object.keys(actualBudgetEntries).length === 0) {
+      return [];
+    }
+    const budgetedValue = effectiveBudgetValue;
+    const actualValue = Object.values(actualBudgetEntries)
+      .filter((entry) => entry.actual_value !== null)
+      .reduce((sum, entry) => sum + parseFloat(entry.actual_value || 0), 0);
+    const balanceValue = budgetedValue - actualValue;
+    return [
+      { name: "Budgeted Value", value: budgetedValue, fill: "#10b981" },
+      { name: "Actual Value", value: actualValue, fill: "#3b82f6" },
+      { name: "Balance", value: Math.abs(balanceValue), fill: balanceValue < 0 ? "#ef4444" : "#f59e0b" },
+    ];
+  }, [existingBudget, actualBudgetEntries, effectiveBudgetValue]);
+  const expenseChartData = useMemo(() => {
+    if (!isAllocated || Object.keys(actualBudgetEntries).length === 0) {
+      return [];
+    }
+    return Object.values(actualBudgetEntries).map((entry) => {
+      const budgeted = parseFloat(entry.splitted_budget) || 0;
+      const actual = parseFloat(entry.actual_value) || 0;
+      const actualExceedsBudget = actual > budgeted;
+      return {
+        name: entry.expense_name,
+        budgeted: budgeted,
+        actual: actual,
+        actualFill: actualExceedsBudget ? "#ef4444" : "#3b82f6",
+      };
+    });
+  }, [actualBudgetEntries, isAllocated]);
+  // Memoized allocated overheads from actual_budget entries
+ const allocatedOverheads = useMemo(() => 
+  Object.values(actualBudgetEntries).map(entry => ({
+    id: entry.overhead_id || Math.random(),
+    expense_name: entry.expense_name,
+    percentage: entry.percentage,
+    splitted_budget: entry.splitted_budget,
+    actual_value: entry.actual_value,
+    difference_value: entry.difference_value,
+    remarks: entry.remarks,
+  })), [actualBudgetEntries]
+);
+
+  // Memoized sums for allocated data (updated to effective)
+  const { sumPerc, sumBudget } = useMemo(() => {
+    const percSum = allocatedOverheads.reduce((sum, oh) => sum + parseFloat(oh.percentage || 0), 0);
+    const budgetSum = allocatedOverheads.reduce((sum, oh) => sum + parseFloat(oh.splitted_budget || 0), 0);
+    return { sumPerc: percSum, sumBudget: budgetSum };
+  }, [allocatedOverheads]);
+
+  const total = useMemo(() => effectiveBudgetValue, [effectiveBudgetValue]);
+  const percDiff = useMemo(() => sumPerc - 100, [sumPerc]);
+  const budgetDiff = useMemo(() => sumBudget - total, [sumBudget, total]);
+  const percError = useMemo(() => 
+    percDiff > 0.01 ? `Excess by ${percDiff.toFixed(2)}%` : percDiff < -0.01 ? `Short by ${Math.abs(percDiff).toFixed(2)}%` : "",
+    [percDiff]
+  );
+  const budgetError = useMemo(() => 
+    budgetDiff > 0.01 ? `Excess by Rs.${budgetDiff.toFixed(2)}` : budgetDiff < -0.01 ? `Short by Rs.${Math.abs(budgetDiff).toFixed(2)}` : "",
+    [budgetDiff]
+  );
+
+  // New: Fetch submission statuses from backend
+  const fetchSubmissionStatuses = useCallback(async () => {
+    if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+    try {
+      const response = await axios.get("http://localhost:5000/projection/submission-statuses", {
+        params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
+      });
+      if (response.data.success) {
+        const statuses = {};
+        response.data.data.forEach(status => {
+          statuses[status.projection_id] = { submitted: status.submitted, po_budget_id: status.po_budget_id };
+        });
+        setSubmissionStatuses(statuses);
+        // Update projections
+        setProjections(prev => prev.map(p => ({
+          ...p,
+          submitted: statuses[p.id]?.submitted || false
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching submission statuses:", error);
+    }
+  }, [selectedSite, selectedWorkDescription]);
+
+  // New: Fetch allocated for projection
+  const fetchAllocatedOverheads = useCallback(async (projId) => {
+    if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+    try {
+      const response = await axios.get("http://localhost:5000/projection/allocated", {
+        params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
+      });
+      if (response.data.success) {
+        setProjections(prev => prev.map(p => 
+          p.id === projId ? { ...p, allocatedOverheads: response.data.data, prevRemainingBudget: response.data.prev_remaining.prev_remaining_budget, prevRemainingPercentage: response.data.prev_remaining.prev_remaining_percentage } : p
+        ));
+      }
+    } catch (error) {
+      console.error("Error fetching allocated:", error);
+    }
+  }, [selectedSite, selectedWorkDescription]);
+
+  // New: Fetch remaining for projection
+  const fetchRemainingBudget = useCallback(async (projId) => {
+    if (!selectedSite?.value || !selectedWorkDescription?.value) return;
+    try {
+      const response = await axios.get("http://localhost:5000/projection/remaining", {
+        params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
+      });
+      if (response.data.success) {
+        setProjections(prev => prev.map(p => 
+          p.id === projId ? { ...p, remainingBudget: response.data.data.remaining_budget, remainingPercentage: response.data.data.remaining_percentage, effectiveBudget: response.data.data.effective_budget } : p
+        ));
+      }
+    } catch (error) {
+      console.error("Error fetching remaining:", error);
+    }
+  }, [selectedSite, selectedWorkDescription]);
+
+  // Updated: canAddProjection - check if previous is submitted
+  const canAddProjection = useMemo(() => {
+    if (projections.length === 1) return projections[0].submitted; // First must be submitted
+    const last = projections[projections.length - 1];
+    return last.submitted;
+  }, [projections]);
+
+  // Updated default template
+  const defaultProjectionTemplate = useCallback((id) => ({
+    id,
+    name: `Projection ${id}`,
+    isOpen: id === 1,
+    budgetAllocated: false,
+    submitted: false,
+    budgetPercentage: "",
+    additionalPercentage: 0,
+    budgetValue: "",
+    materialTotalCost: 0,
+    materialBudgetPercentage: 0,
+    labourTotalCost: 0,
+    labourBudgetPercentage: 0,
+    remainingBudget: 0,
+    remainingPercentage: 0,
+    labourCalculationType: "",
+    noOfLabours: "",
+    totalShifts: "",
+    ratePerShift: "",
+    selectedDynamicOverheads: [],
+    dynamicOverheads: {},
+    allocatedOverheads: [],
+    activeOverheadTab: "material",
+    prevRemainingBudget: 0,
+    prevRemainingPercentage: 0,
+    effectiveBudget: 0
+  }), []);
+
+  // Fetch functions (unchanged)
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get("http://localhost:5000/admin/companies");
@@ -90,9 +2461,9 @@ const ProjectProjectionOld = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchProjects = async (companyId) => {
+  const fetchProjects = useCallback(async (companyId) => {
     try {
       setLoading(true);
       const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
@@ -111,9 +2482,9 @@ const ProjectProjectionOld = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchSites = async (projectId) => {
+  const fetchSites = useCallback(async (projectId) => {
     try {
       setLoading(true);
       const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
@@ -132,9 +2503,9 @@ const ProjectProjectionOld = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchWorkDescriptions = async (siteId) => {
+  const fetchWorkDescriptions = useCallback(async (siteId) => {
     try {
       setLoading(true);
       const response = await axios.get(
@@ -155,13 +2526,13 @@ const ProjectProjectionOld = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchBudgetDetails = async (siteId, descId) => {
+  const fetchBudgetDetails = useCallback(async (siteId, descId) => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/admin/po-total-budget/${siteId}/${descId}`
+        `http://localhost:5000/projection/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -178,71 +2549,110 @@ const ProjectProjectionOld = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const checkBudgetExists = async (siteId, descId) => {
+  const checkBudgetExists = useCallback(async (siteId, descId) => {
     try {
-      const response = await axios.get("http://localhost:5000/admin/po-budget", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
-      if (response.data.success && response.data.data) {
-        const budget = {
-          ...response.data.data,
-          total_po_value: parseFloat(response.data.data.total_po_value) || 0,
-          total_budget_value: parseFloat(response.data.data.total_budget_value) || 0,
+      if (response.data.success && response.data.data.length > 0) {
+        // Updated: Select the budget with the maximum projection_id (latest)
+        const lastBudget = response.data.data.reduce((prev, curr) => 
+          (prev.projection_id || 0) > (curr.projection_id || 0) ? prev : curr
+        );
+        const parsedBudget = {
+          ...lastBudget,
+          total_po_value: parseFloat(lastBudget.total_po_value) || 0,
+          total_budget_value: parseFloat(lastBudget.total_budget_value) || 0,
         };
-        setExistingBudget(budget);
-        if (budget.total_po_value && budget.total_budget_value) {
-          const percentage = ((budget.total_budget_value / budget.total_po_value) * 100).toFixed(2);
-          setBudgetPercentage(percentage);
-          setBudgetValue(budget.total_budget_value.toFixed(2));
-        } else {
-          setBudgetPercentage("");
-          setBudgetValue("");
-        }
+        setExistingBudget(parsedBudget);
       } else {
         setExistingBudget(null);
-        setBudgetPercentage("");
-        setBudgetValue("");
       }
     } catch (error) {
       console.error("Error checking budget existence:", error);
       setError("Failed to check budget existence. Please try again.");
       setExistingBudget(null);
     }
-  };
+  }, []);
 
-  const fetchOverheads = async (po_budget_id) => {
+  // Updated fetchAllPoBudgets to include submitted and prev remaining
+  const fetchAllPoBudgets = useCallback(async (siteId, descId) => {
+    if (!siteId || !descId) return;
     try {
-      const response = await axios.get("http://localhost:5000/admin/overheads", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
+        params: { site_id: siteId, desc_id: descId },
+      });
+      if (response.data.success) {
+        const savedBudgets = response.data.data;
+        const maxId = Math.max(...savedBudgets.map(b => b.projection_id || 0), 1);
+
+        setProjections(prevProjs => {
+          let currentProjs = [...prevProjs];
+
+          // Ensure projections up to maxId exist
+          for (let i = 1; i <= maxId; i++) {
+            let projIndex = currentProjs.findIndex(p => p.id === i);
+            if (projIndex === -1) {
+              const newProjection = defaultProjectionTemplate(i);
+              currentProjs.push(newProjection);
+            }
+            // Sort to ensure order
+            currentProjs.sort((a, b) => a.id - b.id);
+          }
+
+          // Update projections with saved data or set defaults based on previous
+          return currentProjs.map((p, index) => {
+            const saved = savedBudgets.find(b => b.projection_id === p.id);
+            if (saved) {
+              // Calculate prev remaining if index > 0
+              const prevRemBudget = index > 0 ? currentProjs[index - 1].remainingBudget || 0 : 0;
+              const prevRemPerc = index > 0 ? currentProjs[index - 1].remainingPercentage || 0 : 0;
+              return {
+                ...p,
+                poBudgetId: saved.id,
+                budgetPercentage: saved.total_percentage,
+                additionalPercentage: saved.additional_percentage,
+                budgetValue: parseFloat(saved.total_budget_value).toFixed(2),
+                budgetAllocated: true,
+                submitted: saved.projection_status === 1, // Use backend status (1 for first, but overridden by submission)
+                prevRemainingBudget: prevRemBudget,
+                prevRemainingPercentage: prevRemPerc
+              };
+            } else {
+              // For unsaved projections, set based on previous projection's cumulative
+              if (index > 0) {
+                const prevProj = currentProjs[index - 1];
+                const prevRemBudget = prevProj.remainingBudget || 0;
+                const prevRemPerc = prevProj.remainingPercentage || 0;
+                return {
+                  ...p,
+                  budgetPercentage: prevProj.budgetPercentage || "0.00",
+                  additionalPercentage: "0.00",
+                  budgetValue: ((parseFloat(prevProj.budgetPercentage || 0) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
+                  prevRemainingBudget: prevRemBudget,
+                  prevRemainingPercentage: prevRemPerc
+                };
+              }
+              return p;
+            }
+          });
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching saved budgets:", error);
+      setError("Failed to load saved budgets. Please try again.");
+    }
+  }, [budgetData, defaultProjectionTemplate]);
+
+  const fetchOverheads = useCallback(async (po_budget_id) => {
+    try {
+      const response = await axios.get("http://localhost:5000/projection/overheads", {
         params: po_budget_id ? { po_budget_id } : {},
       });
       if (response.data.success) {
         setOverheads(response.data.data);
-        const initialChecked = {};
-        const newEntries = {};
-        const initialDynamicOverheads = {};
-        response.data.data.forEach((overhead) => {
-          initialChecked[overhead.id] = overhead.is_default === 1;
-          newEntries[overhead.id] = {
-            splitted_budget: null,
-            percentage: null,
-            actual_value: null,
-            difference_value: null,
-            remarks: "",
-            edited: false,
-          };
-          if (overhead.is_default === 0) {
-            initialDynamicOverheads[overhead.id] = {
-              value: "",
-              budgetPercentage: 0,
-              expense_name: overhead.expense_name,
-            };
-          }
-        });
-        setCheckedExpenses(initialChecked);
-        setActualBudgetEntries(newEntries);
-        setDynamicOverheads(initialDynamicOverheads);
       } else {
         setError("Failed to fetch overheads.");
       }
@@ -250,108 +2660,64 @@ const ProjectProjectionOld = () => {
       console.error("Error fetching overheads:", error);
       setError("Failed to load overheads. Please try again.");
     }
-  };
+  }, []);
 
-  const fetchActualBudgetEntries = async (po_budget_id) => {
+  const fetchActualBudgetEntries = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/admin/actual-budget/${po_budget_id}`);
+      const response = await axios.get(`http://localhost:5000/projection/actual-budget/${po_budget_id}`);
       if (response.data.success) {
         const entries = response.data.data || {};
-        const processedEntries = {};
-        const selectedOverheads = [];
-        Object.keys(entries).forEach((overheadId) => {
-          const val = parseFloat(entries[overheadId].splitted_budget) || 0;
-          const perc = existingBudget?.total_budget_value > 0 ? (val / existingBudget.total_budget_value * 100).toFixed(2) : "0.00";
-          processedEntries[overheadId] = {
-            ...entries[overheadId],
-            percentage: perc,
-            edited: true,
-          };
-          const overhead = overheads.find((oh) => oh.id === parseInt(overheadId));
-          if (overhead && overhead.is_default === 0) {
-            selectedOverheads.push(overhead);
-            setDynamicOverheads((prev) => ({
-              ...prev,
-              [overheadId]: {
-                value: val.toString(),
-                budgetPercentage: parseFloat(perc),
-                expense_name: overhead.expense_name,
-              },
-            }));
-          }
-        });
-        setActualBudgetEntries(processedEntries);
-        setSelectedDynamicOverheads(selectedOverheads);
-        setIsAllocated(Object.keys(processedEntries).length > 0);
-        if (Object.keys(processedEntries).length > 0) {
-          const checked = {};
-          Object.keys(processedEntries).forEach((id) => {
-            checked[id] = true;
-          });
-          setCheckedExpenses(checked);
-        }
+        setActualBudgetEntries(entries);
+        setIsAllocated(Object.keys(entries).length > 0);
       } else {
         setError(response.data.message || "Failed to fetch actual budget entries.");
+        setIsAllocated(false);
       }
     } catch (error) {
       console.error("Error fetching actual budget entries:", error);
       setError("Failed to load actual budget entries. Please try again.");
+      setIsAllocated(false);
     }
-  };
+  }, []);
 
-  // Projection management functions
-  const addNewProjection = () => {
+  // Projection management functions (unchanged except addNewProjection uses submitted)
+  const addNewProjection = useCallback(() => {
+    if (!canAddProjection) {
+      Swal.fire({
+        icon: "warning",
+        title: "Complete Current Projection",
+        text: "Please submit the current projection before adding a new one.",
+        confirmButtonColor: "#4f46e5",
+      });
+      return;
+    }
+    const prevProjection = projections[projections.length - 1];
     const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
+    const initialPerc = prevProjection.budgetAllocated ? prevProjection.budgetPercentage : "0.00";
     const newProjection = {
-      id: newProjectionId,
-      name: `Projection ${newProjectionId}`,
+      ...defaultProjectionTemplate(newProjectionId),
+      budgetPercentage: initialPerc,
+      budgetValue: ((parseFloat(initialPerc) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
       isOpen: false,
-      budgetAllocated: false,
-      materialTotalCost: 0,
-      materialBudgetPercentage: 0,
-      labourCalculationType: "",
-      noOfLabours: "",
-      totalShifts: "",
-      ratePerShift: "",
-      labourTotalCost: 0,
-      labourBudgetPercentage: 0,
-      selectedDynamicOverheads: [],
-      dynamicOverheads: {},
-      activeOverheadTab: "material"
+      prevRemainingBudget: prevProjection.remainingBudget || 0,
+      prevRemainingPercentage: prevProjection.remainingPercentage || 0
     };
-    setProjections([...projections, newProjection]);
-  };
+    setProjections(prev => [...prev, newProjection]);
+  }, [projections, budgetData, defaultProjectionTemplate, canAddProjection]);
 
-  const toggleProjection = (projectionId) => {
-    setProjections(projections.map(p => 
+  const toggleProjection = useCallback((projectionId) => {
+    setProjections(prev => prev.map(p => 
       p.id === projectionId ? { ...p, isOpen: !p.isOpen } : p
     ));
-  };
+  }, []);
 
-  const updateProjectionField = (projectionId, field, value) => {
-    setProjections(projections.map(p => 
+  const updateProjectionField = useCallback((projectionId, field, value) => {
+    setProjections(prev => prev.map(p => 
       p.id === projectionId ? { ...p, [field]: value } : p
     ));
-  };
+  }, []);
 
-  const getCurrentProjection = () => {
-    return projections.find(p => p.id === currentProjectionId) || projections[0];
-  };
-
-  const handleTotalCostChange = (totalCost) => {
-    console.log("Received total cost from MaterialPlanning:", totalCost);
-    const currentProjection = getCurrentProjection();
-    const costValue = Number(totalCost) || 0;
-    
-    updateProjectionField(currentProjection.id, 'materialTotalCost', costValue);
-    
-    if (existingBudget?.total_budget_value) {
-      const percentage = (costValue / existingBudget.total_budget_value) * 100;
-      updateProjectionField(currentProjection.id, 'materialBudgetPercentage', percentage);
-    }
-  };
-
-  const calculateLabourTotalCost = (projection) => {
+  const calculateLabourTotalCost = useCallback((projection) => {
     let total = 0;
     const rate = parseFloat(projection.ratePerShift) || 0;
 
@@ -363,51 +2729,323 @@ const ProjectProjectionOld = () => {
       total = shifts * rate;
     }
 
-    updateProjectionField(projection.id, 'labourTotalCost', total);
-    
-    if (existingBudget?.total_budget_value) {
-      const percentage = (total / existingBudget.total_budget_value) * 100;
-      updateProjectionField(projection.id, 'labourBudgetPercentage', percentage);
-    }
-  };
+    const bv = parseFloat(projection.budgetValue) || 0;
+    const percentage = bv > 0 ? (total / bv * 100) : 0;
+    return { total, percentage };
+  }, []);
 
-  const calculateDynamicOverheadBudgetPercentage = (projectionId, overheadId, value) => {
+  const recalculateAllPercentages = useCallback((projectionId) => {
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex] };
+      const bv = parseFloat(proj.budgetValue) || 0;
+
+      proj.materialBudgetPercentage = bv > 0 ? (proj.materialTotalCost / bv * 100) : 0;
+
+      const { percentage: labourPerc } = calculateLabourTotalCost(proj);
+      proj.labourBudgetPercentage = labourPerc;
+
+      const updatedDynamic = { ...proj.dynamicOverheads };
+      Object.keys(updatedDynamic).forEach(oid => {
+        const val = parseFloat(updatedDynamic[oid].value) || 0;
+        updatedDynamic[oid] = {
+          ...updatedDynamic[oid],
+          budgetPercentage: bv > 0 ? (val / bv * 100) : 0,
+        };
+      });
+      proj.dynamicOverheads = updatedDynamic;
+
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, [calculateLabourTotalCost]);
+
+  const handleTotalCostChangeForProjection = useCallback((projectionId) => (totalCost) => {
+    console.log("Received total cost from MaterialPlanning:", totalCost);
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = prev[projIndex];
+      const cost = Number(totalCost) || 0;
+      if (proj.materialTotalCost === cost) return prev; // Prevent unnecessary update if value hasn't changed
+      const newProj = { ...proj, materialTotalCost: cost };
+      const bv = parseFloat(newProj.budgetValue) || 0;
+      const perc = bv > 0 ? (cost / bv * 100) : 0;
+      newProj.materialBudgetPercentage = perc;
+      const newProjs = [...prev];
+      newProjs[projIndex] = newProj;
+      return newProjs;
+    });
+    // Fetch updated allocated
+    fetchAllocatedOverheads(projectionId);
+  }, [fetchAllocatedOverheads]);
+
+  const handleLabourCalculationTypeChange = useCallback((projectionId, newType) => {
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex], labourCalculationType: newType };
+      const { total, percentage } = calculateLabourTotalCost(proj);
+      proj.labourTotalCost = total;
+      proj.labourBudgetPercentage = percentage;
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, [calculateLabourTotalCost]);
+
+  const handleNoOfLaboursChange = useCallback((projectionId, newValue) => {
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex], noOfLabours: newValue };
+      const { total, percentage } = calculateLabourTotalCost(proj);
+      proj.labourTotalCost = total;
+      proj.labourBudgetPercentage = percentage;
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, [calculateLabourTotalCost]);
+
+  const handleTotalShiftsChange = useCallback((projectionId, newValue) => {
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex], totalShifts: newValue };
+      const { total, percentage } = calculateLabourTotalCost(proj);
+      proj.labourTotalCost = total;
+      proj.labourBudgetPercentage = percentage;
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, [calculateLabourTotalCost]);
+
+  const handleRatePerShiftChange = useCallback((projectionId, newValue) => {
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex], ratePerShift: newValue };
+      const { total, percentage } = calculateLabourTotalCost(proj);
+      proj.labourTotalCost = total;
+      proj.labourBudgetPercentage = percentage;
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, [calculateLabourTotalCost]);
+
+  const calculateDynamicOverheadBudgetPercentage = useCallback((projectionId, overheadId, value) => {
     const parsedValue = parseFloat(value) || 0;
-    const projection = projections.find(p => p.id === projectionId);
-    
-    if (existingBudget?.total_budget_value && projection) {
-      const percentage = (parsedValue / existingBudget.total_budget_value) * 100;
-      const updatedDynamicOverheads = {
-        ...projection.dynamicOverheads,
+    setProjections(prev => {
+      const projIndex = prev.findIndex(p => p.id === projectionId);
+      if (projIndex === -1) return prev;
+      const proj = { ...prev[projIndex] };
+      const bv = parseFloat(proj.budgetValue) || 0;
+      const percentage = bv > 0 ? (parsedValue / bv * 100) : 0;
+      const currentDyn = proj.dynamicOverheads[overheadId] || {};
+      const updatedDynamic = {
+        ...proj.dynamicOverheads,
         [overheadId]: {
-          ...projection.dynamicOverheads[overheadId],
+          ...currentDyn,
           value: parsedValue,
           budgetPercentage: percentage,
         },
       };
-      updateProjectionField(projectionId, 'dynamicOverheads', updatedDynamicOverheads);
+      proj.dynamicOverheads = updatedDynamic;
+      const newProjs = [...prev];
+      newProjs[projIndex] = proj;
+      return newProjs;
+    });
+  }, []);
+
+const calculateRemainingBudget = useCallback((projection) => {
+  const dynamicOverheadTotal = Object.values(projection.dynamicOverheads || {}).reduce(
+    (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
+    0
+  );
+  const totalAllocated = projection.materialTotalCost + projection.labourTotalCost + dynamicOverheadTotal;
+  const budgetValue = parseFloat(projection.budgetValue) || 0;
+  const remaining = budgetValue - totalAllocated;
+  const percentage = budgetValue > 0 ? (remaining / budgetValue * 100) : 0;
+  return { remainingBudget: remaining, remainingPercentage: percentage };
+}, []);
+
+  const handleBudgetPercentageChangeForProjection = useCallback((projectionId, e) => {
+    let percentage = e.target.value;
+    if (percentage && parseFloat(percentage) > 100) {
+      percentage = "100";
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Budget percentage cannot exceed 100%.",
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
-  };
+    const projection = projections.find(p => p.id === projectionId);
+    const prevProjection = projections.find(p => p.id === projectionId - 1);
+    const prevPerc = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetPercentage) : 0;
+    const newPerc = parseFloat(percentage) || 0;
+    if (newPerc < prevPerc) {
+      percentage = prevPerc.toFixed(2);
+      Swal.fire({
+        icon: "warning",
+        title: "Upgrade Required",
+        text: `New projection must be >= previous (${prevPerc}%). Set to ${prevPerc}%.`,
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+    if (!budgetData) return;
+    const percentageValue = parseFloat(percentage) || 0;
+    const calculatedValue = (percentageValue / 100) * budgetData.total_po_value;
+    const additionalPerc = (percentageValue - prevPerc).toFixed(2);
+    setProjections(prev => prev.map(p => 
+      p.id === projectionId ? { ...p, budgetPercentage: percentage, additionalPercentage: parseFloat(additionalPerc), budgetValue: calculatedValue.toFixed(2) } : p
+    ));
+    setTimeout(() => recalculateAllPercentages(projectionId), 0);
+  }, [budgetData, projections, recalculateAllPercentages]);
 
-  const calculateRemainingBudget = (projection) => {
-    const dynamicOverheadTotal = Object.values(projection.dynamicOverheads || {}).reduce(
-      (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
-      0
-    );
-    const totalAllocated = projection.materialTotalCost + projection.labourTotalCost + dynamicOverheadTotal;
-    const budgetValue = existingBudget?.total_budget_value || 0;
-    return budgetValue - totalAllocated;
-  };
+  const handleBudgetValueChangeForProjection = useCallback((projectionId, e) => {
+    let value = e.target.value;
+    if (value && budgetData && parseFloat(value) > budgetData.total_po_value) {
+      value = budgetData.total_po_value.toFixed(2);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: `Budget value cannot exceed Rs.${budgetData.total_po_value.toFixed(2)}.`,
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+    if (!budgetData) return;
+    const valueNumber = parseFloat(value) || 0;
+    const calculatedPercentage = budgetData.total_po_value > 0 ? (valueNumber / budgetData.total_po_value * 100).toFixed(2) : "";
+    const prevProjection = projections.find(p => p.id === projectionId - 1);
+    const prevValue = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetValue) : 0;
+    if (valueNumber < prevValue) {
+      value = prevValue.toFixed(2);
+      Swal.fire({
+        icon: "warning",
+        title: "Upgrade Required",
+        text: `New projection value must be >= previous (Rs.${prevValue.toFixed(2)}).`,
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+    const additionalPerc = budgetData.total_po_value > 0 ? ((valueNumber - prevValue) / budgetData.total_po_value * 100).toFixed(2) : "0.00";
+    setProjections(prev => prev.map(p => 
+      p.id === projectionId ? { ...p, budgetValue: value, budgetPercentage: calculatedPercentage, additionalPercentage: parseFloat(additionalPerc) } : p
+    ));
+    setTimeout(() => recalculateAllPercentages(projectionId), 0);
+  }, [budgetData, projections, recalculateAllPercentages]);
 
-  // SAVE FUNCTIONS FOR NEW OVERHEADS
-  const saveLabourOverhead = async (projectionId) => {
+  const savePoBudget = useCallback(async (projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection || !budgetData) return;
+    try {
+      const response = await axios.post("http://localhost:5000/projection/save-po-budget", {
+        site_id: selectedSite?.value,
+        desc_id: selectedWorkDescription?.value,
+        total_po_value: budgetData.total_po_value,
+        total_budget_value: parseFloat(projection.budgetValue) || 0,
+        projection_id: projectionId,
+      });
+      if (response.data.success) {
+        await Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: response.data.message,
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+        // Updated: Set poBudgetId and budgetAllocated
+        updateProjectionField(projectionId, 'poBudgetId', response.data.data.id);
+        updateProjectionField(projectionId, 'budgetAllocated', true);
+        if (selectedSite?.value && selectedWorkDescription?.value) {
+          await fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+        }
+        await checkBudgetExists(selectedSite?.value, selectedWorkDescription?.value);
+      } else {
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: response.data.message,
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving PO budget:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to save budget. Please try again.",
+        confirmButtonColor: "#4f46e5",
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+  }, [projections, budgetData, selectedSite, selectedWorkDescription, checkBudgetExists, updateProjectionField, fetchAllPoBudgets]);
+
+  const saveMaterialAllocation = useCallback(async (projectionId) => {
     const projection = projections.find(p => p.id === projectionId);
     if (!projection) return;
 
     try {
       const payload = {
-        site_id: selectedSite.value,
-        desc_id: selectedWorkDescription.value,
+        site_id: selectedSite?.value,
+        desc_id: selectedWorkDescription?.value,
+        total_cost: projection.materialTotalCost,
+        materialBudgetPercentage: projection.materialBudgetPercentage,
+        projection_id: projectionId  // Added projection_id
+      };
+
+      console.log("Material Allocation Payload:", payload);
+
+      const response = await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
+      
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Material allocation saved successfully!",
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+        // Fetch updated allocated
+        fetchAllocatedOverheads(projectionId);
+      }
+    } catch (error) {
+      console.error("Error saving material allocation:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to save material allocation. Please try again.",
+        confirmButtonColor: "#4f46e5",
+      });
+    }
+  }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
+
+  const saveLabourOverhead = useCallback(async (projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection) return;
+
+    try {
+      const payload = {
+        site_id: selectedSite?.value,
+        desc_id: selectedWorkDescription?.value,
         calculation_type: projection.labourCalculationType,
         no_of_labours: projection.labourCalculationType === "no_of_labours" ? parseInt(projection.noOfLabours) : null,
         total_shifts: projection.labourCalculationType === "total_shifts" ? parseInt(projection.totalShifts) : null,
@@ -415,12 +3053,12 @@ const ProjectProjectionOld = () => {
         total_cost: projection.labourTotalCost,
         overhead_type: "labours",
         labourBudgetPercentage: projection.labourBudgetPercentage,
-        projection_id: projectionId
+        projection_id: projectionId  // Added projection_id
       };
 
       console.log("Labour Overhead Payload:", payload);
 
-      const response = await axios.post("http://localhost:5000/admin/save-labour-overhead", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-labour-overhead", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -431,6 +3069,8 @@ const ProjectProjectionOld = () => {
           timer: 3000,
           timerProgressBar: true,
         });
+        // Fetch updated allocated
+        fetchAllocatedOverheads(projectionId);
       }
     } catch (error) {
       console.error("Error saving labour overhead:", error);
@@ -441,9 +3081,182 @@ const ProjectProjectionOld = () => {
         confirmButtonColor: "#4f46e5",
       });
     }
-  };
+  }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
 
-  const saveDynamicOverhead = async (projectionId, overheadId, overheadName) => {
+  // Updated: Edit overhead handler (REMOVED - no longer used; forms are always editable)
+  // (Kept for reference but not called; remove if not needed elsewhere)
+
+  // Updated: Delete overhead handler (now used only for top-right delete)
+  const deleteOverhead = useCallback(async (projectionId, type, id, overheadName) => {
+    if (type === 'material') return; // Handled in MaterialPlanning
+    const projection = projections.find(p => p.id === projectionId);
+    const isSubmitted = submissionStatuses[projectionId]?.submitted || projection.submitted;
+    if (isSubmitted) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cannot Delete",
+        text: "Deletion disabled after submission.",
+        confirmButtonColor: "#4f46e5",
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: `Delete ${overheadName}?`,
+      text: `Are you sure you want to delete ${overheadName}? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: 'Yes, delete!',
+    });
+    if (result.isConfirmed) {
+      try {
+        const response = await axios.delete("http://localhost:5000/projection/delete-overhead", {
+          data: { 
+            site_id: selectedSite.value,
+            desc_id: selectedWorkDescription.value,
+            projection_id: projectionId,
+            overhead_type_id: id,
+            overhead_type: overheadName
+          }
+        });
+        if (response.data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: `${overheadName} deleted successfully.`,
+            confirmButtonColor: "#4f46e5",
+          });
+          // Refresh allocated
+          fetchAllocatedOverheads(projectionId);
+          // Clear local state
+          if (type === 'labours') {
+            updateProjectionField(projectionId, 'labourTotalCost', 0);
+            updateProjectionField(projectionId, 'labourBudgetPercentage', 0);
+            updateProjectionField(projectionId, 'labourCalculationType', '');
+            updateProjectionField(projectionId, 'noOfLabours', '');
+            updateProjectionField(projectionId, 'totalShifts', '');
+            updateProjectionField(projectionId, 'ratePerShift', '');
+          } else {
+            const updatedDynamic = { ...projection.dynamicOverheads };
+            if (updatedDynamic[id]) {
+              updatedDynamic[id] = { ...updatedDynamic[id], value: 0, budgetPercentage: 0 };
+            }
+            updateProjectionField(projectionId, 'dynamicOverheads', updatedDynamic);
+          }
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: error.response?.data?.message || 'Failed to delete.',
+          confirmButtonColor: "#4f46e5",
+        });
+      }
+    }
+  }, [projections, submissionStatuses, selectedSite, selectedWorkDescription, fetchAllocatedOverheads, updateProjectionField]);
+
+  // Updated finalSubmissionProjection - removed call to save-actual-budget (handled in backend final submission with aggregation)
+  const finalSubmissionProjection = useCallback(async (projectionId) => {
+    const projection = projections.find(p => p.id === projectionId);
+    if (!projection) return;
+
+    let po_budget_id = projection.poBudgetId;
+
+    // If no po_budget_id, save po_budget first
+    if (!po_budget_id) {
+      try {
+        const saveResponse = await axios.post("http://localhost:5000/projection/save-po-budget", {
+          site_id: selectedSite?.value,
+          desc_id: selectedWorkDescription?.value,
+          total_po_value: budgetData.total_po_value,
+          total_budget_value: parseFloat(projection.budgetValue) || 0,
+          projection_id: projectionId,
+        });
+        if (saveResponse.data.success) {
+          po_budget_id = saveResponse.data.data.id;
+          // Update projection state
+          setProjections(prev => prev.map(p => 
+            p.id === projectionId ? { ...p, poBudgetId: po_budget_id, budgetAllocated: true } : p
+          ));
+          // Refresh budgets
+          if (selectedSite?.value && selectedWorkDescription?.value) {
+            await fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+          }
+          await checkBudgetExists(selectedSite?.value, selectedWorkDescription?.value);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Budget Save Error",
+            text: saveResponse.data.message || "Failed to save budget before submission.",
+            confirmButtonColor: "#4f46e5",
+          });
+          return;
+        }
+      } catch (saveError) {
+        console.error("Error saving PO budget for submission:", saveError);
+        Swal.fire({
+          icon: "error",
+          title: "Budget Save Error",
+          text: "Failed to save budget before submission. Please try again.",
+          confirmButtonColor: "#4f46e5",
+        });
+        return;
+      }
+    }
+
+    // Removed: Collect entries and call save-actual-budget (now handled in backend final submission with aggregation)
+
+    try {
+      const response = await axios.post("http://localhost:5000/projection/final-projection-submission", {
+        site_id: selectedSite?.value,
+        desc_id: selectedWorkDescription?.value,
+        projection_id: projectionId,
+        projection_data: {
+          budgetValue: projection.budgetValue,
+          additionalPercentage: projection.additionalPercentage,
+          materialTotalCost: projection.materialTotalCost,
+          materialBudgetPercentage: projection.materialBudgetPercentage,
+          labourTotalCost: projection.labourTotalCost,
+          labourBudgetPercentage: projection.labourBudgetPercentage,
+          dynamicOverheads: projection.dynamicOverheads,
+        }
+      });
+
+      if (response.data.success) {
+        // Set submitted
+        setProjections(prev => prev.map(p => p.id === projectionId ? { ...p, submitted: true } : p));
+        setSubmissionStatuses(prev => ({ ...prev, [projectionId]: { ...prev[projectionId], submitted: true } }));
+        // Fetch remaining
+        await fetchRemainingBudget(projectionId);
+        // Fetch updated allocated (now in actual_budget, but since transferred, refetch)
+        await fetchAllocatedOverheads(projectionId);
+        // Refresh actual_budget for the latest po_budget_id (aggregated)
+        if (existingBudget) {
+          await fetchActualBudgetEntries(existingBudget.id);
+        }
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `${projection.name} submitted successfully! Remaining: ₹${response.data.data.remaining_budget}`,
+          confirmButtonColor: "#4f46e5",
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error in final submission:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to submit projection. Please try again.",
+        confirmButtonColor: "#4f46e5",
+      });
+    }
+  }, [projections, selectedSite, selectedWorkDescription, existingBudget, fetchActualBudgetEntries, budgetData, fetchAllPoBudgets, checkBudgetExists, fetchRemainingBudget, fetchAllocatedOverheads]);
+
+  const saveDynamicOverhead = useCallback(async (projectionId, overheadId, overheadName) => {
     const projection = projections.find(p => p.id === projectionId);
     if (!projection) return;
 
@@ -491,10 +3304,10 @@ const ProjectProjectionOld = () => {
         value,
         percentage,
         overhead_type: overheadName,
-        projection_id: projectionId,
+        projection_id: projectionId,  // Added projection_id
       };
 
-      const response = await axios.post("http://localhost:5000/admin/save-dynamic-overhead-values", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-dynamic-overhead-values", payload);
 
       if (response.data.success) {
         Swal.fire({
@@ -505,6 +3318,8 @@ const ProjectProjectionOld = () => {
           timer: 3000,
           timerProgressBar: true,
         });
+        // Fetch updated allocated
+        fetchAllocatedOverheads(projectionId);
       } else {
         throw new Error(response.data.message || "Unknown error");
       }
@@ -527,268 +3342,9 @@ const ProjectProjectionOld = () => {
         confirmButtonColor: "#4f46e5",
       });
     }
-  };
+  }, [projections, selectedSite, selectedWorkDescription, fetchAllocatedOverheads]);
 
-  const savePoBudget = async (projectionId) => {
-    try {
-      const response = await axios.post("http://localhost:5000/admin/save-po-budget", {
-        site_id: selectedSite.value,
-        desc_id: selectedWorkDescription.value,
-        total_po_value: budgetData.total_po_value,
-        total_budget_value: parseFloat(budgetValue) || 0,
-        projection_id: projectionId,
-      });
-      if (response.data.success) {
-        await Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: response.data.message,
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-        await checkBudgetExists(selectedSite.value, selectedWorkDescription.value);
-        updateProjectionField(projectionId, 'budgetAllocated', true);
-      } else {
-        await Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: response.data.message,
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error saving PO budget:", error);
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to save budget. Please try again.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-  };
-
-  const finalSubmissionProjection = async (projectionId) => {
-    const projection = projections.find(p => p.id === projectionId);
-    if (!projection) return;
-
-    try {
-      const response = await axios.post("http://localhost:5000/admin/final-projection-submission", {
-        site_id: selectedSite.value,
-        desc_id: selectedWorkDescription.value,
-        projection_id: projectionId,
-        projection_data: {
-          materialTotalCost: projection.materialTotalCost,
-          materialBudgetPercentage: projection.materialBudgetPercentage,
-          labourTotalCost: projection.labourTotalCost,
-          labourBudgetPercentage: projection.labourBudgetPercentage,
-          dynamicOverheads: projection.dynamicOverheads,
-        }
-      });
-
-      if (response.data.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: `${projection.name} submitted successfully!`,
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error in final submission:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to submit projection. Please try again.",
-        confirmButtonColor: "#4f46e5",
-      });
-    }
-  };
-
-  // ALL REMAINING EXISTING FUNCTIONS (saveOverhead, allocateBudget, etc.)
-  const saveOverhead = async () => {
-    const { value: expense_name } = await Swal.fire({
-      title: "Add New Overhead",
-      input: "text",
-      inputLabel: "Expense Name",
-      inputPlaceholder: "Enter expense name",
-      showCancelButton: true,
-      confirmButtonText: "Save",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#4f46e5",
-      inputValidator: (value) => {
-        if (!value) {
-          return "Expense name is required!";
-        }
-      },
-    });
-
-    if (expense_name) {
-      try {
-        const response = await axios.post("http://localhost:5000/admin/save-overhead", {
-          expense_name,
-        });
-        if (response.data.success) {
-          await Swal.fire({
-            icon: "success",
-            title: "Success",
-            text: response.data.message,
-            confirmButtonColor: "#4f46e5",
-            timer: 3000,
-            timerProgressBar: true,
-          });
-          const newOverhead = { id: response.data.data.id, expense_name, is_default: 0 };
-          setOverheads((prev) => [...prev, newOverhead]);
-          setCheckedExpenses((prev) => ({
-            ...prev,
-            [newOverhead.id]: false,
-          }));
-          setActualBudgetEntries((prev) => ({
-            ...prev,
-            [newOverhead.id]: {
-              splitted_budget: null,
-              percentage: null,
-              actual_value: null,
-              difference_value: null,
-              remarks: "",
-              edited: false,
-            },
-          }));
-        } else {
-          await Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: response.data.message,
-            confirmButtonColor: "#4f46e5",
-            timer: 3000,
-            timerProgressBar: true,
-          });
-        }
-      } catch (error) {
-        console.error("Error saving overhead:", error);
-        await Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Failed to save overhead. Please try again.",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    }
-  };
-
-  const allocateBudget = async () => {
-    if (!existingBudget || !existingBudget.total_budget_value) {
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No valid budget exists to allocate expenses.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-
-    const checkedCount = Object.values(checkedExpenses).filter((checked) => checked).length;
-    if (checkedCount === 0) {
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "At least one expense must be checked.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-
-    const { sumPerc, sumBudget } = computeSums();
-    if (Math.abs(sumPerc - 100) > 0.01) {
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: `Total budget percentage must equal 100%. Current total: ${sumPerc.toFixed(2)}%.`,
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-
-    const entries = Object.keys(checkedExpenses)
-      .filter((id) => checkedExpenses[id])
-      .map((id) => ({
-        overhead_id: parseInt(id),
-        splitted_budget: parseFloat(actualBudgetEntries[id]?.splitted_budget) || 0,
-        actual_value: parseFloat(actualBudgetEntries[id]?.actual_value) || null,
-        remarks: actualBudgetEntries[id]?.remarks || "",
-      }));
-
-    const totalSplitted = entries.reduce((sum, entry) => sum + parseFloat(entry.splitted_budget || 0), 0);
-    if (Math.abs(totalSplitted - existingBudget.total_budget_value) > 0.01) {
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: `Sum of budgeted values (${totalSplitted.toFixed(2)}) must equal total budget value (Rs.${existingBudget.total_budget_value.toFixed(2)}).`,
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-
-    try {
-      const response = await axios.post("http://localhost:5000/admin/save-actual-budget", {
-        po_budget_id: existingBudget.id,
-        actual_budget_entries: entries,
-      });
-      if (response.data.success) {
-        await Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: response.data.message,
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-        await fetchActualBudgetEntries(existingBudget.id);
-        try {
-          await axios.get("http://localhost:5000/site-incharge/calculate-labour-budget");
-        } catch (error) {
-          console.error("Error calling calculate-labour-budget API:", error.message);
-        }
-      } else {
-        await Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: response.data.message,
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-      }
-    } catch (error) {
-      console.error("Error allocating budget:", error);
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to allocate budget. Please try again.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-  };
-
-  const addNewOverhead = async () => {
+  const addNewOverhead = useCallback(async () => {
     const { value: expense_name } = await Swal.fire({
       title: "Add New Overhead",
       input: "text",
@@ -810,36 +3366,12 @@ const ProjectProjectionOld = () => {
 
     if (expense_name) {
       try {
-        const response = await axios.post("http://localhost:5000/admin/save-overhead", {
+        const response = await axios.post("http://localhost:5000/projection/save-overhead", {
           expense_name,
         });
         if (response.data.success) {
           const newOverhead = response.data.data;
           setOverheads((prev) => [...prev, newOverhead]);
-          setDynamicOverheads((prev) => ({
-            ...prev,
-            [newOverhead.id]: {
-              value: "",
-              budgetPercentage: 0,
-              expense_name: newOverhead.expense_name,
-            },
-          }));
-          setCheckedExpenses((prev) => ({
-            ...prev,
-            [newOverhead.id]: false,
-          }));
-          setActualBudgetEntries((prev) => ({
-            ...prev,
-            [newOverhead.id]: {
-              splitted_budget: null,
-              percentage: null,
-              actual_value: null,
-              difference_value: null,
-              remarks: "",
-              edited: false,
-            },
-          }));
-          setSelectedDynamicOverheads((prev) => [...prev, newOverhead]);
           Swal.fire({
             icon: "success",
             title: "Success",
@@ -866,424 +3398,594 @@ const ProjectProjectionOld = () => {
         });
       }
     }
-  };
+  }, [overheads]);
 
-  // ALL EXISTING HANDLERS
-  const handleBudgetPercentageChange = (e) => {
-    let percentage = e.target.value;
-    if (percentage && parseFloat(percentage) > 100) {
-      percentage = "100";
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Budget percentage cannot exceed 100%.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-    setBudgetPercentage(percentage);
-    if (percentage && budgetData && budgetData.total_po_value) {
-      const percentageValue = parseFloat(percentage);
-      if (!isNaN(percentageValue) && percentageValue >= 0) {
-        const calculatedValue = (percentageValue / 100) * budgetData.total_po_value;
-        if (calculatedValue <= budgetData.total_po_value) {
-          setBudgetValue(calculatedValue.toFixed(2));
-        } else {
-          setBudgetValue(budgetData.total_po_value.toFixed(2));
-        }
-      } else {
-        setBudgetValue("");
+  const handleSelectOverhead = useCallback((overhead, projectionId) => {
+    setProjections(prev => prev.map(p => {
+      if (p.id !== projectionId) return p;
+      if (!p.selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
+        return {
+          ...p,
+          selectedDynamicOverheads: [...p.selectedDynamicOverheads, overhead]
+        };
       }
-    } else {
-      setBudgetValue("");
-    }
-  };
-
-  const handleBudgetValueChange = (e) => {
-    let value = e.target.value;
-    if (
-      value &&
-      budgetData &&
-      budgetData.total_po_value &&
-      parseFloat(value) > budgetData.total_po_value
-    ) {
-      value = budgetData.total_po_value.toString();
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: `Budget value cannot exceed Rs.${budgetData.total_po_value.toFixed(2)}.`,
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-    setBudgetValue(value);
-    if (value && budgetData && budgetData.total_po_value) {
-      const valueNumber = parseFloat(value);
-      if (!isNaN(valueNumber) && valueNumber >= 0 && budgetData.total_po_value > 0) {
-        const calculatedPercentage = (valueNumber / budgetData.total_po_value) * 100;
-        if (calculatedPercentage <= 100) {
-          setBudgetPercentage(calculatedPercentage.toFixed(2));
-        } else {
-          setBudgetPercentage("100");
-        }
-      } else {
-        setBudgetPercentage("");
-      }
-    } else {
-      setBudgetPercentage("");
-    }
-  };
-
-  const handleExpenseCheckboxChange = (id) => {
-    setCheckedExpenses((prev) => {
-      const newChecked = { ...prev, [id]: !prev[id] };
-      const checkedCount = Object.values(newChecked).filter((checked) => checked).length;
-      if (checkedCount === 0) {
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "At least one expense must be checked.",
-          confirmButtonColor: "#4f46e5",
-          timer: 3000,
-          timerProgressBar: true,
-        });
-        return prev;
-      }
-      if (!newChecked[id]) {
-        setActualBudgetEntries((prevEntries) => ({
-          ...prevEntries,
-          [id]: {
-            ...prevEntries[id],
-            splitted_budget: null,
-            percentage: null,
-            edited: false,
-          },
-        }));
-      }
-      return newChecked;
-    });
-  };
-
-  const handlePercentageChange = (id, value) => {
-    let perc = value === "" ? "" : parseFloat(value);
-    if (value === "" || isNaN(perc) || perc < 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Percentage cannot be negative or invalid.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-    if (perc > 100) {
-      perc = 100;
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Percentage cannot exceed 100%.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-    const total = existingBudget.total_budget_value;
-    const newValue = ((perc / 100) * total).toFixed(2);
-    setActualBudgetEntries((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        percentage: value,
-        splitted_budget: newValue,
-        edited: true,
-      },
+      return p;
     }));
-  };
-
-  const handleSplittedBudgetChange = (id, value) => {
-    let val = parseFloat(value);
-    if (isNaN(val) || val < 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Budget value cannot be negative.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-    const total = existingBudget.total_budget_value;
-    if (val > total) {
-      val = total;
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: `Budget value cannot exceed Rs.${total.toFixed(2)}.`,
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-    const perc = (val / total * 100).toFixed(2);
-    setActualBudgetEntries((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        splitted_budget: val.toFixed(2),
-        percentage: perc.includes(".") ? perc : parseInt(perc).toString(),
-        edited: true,
-      },
-    }));
-  };
-
-  const handleSelectOverhead = (overhead, projectionId) => {
-    const projection = projections.find(p => p.id === projectionId);
-    if (!projection.selectedDynamicOverheads.some((oh) => oh.id === overhead.id)) {
-      const updatedSelectedOverheads = [...projection.selectedDynamicOverheads, overhead];
-      updateProjectionField(projectionId, 'selectedDynamicOverheads', updatedSelectedOverheads);
-    }
-  };
-
-  const handleRemoveOverhead = (overheadId, projectionId) => {
-    const projection = projections.find(p => p.id === projectionId);
-    const updatedSelectedOverheads = projection.selectedDynamicOverheads.filter((oh) => oh.id !== overheadId);
-    updateProjectionField(projectionId, 'selectedDynamicOverheads', updatedSelectedOverheads);
-    
-    const updatedDynamicOverheads = { ...projection.dynamicOverheads };
-    updatedDynamicOverheads[overheadId] = {
-      ...updatedDynamicOverheads[overheadId],
-      value: "",
-      budgetPercentage: 0,
-    };
-    updateProjectionField(projectionId, 'dynamicOverheads', updatedDynamicOverheads);
-  };
-
-  const computeSums = () => {
-    let sumPerc = 0;
-    let sumBudget = 0;
-    Object.keys(checkedExpenses).forEach((id) => {
-      if (checkedExpenses[id]) {
-        sumPerc += parseFloat(actualBudgetEntries[id]?.percentage || 0);
-        sumBudget += parseFloat(actualBudgetEntries[id]?.splitted_budget || 0);
-      }
-    });
-    return { sumPerc, sumBudget };
-  };
-
-  const handleSubmit = async () => {
-    if (
-      selectedCompany &&
-      selectedProject &&
-      selectedSite &&
-      selectedWorkDescription &&
-      budgetPercentage &&
-      budgetValue
-    ) {
-      await savePoBudget(1);
-    } else {
-      await Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Please select all fields and enter budget details before submitting.",
-        confirmButtonColor: "#4f46e5",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-  };
-
-  // ALL EXISTING USEEFFECTS PLUS NEW ONES
-  useEffect(() => {
-    fetchCompanies();
   }, []);
 
+  const handleRemoveOverhead = useCallback((overheadId, projectionId) => {
+    setProjections(prev => prev.map(p => {
+      if (p.id !== projectionId) return p;
+      const updatedSelected = p.selectedDynamicOverheads.filter((oh) => oh.id !== overheadId);
+      const updatedDynamic = { ...p.dynamicOverheads };
+      if (updatedDynamic[overheadId]) {
+        updatedDynamic[overheadId] = {
+          ...updatedDynamic[overheadId],
+          value: "",
+          budgetPercentage: 0,
+        };
+      }
+      return { ...p, selectedDynamicOverheads: updatedSelected, dynamicOverheads: updatedDynamic };
+    }));
+  }, []);
+
+  // UseEffects (unchanged except add fetchAllocatedOverheads and fetchRemainingBudget on projection change)
   useEffect(() => {
-    projections.forEach(projection => {
-      calculateLabourTotalCost(projection);
-    });
-  }, [projections.map(p => p.labourCalculationType + p.noOfLabours + p.totalShifts + p.ratePerShift).join(','), existingBudget]);
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   useEffect(() => {
-    if (selectedCompany) {
+    if (selectedCompany?.value) {
       fetchProjects(selectedCompany.value);
-      setProjects([]);
-      setSites([]);
-      setWorkDescriptions([]);
-      setSelectedProject(null);
-      setSelectedSite(null);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     } else {
       setProjects([]);
-      setSites([]);
-      setWorkDescriptions([]);
-      setSelectedProject(null);
-      setSelectedSite(null);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     }
-  }, [selectedCompany]);
+    setSites([]);
+    setWorkDescriptions([]);
+    setSelectedProject(null);
+    setSelectedSite(null);
+    setSelectedWorkDescription(null);
+    setBudgetData(null);
+    setExistingBudget(null);
+    setOverheads([]);
+    setActualBudgetEntries({});
+    setIsAllocated(false);
+    setSubmissionStatuses({});
+    setProjections(prev => prev.map(p => ({
+      ...p,
+      budgetPercentage: "",
+      budgetValue: "",
+      budgetAllocated: false,
+      additionalPercentage: 0,
+      materialTotalCost: 0,
+      materialBudgetPercentage: 0,
+      labourTotalCost: 0,
+      labourBudgetPercentage: 0,
+      dynamicOverheads: {},
+      selectedDynamicOverheads: [],
+      submitted: false,
+      prevRemainingBudget: 0,
+      prevRemainingPercentage: 0
+    })));
+  }, [selectedCompany, fetchProjects]);
 
   useEffect(() => {
-    if (selectedProject) {
+    if (selectedProject?.value) {
       fetchSites(selectedProject.value);
-      setSites([]);
-      setWorkDescriptions([]);
-      setSelectedSite(null);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     } else {
       setSites([]);
-      setWorkDescriptions([]);
-      setSelectedSite(null);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     }
-  }, [selectedProject]);
+    setWorkDescriptions([]);
+    setSelectedSite(null);
+    setSelectedWorkDescription(null);
+    setBudgetData(null);
+    setExistingBudget(null);
+    setOverheads([]);
+    setActualBudgetEntries({});
+    setIsAllocated(false);
+    setSubmissionStatuses({});
+    setProjections([defaultProjectionTemplate(1)]);
+  }, [selectedProject, fetchSites, defaultProjectionTemplate]);
 
   useEffect(() => {
-    if (selectedSite) {
+    if (selectedSite?.value) {
       fetchWorkDescriptions(selectedSite.value);
-      setWorkDescriptions([]);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     } else {
       setWorkDescriptions([]);
-      setSelectedWorkDescription(null);
-      setBudgetData(null);
-      setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
-      setOverheads([]);
-      setCheckedExpenses({});
-      setActualBudgetEntries({});
-      setIsAllocated(false);
     }
-  }, [selectedSite]);
+    setSelectedWorkDescription(null);
+    setBudgetData(null);
+    setExistingBudget(null);
+    setOverheads([]);
+    setActualBudgetEntries({});
+    setIsAllocated(false);
+    setSubmissionStatuses({});
+    setProjections([defaultProjectionTemplate(1)]);
+  }, [selectedSite, fetchWorkDescriptions, defaultProjectionTemplate]);
 
   useEffect(() => {
-    if (selectedSite && selectedWorkDescription) {
+    if (selectedSite?.value && selectedWorkDescription?.value) {
       fetchBudgetDetails(selectedSite.value, selectedWorkDescription.value);
       checkBudgetExists(selectedSite.value, selectedWorkDescription.value);
     } else {
       setBudgetData(null);
       setExistingBudget(null);
-      setBudgetPercentage("");
-      setBudgetValue("");
       setOverheads([]);
-      setCheckedExpenses({});
       setActualBudgetEntries({});
       setIsAllocated(false);
+      setSubmissionStatuses({});
+      setProjections([defaultProjectionTemplate(1)]);
     }
-  }, [selectedSite, selectedWorkDescription]);
+  }, [selectedSite, selectedWorkDescription, fetchBudgetDetails, checkBudgetExists, defaultProjectionTemplate]);
 
   useEffect(() => {
-    if (existingBudget && existingBudget.id) {
+    if (selectedSite?.value && selectedWorkDescription?.value && budgetData) {
+      fetchAllPoBudgets(selectedSite.value, selectedWorkDescription.value);
+      fetchSubmissionStatuses();
+    }
+  }, [selectedSite, selectedWorkDescription, budgetData, fetchAllPoBudgets, fetchSubmissionStatuses]);
+
+  useEffect(() => {
+    if (existingBudget?.id) {
       fetchOverheads(existingBudget.id);
       fetchActualBudgetEntries(existingBudget.id);
     } else {
       setOverheads([]);
-      setCheckedExpenses({});
       setActualBudgetEntries({});
-      setDynamicOverheads({});
-      setSelectedDynamicOverheads([]);
       setIsAllocated(false);
     }
-  }, [existingBudget]);
+  }, [existingBudget, fetchOverheads, fetchActualBudgetEntries]);
 
-  // CHART CALCULATIONS
-  const chartData = existingBudget && actualBudgetEntries ? (() => {
-    const budgetedValue = Object.values(actualBudgetEntries)
-      .filter((entry) => entry.splitted_budget !== null)
-      .reduce((sum, entry) => sum + parseFloat(entry.splitted_budget || 0), 0);
-    const actualValue = Object.values(actualBudgetEntries)
-      .filter((entry) => entry.actual_value !== null)
-      .reduce((sum, entry) => sum + parseFloat(entry.actual_value || 0), 0);
-    const balanceValue = budgetedValue - actualValue;
-    return [
-      { name: "Budgeted Value", value: budgetedValue, fill: "#92c352" },
-      { name: "Actual Value", value: actualValue, fill: "#40A4DF" },
-      { name: "Balance", value: Math.abs(balanceValue), fill: balanceValue < 0 ? "#C84D4D" : "#f0af0a" },
-    ];
-  })() : [];
-
-  const expenseChartData = overheads
-    .filter((overhead) => isAllocated ? actualBudgetEntries[overhead.id]?.splitted_budget !== null : true )
-    .map((overhead) => {
-      const budgeted = parseFloat(actualBudgetEntries[overhead.id]?.splitted_budget) || 0;
-      const actual = parseFloat(actualBudgetEntries[overhead.id]?.actual_value) || 0;
-      const actualExceedsBudget = actual > budgeted;
-      return {
-        name: overhead.expense_name,
-        budgeted: budgeted,
-        actual: actual,
-        actualFill: actualExceedsBudget ? "#C84D4D" : "#40A4DF",
-      };
+  // Existing useEffects (add fetchAllocatedOverheads and fetchRemainingBudget on projection change)
+  useEffect(() => {
+    projections.forEach(proj => {
+      fetchAllocatedOverheads(proj.id);
+      if (proj.submitted) fetchRemainingBudget(proj.id);
     });
+  }, [selectedSite, selectedWorkDescription, projections, fetchAllocatedOverheads, fetchRemainingBudget]);
 
-  const { sumPerc, sumBudget } = computeSums();
-  const total = existingBudget?.total_budget_value || 0;
-  const percDiff = sumPerc - 100;
-  const budgetDiff = sumBudget - total;
-  const percError = percDiff > 0.01 ? `Excess by ${percDiff.toFixed(2)}%` : percDiff < -0.01 ? `Short by ${Math.abs(percDiff).toFixed(2)}%` : "";
-  const budgetError = budgetDiff > 0.01 ? `Excess by Rs.${budgetDiff.toFixed(2)}` : budgetDiff < -0.01 ? `Short by Rs.${Math.abs(budgetDiff).toFixed(2)}` : "";
-  const isValid = Math.abs(sumPerc - 100) <= 0.01 && Math.abs(budgetDiff) <= 0.01;
-  const successMessage = isValid ? "100% of budgeted value allocated successfully!" : "";
+// Updated ProjectionAccordion useMemo (add prev remaining display, remove edit/delete in summary, top-right delete only, pre-populate forms with allocated data, no small edit/delete below save)
+const ProjectionAccordion = useMemo(() => 
+  projections.map((projection) => {
+    const prevProjection = projections.find(p => p.id === projection.id - 1);
+    const prevPerc = prevProjection?.budgetAllocated ? parseFloat(prevProjection.budgetPercentage) : 0;
+    const progressWidth = (parseFloat(projection.budgetPercentage || 0) / 100) * 100;
+    const isSubmitted = submissionStatuses[projection.id]?.submitted || projection.submitted;
+    const { remainingBudget: calcRemBudget, remainingPercentage: calcRemPerc } = calculateRemainingBudget(projection);
+    const effectiveBudget = projection.effectiveBudget || parseFloat(projection.budgetValue);
+    const effectiveRemPerc = effectiveBudget > 0 ? ((isSubmitted ? projection.remainingBudget : calcRemBudget) / effectiveBudget * 100) : 0;
+    const allocOverhead = projection.allocatedOverheads.find(oh => oh.expense_name.toLowerCase() === 'labours') || {};
+    const dynOverhead = projection.allocatedOverheads.find(oh => oh.id === parseInt(projection.activeOverheadTab?.split('-')[1]));
+    return (
+      <div key={projection.id} className="border border-gray-200 rounded-xl mb-6 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
+        <div
+          className="flex items-center justify-between p-6 cursor-pointer hover:bg-gradient-to-r hover:from-gray-50 to-white rounded-t-xl"
+          onClick={() => toggleProjection(projection.id)}
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`w-3 h-3 rounded-full ${projection.budgetAllocated ? 'bg-green-500' : 'bg-yellow-500'}`} />
+            <h3 className="text-xl font-semibold text-gray-800">{projection.name}</h3>
+          </div>
+          <div className="flex items-center space-x-3">
+            {projection.budgetAllocated ? (
+              <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full flex items-center space-x-1">
+                <CheckCircle size={14} /> Allocated
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full flex items-center space-x-1">
+                <AlertCircle size={14} /> Pending
+              </span>
+            )}
+            {projection.isOpen ? <ChevronUp size={20} className="text-gray-500" /> : <ChevronDown size={20} className="text-gray-500" />}
+          </div>
+        </div>
+
+        {projection.isOpen && (
+          <div className="p-6">
+            {!projection.budgetAllocated && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <h4 className="text-xl font-semibold mb-4 text-blue-800 flex items-center space-x-2">
+                  <span>Budget Allocation</span>
+                  <span className="text-sm text-blue-600">(Cumulative Total %)</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Total % (Upgrade from {prevPerc.toFixed(2)}%)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      max="100"
+                      min={prevPerc}
+                      value={projection.budgetPercentage}
+                      onChange={(e) => handleBudgetPercentageChangeForProjection(projection.id, e)}
+                      className="w-full p-4 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                      placeholder="Enter total %"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Total Value (Rs.)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min={prevProjection?.budgetValue || 0}
+                      value={projection.budgetValue}
+                      onChange={(e) => handleBudgetValueChangeForProjection(projection.id, e)}
+                      className="w-full p-4 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
+                      placeholder="Enter total value"
+                    />
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => savePoBudget(projection.id)}
+                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={loading || !projection.budgetPercentage || !projection.budgetValue || parseFloat(projection.budgetPercentage) <= prevPerc}
+                    >
+                      {loading ? (
+                        <Loader2 className="animate-spin inline-block mr-2" size={20} />
+                      ) : null}
+                      Save Budget
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {projection.budgetAllocated && (
+              <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                <h4 className="text-xl font-semibold mb-4 text-green-800 flex items-center space-x-2">
+                  <CheckCircle size={20} className="text-green-500" />
+                  Allocated Budget (Fixed)
+                </h4>
+                <div className="space-y-4">
+                  {projection.prevRemainingBudget > 0 && (
+                    <div className="flex justify-between items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <span className="text-sm font-medium text-yellow-800">Previous Remaining Added:</span>
+                      <span className="text-lg font-bold text-yellow-700">₹{parseFloat(projection.prevRemainingBudget).toLocaleString()} ({projection.prevRemainingPercentage.toFixed(2)}%)</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+                    <span className="text-sm font-medium text-gray-700">Additional %:</span>
+                    <span className="text-lg font-bold text-green-700">{projection.additionalPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+                    <span className="text-sm font-medium text-gray-700">Total %:</span>
+                    <span className="text-lg font-bold text-green-700">{projection.budgetPercentage}%</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-white rounded-lg shadow-sm">
+                    <span className="text-sm font-medium text-gray-700">Total Value (Rs.):</span>
+                    <span className="text-lg font-bold text-green-700">₹{parseFloat(projection.budgetValue).toLocaleString()}</span>
+                  </div>
+                  <div className="relative pt-1">
+                    <div className="flex mb-2 items-center justify-between">
+                      <div>
+                        <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-800 bg-green-200">
+                          Cumulative Progress
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-semibold inline-block text-green-800">{progressWidth.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-200">
+                      <div
+                        style={{ width: `${progressWidth}%` }}
+                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {projection.budgetAllocated && (
+              <>
+                <div className="flex flex-wrap gap-2 mb-8 pb-4 border-b border-gray-200 overflow-x-auto bg-gray-50 rounded-lg p-4">
+                  {[
+                    { key: "material", label: "Material", icon: "📦" },
+                    { key: "labour", label: "Labour", icon: "👥" },
+                    ...projection.selectedDynamicOverheads.map((overhead) => ({
+                      key: `overhead-${overhead.id}`,
+                      label: overhead.expense_name,
+                      icon: "⚙️",
+                    })),
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      className={`flex items-center px-6 py-3 font-semibold whitespace-nowrap rounded-full transition-all duration-200 ${
+                        projection.activeOverheadTab === tab.key
+                          ? "bg-indigo-600 text-white shadow-lg"
+                          : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                      }`}
+                      onClick={() => updateProjectionField(projection.id, 'activeOverheadTab', tab.key)}
+                    >
+                      <span className="mr-2 text-sm">{tab.icon}</span>
+                      {tab.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      Swal.fire({
+                        title: "Select Overhead",
+                        input: "select",
+                        inputOptions: overheads
+                          .filter((oh) => oh.is_default === 0)
+                          .filter((oh) => !projection.selectedDynamicOverheads.some((selected) => selected.id === oh.id))
+                          .reduce((options, overhead) => {
+                            options[overhead.id] = overhead.expense_name;
+                            return options;
+                          }, {}),
+                        inputPlaceholder: "Select an overhead",
+                        showCancelButton: true,
+                        confirmButtonText: "Add",
+                        confirmButtonColor: "#4f46e5",
+                        showDenyButton: true,
+                        denyButtonText: "Add New Overhead",
+                        denyButtonColor: "#22c55e",
+                        inputValidator: (value) => {
+                          if (!value) {
+                            return "Please select an overhead!";
+                          }
+                        },
+                      }).then((result) => {
+                        if (result.isConfirmed) {
+                          const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
+                          handleSelectOverhead(selectedOverhead, projection.id);
+                          updateProjectionField(projection.id, 'activeOverheadTab', `overhead-${selectedOverhead.id}`);
+                        } else if (result.isDenied) {
+                          addNewOverhead();
+                        }
+                      });
+                    }}
+                    className="flex items-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-full hover:from-emerald-600 hover:to-green-700 shadow-lg transition-all duration-200 ml-2"
+                  >
+                    <PlusCircle className="mr-2" size={18} />
+                    Add Overhead
+                  </button>
+                </div>
+
+                {projection.activeOverheadTab === "material" && (
+                  <div className="p-6 bg-gray-50 rounded-xl mb-6">
+                    <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+                      <span>📦</span>
+                      <span>Material Overhead</span>
+                    </h4>
+                    <MaterialPlanning
+                      selectedCompany={selectedCompany}
+                      selectedProject={selectedProject}
+                      selectedSite={selectedSite}
+                      selectedWorkDesc={selectedWorkDescription}
+                      existingBudget={existingBudget}
+                      projectionBudgetValue={projection.budgetValue}
+                      projectionId={projection.id}
+                      isSubmitted={isSubmitted}
+                      onTotalCostChange={handleTotalCostChangeForProjection(projection.id)}
+                    />
+                    {!isSubmitted && (
+                      <button
+                        onClick={() => saveMaterialAllocation(projection.id)}
+                        className="mt-4 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        Save Material Allocation
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {projection.activeOverheadTab === "labour" && (
+                  <div className="p-6 bg-gray-50 rounded-xl mb-6 relative">
+                    <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+                      <span>👥</span>
+                      <span>Labour Overhead</span>
+                    </h4>
+                    {!isSubmitted && (
+                      <button
+                        onClick={() => deleteOverhead(projection.id, 'labours', 'labour-id', 'Labour')}
+                        className="absolute top-4 right-4 text-red-600 hover:text-red-800 transition-colors duration-200"
+                        title="Delete Labour Overhead"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Calculation Type</label>
+                        <select
+                          value={projection.labourCalculationType}
+                          onChange={(e) => handleLabourCalculationTypeChange(projection.id, e.target.value)}
+                          disabled={isSubmitted}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="no_of_labours">No of Labours</option>
+                          <option value="total_shifts">Total Estimated Shifts</option>
+                        </select>
+                      </div>
+                    </div>
+                    {projection.labourCalculationType && (
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        {projection.labourCalculationType === "no_of_labours" && (
+                          <div>
+                            <label className="block text-sm font-medium mb-2">No of Labours</label>
+                            <input
+                              type="number"
+                              value={projection.noOfLabours}
+                              onChange={(e) => handleNoOfLaboursChange(projection.id, e.target.value)}
+                              disabled={isSubmitted}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                              placeholder="Enter number of labours"
+                            />
+                          </div>
+                        )}
+                        {projection.labourCalculationType === "total_shifts" && (
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
+                            <input
+                              type="number"
+                              value={projection.totalShifts}
+                              onChange={(e) => handleTotalShiftsChange(projection.id, e.target.value)}
+                              disabled={isSubmitted}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                              placeholder="Enter total shifts"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Rate per Shift</label>
+                          <input
+                            type="number"
+                            value={projection.ratePerShift}
+                            onChange={(e) => handleRatePerShiftChange(projection.id, e.target.value)}
+                            disabled={isSubmitted}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                            placeholder="Enter rate per shift"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium">Total Labour Cost:</span>
+                        <span className="text-lg font-semibold text-indigo-700">₹{projection.labourTotalCost.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Budget Percentage:</span>
+                        <span className="text-lg font-semibold text-indigo-700">{projection.labourBudgetPercentage.toFixed(2)}%</span>
+                      </div>
+                    </div>
+                    {!isSubmitted && (
+                      <button
+                        onClick={() => saveLabourOverhead(projection.id)}
+                        className="mt-4 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        Save Labour Overhead
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {projection.selectedDynamicOverheads.map((overhead) => (
+                  projection.activeOverheadTab === `overhead-${overhead.id}` && (
+                    <div key={overhead.id} className="p-6 bg-gray-50 rounded-xl mb-6 relative">
+                      <h4 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-indigo-800">
+                        <span>⚙️</span>
+                        <span>{overhead.expense_name} Overhead</span>
+                      </h4>
+                      {!isSubmitted && (
+                        <button
+                          onClick={() => deleteOverhead(projection.id, overhead.expense_name.toLowerCase(), overhead.id, overhead.expense_name)}
+                          className="absolute top-4 right-4 text-red-600 hover:text-red-800 transition-colors duration-200"
+                          title={`Delete ${overhead.expense_name}`}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            {overhead.expense_name} Value
+                          </label>
+                          <input
+                            type="number"
+                            value={projection.dynamicOverheads[overhead.id]?.value || ""}
+                            onChange={(e) =>
+                              calculateDynamicOverheadBudgetPercentage(projection.id, overhead.id, e.target.value)
+                            }
+                            disabled={isSubmitted}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                            placeholder={`Enter ${overhead.expense_name} value`}
+                          />
+                          <p className="text-sm text-gray-600 mt-1">
+                            Remaining Budget: ₹{calcRemBudget.toLocaleString()}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Budget Percentage</label>
+                          <input
+                            type="text"
+                            value={`${(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
+                            readOnly
+                            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+                          />
+                        </div>
+                      </div>
+                      {!isSubmitted && (
+                        <button
+                          onClick={() => saveDynamicOverhead(projection.id, overhead.id, overhead.expense_name)}
+                          className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                          Save {overhead.expense_name} Overhead
+                        </button>
+                      )}
+                    </div>
+                  )
+                ))}
+
+            <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-200">
+  <h4 className="text-xl font-semibold mb-6 text-indigo-800">Budget Allocation Summary</h4>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    {/* Display from allocatedOverheads - NO edit/delete icons */}
+    {projection.allocatedOverheads.map((alloc) => (
+      <div key={alloc.id} className="p-4 bg-white rounded-lg shadow-sm">
+        <p className="text-sm text-gray-600">{alloc.expense_name}</p>
+        <p className="text-lg font-bold text-indigo-700">₹{parseFloat(alloc.total_cost || 0).toLocaleString()}</p>
+        <p className="text-sm text-indigo-600">{parseFloat(alloc.budget_percentage || 0).toFixed(2)}%</p>
+      </div>
+    ))}
+  </div>
+  {/* Always display calculated remaining (override with fetched if submitted) */}
+  <div className="pt-4 border-t border-indigo-200">
+    <p className="text-lg font-bold text-green-700">
+      Remaining Budget: ₹{isSubmitted ? parseFloat(projection.remainingBudget || 0).toLocaleString() : calcRemBudget.toLocaleString()} ({effectiveRemPerc.toFixed(2)}% of ₹{effectiveBudget.toLocaleString()})
+    </p>
+  </div>
+  <div className="mt-6 flex justify-end">
+    {!isSubmitted && (
+      <button
+        onClick={() => finalSubmissionProjection(projection.id)}
+        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
+        Final Submission ({projection.name})
+      </button>
+    )}
+  </div>
+</div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }), [projections, toggleProjection, budgetData, loading, savePoBudget, updateProjectionField, overheads, handleSelectOverhead, addNewOverhead, handleTotalCostChangeForProjection, handleLabourCalculationTypeChange, handleNoOfLaboursChange, handleTotalShiftsChange, handleRatePerShiftChange, saveLabourOverhead, handleRemoveOverhead, calculateDynamicOverheadBudgetPercentage, calculateRemainingBudget, saveDynamicOverhead, finalSubmissionProjection, selectedCompany, selectedProject, selectedSite, selectedWorkDescription, existingBudget, saveMaterialAllocation, calculateLabourTotalCost, recalculateAllPercentages, fetchAllocatedOverheads, fetchRemainingBudget, submissionStatuses, deleteOverhead]
+);
+
+  const addedOverheads = useMemo(() => overheads.filter(o => o.is_default === 0), [overheads]);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Project Budget Allocation</h1>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Project Budget Allocation
+          </h1>
+          <p className="text-gray-600">Manage cumulative projections under PO budgets professionally</p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center space-x-2">
+            <AlertCircle size={20} />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Company, Project, Site, Work Description Selection */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Project Selection</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800">Project Selection</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Company
@@ -1295,7 +3997,8 @@ const ProjectProjectionOld = () => {
                 placeholder="Select a company..."
                 isLoading={loading}
                 isClearable
-                className="text-sm"
+                classNamePrefix="text-sm"
+                className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -1311,7 +4014,8 @@ const ProjectProjectionOld = () => {
                 isLoading={loading}
                 isDisabled={!selectedCompany}
                 isClearable
-                className="text-sm"
+                classNamePrefix="text-sm"
+                className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -1327,7 +4031,8 @@ const ProjectProjectionOld = () => {
                 isLoading={loading}
                 isDisabled={!selectedProject}
                 isClearable
-                className="text-sm"
+                classNamePrefix="text-sm"
+                className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -1343,723 +4048,246 @@ const ProjectProjectionOld = () => {
                 isLoading={loading}
                 isDisabled={!selectedSite}
                 isClearable
-                className="text-sm"
+                classNamePrefix="text-sm"
+                className="text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
         </div>
 
-        {/* Budget Details */}
         {budgetData && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">PO Budget Details</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse border border-gray-300">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 overflow-hidden">
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">PO Budget Details</h2>
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="border border-gray-300 px-4 py-2 text-left">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total PO Quantity
                     </th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Unit of Measure
                     </th>
-                    <th className="border border-gray-300 px-4 py-2 text-left">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total Rate
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td className="border border-gray-300 px-4 py-2">
+                <tbody className="bg-white divide-y divide-gray-200">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {budgetData.total_po_qty}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {budgetData.uom}
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      Rs.{budgetData.total_rate.toFixed(2)}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-700">
+                      ₹{budgetData.total_rate.toLocaleString()}
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <div className="mt-4">
-              <span className="text-lg font-semibold text-indigo-600">
-                Total PO Value: Rs.{budgetData.total_po_value.toFixed(2)}
+            <div className="mt-4 text-center">
+              <span className="text-2xl font-bold text-indigo-600">
+                Total PO Value: ₹{budgetData.total_po_value.toLocaleString()}
               </span>
             </div>
 
-            {/* Current Selection, Budget Info, Allocation Status */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
+              <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                   Current Selection
                 </h4>
-                <p className="text-sm">
-                  Company: {selectedCompany?.label || "Not selected"}
-                </p>
-                <p className="text-sm">
-                  Project: {selectedProject?.label || "Not selected"}
-                </p>
-                <p className="text-sm">Site: {selectedSite?.label || "Not selected"}</p>
-                <p className="text-sm">
-                  Work Description: {selectedWorkDescription?.label || "Not selected"}
-                </p>
+                <p className="text-sm text-gray-900">Company: {selectedCompany?.label || "Not selected"}</p>
+                <p className="text-sm text-gray-900">Project: {selectedProject?.label || "Not selected"}</p>
+                <p className="text-sm text-gray-900">Site: {selectedSite?.label || "Not selected"}</p>
+                <p className="text-sm text-gray-900">Work Description: {selectedWorkDescription?.label || "Not selected"}</p>
               </div>
 
-              <div>
+              <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                   Budget Information
                 </h4>
-                <p className="text-sm">
-                  PO Value: {budgetData ? `Rs.${budgetData.total_po_value.toFixed(2)}` : "Not available"}
-                </p>
-                <p className="text-sm">
-                  Budget Value: {existingBudget ? `Rs.${existingBudget.total_budget_value.toFixed(2)}` : "Not set"}
-                </p>
-                <p className="text-sm">
-                  Budget Percentage: {existingBudget ? `${budgetPercentage}%` : "Not set"}
-                </p>
+                <p className="text-sm text-gray-900">PO Value: ₹{budgetData.total_po_value.toLocaleString()}</p>
+                <p className="text-sm text-gray-900">Existing Budget Value: {existingBudget ? `₹${parseFloat(existingBudget.total_budget_value).toLocaleString()}` : "Not set"}</p>
               </div>
 
-              <div>
+              <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
                   Allocation Status
                 </h4>
-                <p className="text-sm">
-                  Status: {isAllocated ? "Budget Allocated" : "Pending Allocation"}
-                </p>
-                <p className="text-sm">
-                  Total Overheads: {overheads.length}
-                </p>
-                <p className="text-sm">
-                  Selected Overheads: {Object.values(checkedExpenses).filter(Boolean).length}
-                </p>
+                <p className="text-sm text-gray-900">Status: {isAllocated ? "Budget Allocated" : "Pending Allocation"}</p>
+                <p className="text-sm text-gray-900">Allocated Overheads: {allocatedOverheads.length}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* New Overhead Allocation Section - Projection-wise */}
-        {existingBudget && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">New Overhead Allocation Section</h2>
+        {budgetData && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-gray-800">Overhead Allocation Projections</h2>
               <button
                 onClick={addNewProjection}
-                className="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
+                disabled={!canAddProjection}
+                className={`flex items-center px-6 py-3 font-semibold rounded-full transition-all duration-200 ${
+                  canAddProjection
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
               >
-                <PlusCircle className="mr-2" size={16} />
-                Add Projection
+                <PlusCircle className="mr-2" size={20} />
+                Add New Projection
               </button>
             </div>
 
-            {/* Projection Accordions */}
-            {projections.map((projection) => (
-              <div key={projection.id} className="border border-gray-200 rounded-lg mb-4">
-                <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
-                  onClick={() => toggleProjection(projection.id)}
-                >
-                  <h3 className="text-lg font-medium">{projection.name}</h3>
-                  <div className="flex items-center space-x-2">
-                    {projection.budgetAllocated && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        Budget Allocated
-                      </span>
-                    )}
-                    {projection.isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </div>
-                </div>
-
-                {projection.isOpen && (
-                  <div className="p-4 border-t border-gray-200">
-                    {/* Budget Allocation for this projection */}
-                    {!projection.budgetAllocated && (
-                      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                        <h4 className="text-lg font-medium mb-3">Budget Allocation</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Budget Percentage (%)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              max="100"
-                              min="0"
-                              value={budgetPercentage}
-                              onChange={handleBudgetPercentageChange}
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                              placeholder="Enter percentage"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Budget Value (Rs.)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={budgetValue}
-                              onChange={handleBudgetValueChange}
-                              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                              placeholder="Enter budget value"
-                            />
-                          </div>
-
-                          <div className="flex items-end">
-                            <button
-                              onClick={() => savePoBudget(projection.id)}
-                              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                              disabled={loading}
-                            >
-                              {loading ? (
-                                <Loader2 className="animate-spin inline-block mr-2" size={16} />
-                              ) : null}
-                              Save Budget
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Overhead Allocation Tabs */}
-                    {projection.budgetAllocated && (
-                      <>
-                        <div className="flex space-x-2 mb-6 border-b overflow-x-auto">
-                          {[
-                            { key: "material", label: "Material" },
-                            { key: "labour", label: "Labour" },
-                            ...projection.selectedDynamicOverheads.map((overhead) => ({
-                              key: `overhead-${overhead.id}`,
-                              label: overhead.expense_name,
-                            })),
-                          ].map((tab) => (
-                            <button
-                              key={tab.key}
-                              className={`px-4 py-2 font-medium whitespace-nowrap ${
-                                projection.activeOverheadTab === tab.key
-                                  ? "text-indigo-600 border-b-2 border-indigo-600"
-                                  : "text-gray-600 hover:text-indigo-600"
-                              }`}
-                              onClick={() => updateProjectionField(projection.id, 'activeOverheadTab', tab.key)}
-                            >
-                              {tab.label}
-                            </button>
-                          ))}
-                          <button
-                            onClick={() => {
-                              Swal.fire({
-                                title: "Select Overhead",
-                                input: "select",
-                                inputOptions: overheads
-                                  .filter((oh) => oh.is_default === 0)
-                                  .filter((oh) => !projection.selectedDynamicOverheads.some((selected) => selected.id === oh.id))
-                                  .reduce((options, overhead) => {
-                                    options[overhead.id] = overhead.expense_name;
-                                    return options;
-                                  }, {}),
-                                inputPlaceholder: "Select an overhead",
-                                showCancelButton: true,
-                                confirmButtonText: "Add",
-                                confirmButtonColor: "#4f46e5",
-                                showDenyButton: true,
-                                denyButtonText: "Add New Overhead",
-                                denyButtonColor: "#22c55e",
-                                inputValidator: (value) => {
-                                  if (!value) {
-                                    return "Please select an overhead!";
-                                  }
-                                },
-                              }).then((result) => {
-                                if (result.isConfirmed) {
-                                  const selectedOverhead = overheads.find((oh) => oh.id === parseInt(result.value));
-                                  handleSelectOverhead(selectedOverhead, projection.id);
-                                  updateProjectionField(projection.id, 'activeOverheadTab', `overhead-${selectedOverhead.id}`);
-                                } else if (result.isDenied) {
-                                  addNewOverhead();
-                                }
-                              });
-                            }}
-                            className="flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"
-                          >
-                            <PlusCircle className="mr-2" size={16} />
-                            Add Overhead
-                          </button>
-                        </div>
-
-                        {/* Material Overhead Tab */}
-                        {projection.activeOverheadTab === "material" && (
-                          <div>
-                            <h4 className="text-lg font-medium mb-4">Material Overhead</h4>
-                            <MaterialPlanning
-                              selectedCompany={selectedCompany}
-                              selectedProject={selectedProject}
-                              selectedSite={selectedSite}
-                              selectedWorkDesc={selectedWorkDescription}
-                              existingBudget={existingBudget}
-                              onTotalCostChange={handleTotalCostChange}
-                            />
-                          </div>
-                        )}
-
-                        {/* Labour Overhead Tab */}
-                        {projection.activeOverheadTab === "labour" && (
-                          <div>
-                            <h4 className="text-lg font-medium mb-4">Labour Overhead</h4>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Calculation Type</label>
-                                <select
-                                  value={projection.labourCalculationType}
-                                  onChange={(e) => updateProjectionField(projection.id, 'labourCalculationType', e.target.value)}
-                                  className="w-full p-2 border border-gray-300 rounded-lg"
-                                >
-                                  <option value="">Select Type</option>
-                                  <option value="no_of_labours">No of Labours</option>
-                                  <option value="total_shifts">Total Estimated Shifts</option>
-                                </select>
-                              </div>
-                            </div>
-                            {projection.labourCalculationType && (
-                              <div className="grid grid-cols-3 gap-4 mb-4">
-                                {projection.labourCalculationType === "no_of_labours" && (
-                                  <div>
-                                    <label className="block text-sm font-medium mb-2">No of Labours</label>
-                                    <input
-                                      type="number"
-                                      value={projection.noOfLabours}
-                                      onChange={(e) => updateProjectionField(projection.id, 'noOfLabours', e.target.value)}
-                                      className="w-full p-2 border border-gray-300 rounded-lg"
-                                      placeholder="Enter number of labours"
-                                    />
-                                  </div>
-                                )}
-                                {projection.labourCalculationType === "total_shifts" && (
-                                  <div>
-                                    <label className="block text-sm font-medium mb-2">Total Estimated Shifts</label>
-                                    <input
-                                      type="number"
-                                      value={projection.totalShifts}
-                                      onChange={(e) => updateProjectionField(projection.id, 'totalShifts', e.target.value)}
-                                      className="w-full p-2 border border-gray-300 rounded-lg"
-                                      placeholder="Enter total shifts"
-                                    />
-                                  </div>
-                                )}
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Rate per Shift</label>
-                                  <input
-                                    type="number"
-                                    value={projection.ratePerShift}
-                                    onChange={(e) => updateProjectionField(projection.id, 'ratePerShift', e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg"
-                                    placeholder="Enter rate per shift"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="font-medium">Total Labour Cost:</span>
-                                <span className="text-lg font-semibold">Rs. {projection.labourTotalCost.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium">Budget Percentage:</span>
-                                <span className="text-lg font-semibold">{projection.labourBudgetPercentage.toFixed(2)}%</span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => saveLabourOverhead(projection.id)}
-                              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                            >
-                              Save Labour Overhead
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Dynamic Overhead Tabs */}
-                        {projection.selectedDynamicOverheads.map((overhead) => (
-                          projection.activeOverheadTab === `overhead-${overhead.id}` && (
-                            <div key={overhead.id} className="relative">
-                              <h4 className="text-lg font-medium mb-4">{overhead.expense_name} Overhead</h4>
-                              <button
-                                onClick={() => handleRemoveOverhead(overhead.id, projection.id)}
-                                className="absolute top-2 right-2 text-red-600 hover:text-red-800"
-                                title={`Remove ${overhead.expense_name}`}
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                              <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">
-                                    {overhead.expense_name} Value
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={projection.dynamicOverheads[overhead.id]?.value || ""}
-                                    onChange={(e) =>
-                                      calculateDynamicOverheadBudgetPercentage(projection.id, overhead.id, e.target.value)
-                                    }
-                                    max={calculateRemainingBudget(projection)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg"
-                                    placeholder={`Enter ${overhead.expense_name} value`}
-                                  />
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    Remaining Budget: Rs. {calculateRemainingBudget(projection).toFixed(2)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Budget Percentage</label>
-                                  <input
-                                    type="text"
-                                    value={`${(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%`}
-                                    readOnly
-                                    className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50"
-                                  />
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => saveDynamicOverhead(projection.id, overhead.id, overhead.expense_name)}
-                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                              >
-                                Save {overhead.expense_name} Overhead
-                              </button>
-                            </div>
-                          )
-                        ))}
-
-                        {/* Budget Allocation Summary for Projection 1 */}
-                        {projection.id === 1 && (
-                          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                            <h4 className="text-lg font-medium mb-3">Budget Allocation Summary</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p>Material: Rs. {projection.materialTotalCost.toFixed(2)} ({projection.materialBudgetPercentage.toFixed(2)}%)</p>
-                                <p>Labour: Rs. {projection.labourTotalCost.toFixed(2)} ({projection.labourBudgetPercentage.toFixed(2)}%)</p>
-                              </div>
-                              <div>
-                                {projection.selectedDynamicOverheads.map((overhead) => (
-                                  <p key={overhead.id}>
-                                    {overhead.expense_name}: Rs. {(parseFloat(projection.dynamicOverheads[overhead.id]?.value) || 0).toFixed(2)} (
-                                    {(projection.dynamicOverheads[overhead.id]?.budgetPercentage || 0).toFixed(2)}%)
-                                  </p>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="font-semibold">
-                                Total Allocated: Rs.{' '}
-                                {(projection.materialTotalCost +
-                                  projection.labourTotalCost +
-                                  Object.values(projection.dynamicOverheads || {}).reduce(
-                                    (sum, overhead) => sum + (parseFloat(overhead.value) || 0),
-                                    0
-                                  )).toFixed(2)}
-                              </p>
-                              <p className="font-semibold">Remaining Budget: Rs. {calculateRemainingBudget(projection).toFixed(2)}</p>
-                            </div>
-                            <div className="mt-4">
-                              <button
-                                onClick={() => finalSubmissionProjection(projection.id)}
-                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                              >
-                                Final Submission (Save Projection 1)
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+            {ProjectionAccordion}
           </div>
         )}
         
-        {/* Existing Overhead Allocation Section */}
         {existingBudget && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">
-                {isAllocated ? "Budget Allocated" : "Allocate Budget"}
-              </h2>
-              {!isAllocated && (
-                <button
-                  onClick={saveOverhead}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400"
-                >
-                  <Plus className="mr-2" size={16} />
-                  Add New Overhead
-                </button>
-              )}
-            </div>
-            {overheads.length > 0 ? (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+              Budget Allocated
+            </h2>
+            {isAllocated ? (
               <>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full table-auto border-collapse border border-gray-300">
+                {percError && (
+                  <div className="mb-4 p-3 bg-red-100 rounded-lg text-red-800 font-medium flex items-center space-x-2">
+                    <AlertCircle size={16} />
+                    <span>{percError} | {budgetError}</span>
+                  </div>
+                )}
+                {lastProjection.prevRemainingBudget > 0 && (
+                  <div className="mb-4 p-3 bg-yellow-100 rounded-lg text-yellow-800 font-medium flex items-center space-x-2">
+                    <AlertCircle size={16} />
+                    <span>Previous Remaining Added to Target: ₹{parseFloat(lastProjection.prevRemainingBudget).toLocaleString()} ({lastProjection.prevRemainingPercentage.toFixed(2)}%)</span>
+                  </div>
+                )}
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           S.No
                         </th>
-                        {!isAllocated && (
-                          <th className="border border-gray-300 px-4 py-2 text-left">
-                            Select
-                          </th>
-                        )}
-                        <th className="border border-gray-300 px-4 py-2 text-left">
-                          List of Expense{" "}
-                          {!isAllocated && (
-                            <button
-                              onClick={saveOverhead}
-                              className="ml-2 text-green-600 hover:text-green-800"
-                              title="Add new overhead"
-                            >
-                              <Plus size={16} />
-                            </button>
-                          )}
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          List of Expense
                         </th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
-                          Budget Percentage (%){" "}
-                          {successMessage && (
-                            <span className="text-green-600 text-sm">
-                              {successMessage}
-                            </span>
-                          )}
-                          {percError && !successMessage && (
-                            <span className="text-red-600 text-sm">
-                              {percError}
-                            </span>
-                          )}
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Budget Percentage (%)
                         </th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
-                          Budgeted Value (Rs.){" "}
-                          {successMessage && (
-                            <span className="text-green-600 text-sm">
-                              {successMessage}
-                            </span>
-                          )}
-                          {budgetError && !successMessage && (
-                            <span className="text-red-600 text-sm">
-                              {budgetError}
-                            </span>
-                          )}
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Budgeted Value (Rs.)
                         </th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actual Value (Rs.)
                         </th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Balance (Rs.)
                         </th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Remarks
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {overheads.map((overhead, index) => {
-                        const balance =
-                          actualBudgetEntries[overhead.id]?.splitted_budget &&
-                          actualBudgetEntries[overhead.id]?.actual_value
-                            ? parseFloat(
-                                actualBudgetEntries[overhead.id].splitted_budget
-                              ) - parseFloat(actualBudgetEntries[overhead.id].actual_value)
-                            : null;
-
-                        return (
-                          <tr key={overhead.id}>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {index + 1}
-                            </td>
-                            {!isAllocated && (
-                              <td className="border border-gray-300 px-4 py-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={checkedExpenses[overhead.id] || false}
-                                  onChange={() =>
-                                    handleExpenseCheckboxChange(overhead.id)
-                                  }
-                                  disabled={overhead.is_default === 1}
-                                />
-                              </td>
-                            )}
-                            <td className="border border-gray-300 px-4 py-2">
-                              {overhead.expense_name}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {isAllocated ? (
-                                actualBudgetEntries[overhead.id]?.percentage || "N/A"
-                              ) : checkedExpenses[overhead.id] ? (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  max="100"
-                                  value={
-                                    actualBudgetEntries[overhead.id]?.percentage || ""
-                                  }
-                                  onChange={(e) =>
-                                    handlePercentageChange(overhead.id, e.target.value)
-                                  }
-                                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                />
-                              ) : (
-                                "N/A"
-                              )}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {isAllocated ? (
-                                actualBudgetEntries[overhead.id]?.splitted_budget || "N/A"
-                              ) : checkedExpenses[overhead.id] ? (
-                                <input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={
-                                    actualBudgetEntries[overhead.id]?.splitted_budget || ""
-                                  }
-                                  onChange={(e) =>
-                                    handleSplittedBudgetChange(overhead.id, e.target.value)
-                                  }
-                                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                />
-                              ) : (
-                                "N/A"
-                              )}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {actualBudgetEntries[overhead.id]?.actual_value || "N/A"}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {balance !== null ? (
-                                <span
-                                  className={
-                                    balance >= 0 ? "text-green-600" : "text-red-600"
-                                  }
-                                >
-                                  {balance.toFixed(2)}
-                                </span>
-                              ) : (
-                                "N/A"
-                              )}
-                            </td>
-                            <td className="border border-gray-300 px-4 py-2">
-                              {actualBudgetEntries[overhead.id]?.remarks || "N/A"}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {allocatedOverheads.map((overhead, index) => (
+                        <tr key={overhead.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {index + 1}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {overhead.expense_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {overhead.percentage || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {overhead.splitted_budget || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {overhead.actual_value || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={
+                                parseFloat(overhead.difference_value || 0) >= 0 
+                                  ? "text-green-600 font-medium" 
+                                  : "text-red-600 font-medium"
+                              }
+                            >
+                              {overhead.difference_value || "N/A"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {overhead.remarks || "N/A"}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Total Row */}
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-6 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <span className="font-medium">Total Percentage:</span>
-                      <span
-                        className={`ml-2 font-semibold ${
-                          Math.abs(sumPerc - 100) <= 0.01
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
+                      <span className="font-medium text-gray-700">Total Percentage:</span>
+                      <span className="ml-2 text-lg font-bold text-green-600">
                         {sumPerc.toFixed(2)}%
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Total Budget:</span>
-                      <span
-                        className={`ml-2 font-semibold ${
-                          Math.abs(sumBudget - total) <= 0.01
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        Rs.{sumBudget.toFixed(2)}
+                      <span className="font-medium text-gray-700">Total Budget:</span>
+                      <span className="ml-2 text-lg font-bold text-green-600">
+                        ₹{sumBudget.toLocaleString()}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium">Target Budget:</span>
-                      <span className="ml-2 font-semibold text-indigo-600">
-                        Rs.{total.toFixed(2)}
+                      <span className="font-medium text-gray-700">Target Budget (Last Proj):</span>
+                      <span className="ml-2 text-lg font-bold text-indigo-600">
+                        ₹{total.toLocaleString()}
                       </span>
                     </div>
                   </div>
-                  {successMessage && (
-                    <div className="mt-2 text-green-600 font-medium">
-                      {successMessage}
-                    </div>
-                  )}
-                  {!successMessage && (percError || budgetError) && (
-                    <div className="mt-2 text-red-600 font-medium">
-                      {percError && <div>{percError}</div>}
-                      {budgetError && <div>{budgetError}</div>}
-                    </div>
-                  )}
                 </div>
 
-                {/* Allocate Button */}
-                {!isAllocated && (
-                  <div className="mt-6 flex justify-end">
-                    <button
-                      onClick={allocateBudget}
-                      className={`px-6 py-3 font-semibold rounded-lg focus:outline-none focus:ring-2 ${
-                        isValid
-                          ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-400"
-                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      }`}
-                      disabled={!isValid || loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="animate-spin inline-block mr-2" size={16} />
-                      ) : null}
-                      Allocate Budget
-                    </button>
-                  </div>
-                )}
+             
               </>
             ) : (
-
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">
-                  No overheads found. Add some overheads to begin budget allocation.
+              <div className="text-center py-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <AlertCircle className="mx-auto h-12 w-12 text-blue-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Budget Allocation Pending</h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  No budget has been allocated yet for this PO. Please complete the projection and allocation process to view and track expense breakdowns professionally.
                 </p>
-                <button
-                  onClick={saveOverhead}
-                  className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                >
-                  Add New Overhead
-                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Charts Section */}
         {isAllocated && chartData.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Total Budget Chart */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Budget Overview (Budgeted vs Actual vs Balance)
-              </h3>
-              <div className="h-64">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-semibold mb-6 text-gray-800">Budget Overview (Budgeted vs Actual vs Balance)</h3>
+              {lastProjection.prevRemainingBudget > 0 && (
+                <div className="mb-4 p-3 bg-yellow-100 rounded-lg text-yellow-800 font-medium flex items-center space-x-2">
+                  <AlertCircle size={16} />
+                  <span>Previous Remaining Added: ₹{parseFloat(lastProjection.prevRemainingBudget).toLocaleString()} ({lastProjection.prevRemainingPercentage.toFixed(2)}%)</span>
+                </div>
+              )}
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                  <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <XAxis dataKey="name" className="text-sm" />
+                    <YAxis className="text-sm" />
                     <Tooltip
-                      formatter={(value) => [`Rs.${value.toFixed(2)}`, "Amount"]}
+                      formatter={(value) => [`₹${value.toLocaleString()}`, "Amount"]}
+                      labelStyle={{ color: "#374151" }}
+                      contentStyle={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
                     />
-
-                    <Bar dataKey="value">
+                    <Bar dataKey="value" barSize={30}>
                       {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
@@ -2069,21 +4297,22 @@ const ProjectProjectionOld = () => {
               </div>
             </div>
 
-            {/* Individual Expenses Chart */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-semibold mb-6 text-gray-800">
                 Expense-wise Allocation (Budgeted vs Actual)
               </h3>
-              <div className="h-64">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={expenseChartData}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                  <BarChart data={expenseChartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                    <XAxis dataKey="name" className="text-sm" angle={-45} textAnchor="end" height={80} />
+                    <YAxis className="text-sm" />
                     <Tooltip
-                      formatter={(value) => [`Rs.${value.toFixed(2)}`, "Amount"]}
+                      formatter={(value) => [`₹${value.toLocaleString()}`, "Amount"]}
+                      labelStyle={{ color: "#374151" }}
+                      contentStyle={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}
                     />
-                    <Bar dataKey="budgeted" fill="#92c352" name="Budgeted" />
-                    <Bar dataKey="actual" name="Actual">
+                    <Bar dataKey="budgeted" fill="#10b981" name="Budgeted" barSize={30} />
+                    <Bar dataKey="actual" name="Actual" barSize={30}>
                       {expenseChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.actualFill} />
                       ))}
@@ -2094,7 +4323,6 @@ const ProjectProjectionOld = () => {
             </div>
           </div>
         )}
-        
       </div>
     </div>
   );

@@ -61,124 +61,6 @@ exports.getWorkDescriptions = async (req, res) => {
   }
 };
 
-// exports.getCompletionEntriesBySite = async (req, res) => {
-//   const { siteId } = req.params;
-//   const { start_date, end_date } = req.query;
-
-//   try {
-//     if (start_date && !/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
-//       return res.status(400).json({
-//         status: "error",
-//         message: "start_date must be in YYYY-MM-DD format",
-//       });
-//     }
-//     if (end_date && !/^\d{4}-\d{2}-\d{2}$/.test(end_date)) {
-//       return res.status(400).json({
-//         status: "error",
-//         message: "end_date must be in YYYY-MM-DD format",
-//       });
-//     }
-//     if (start_date && end_date && start_date > end_date) {
-//       return res.status(400).json({
-//         status: "error",
-//         message: "start_date cannot be later than end_date",
-//       });
-//     }
-
-//     let query = `
-//       SELECT 
-//         ic.category_id,
-//         ic.category_name,
-//         isc.subcategory_name,
-//         DATE_FORMAT(ceh.entry_date, '%Y-%m-%d') as entry_date,
-//         ceh.entry_id,
-//         ceh.area_added,
-//         ceh.rate,
-//         ceh.value_added,
-//         ceh.created_by,
-//         pr.desc_id,
-//         DATE_FORMAT(CONVERT_TZ(ceh.created_at, '+00:00', '+05:30'), '%Y-%m-%d') as created_date,
-//         DATE_FORMAT(CONVERT_TZ(ceh.created_at, '+00:00', '+05:30'), '%H:%i:%s') as created_time
-//       FROM completion_entries_history ceh
-//       JOIN po_reckoner pr ON ceh.rec_id = pr.rec_id
-//       JOIN item_category ic ON pr.category_id = ic.category_id
-//       JOIN item_subcategory isc ON pr.subcategory_id = isc.subcategory_id
-//       WHERE pr.site_id = ?
-//     `;
-//     const queryParams = [siteId];
-
-//     if (start_date) {
-//       query += ' AND ceh.entry_date >= ?';
-//       queryParams.push(start_date);
-//     }
-//     if (end_date) {
-//       query += ' AND ceh.entry_date <= ?';
-//       queryParams.push(end_date);
-//     }
-
-//     query += ' ORDER BY ic.category_id, isc.subcategory_name, ceh.entry_date, ceh.created_at';
-
-//     const [rows] = await db.query(query, queryParams);
-
-//     const categoryMap = new Map();
-//     rows.forEach(row => {
-//       const { category_id, category_name, subcategory_name, entry_date, desc_id, created_date, created_time, ...entry } = row;
-
-//       let category = categoryMap.get(category_id);
-//       if (!category) {
-//         category = { category_id, category_name, subcategories: new Map() };
-//         categoryMap.set(category_id, category);
-//       }
-
-//       let subcategory = category.subcategories.get(subcategory_name);
-//       if (!subcategory) {
-//         subcategory = { subcategory_name, entries_by_date: new Map() };
-//         category.subcategories.set(subcategory_name, subcategory);
-//       }
-
-//       let dateEntry = subcategory.entries_by_date.get(entry_date);
-//       if (!dateEntry) {
-//         dateEntry = { entry_date, entries: [] };
-//         subcategory.entries_by_date.set(entry_date, dateEntry);
-//       }
-
-//       dateEntry.entries.push({
-//         entry_id: row.entry_id,
-//         area_added: parseFloat(row.area_added) || 0,
-//         rate: parseFloat(row.rate) || 0,
-//         value_added: parseFloat(row.value_added) || 0,
-//         created_by: row.created_by,
-//         desc_id,
-//         created_date,
-//         created_time
-//       });
-//     });
-
-//     const groupedData = Array.from(categoryMap.values()).map(category => ({
-//       category_id: category.category_id,
-//       category_name: category.category_name,
-//       subcategories: Array.from(category.subcategories.values()).map(subcategory => ({
-//         subcategory_name: subcategory.subcategory_name,
-//         entries_by_date: Array.from(subcategory.entries_by_date.values())
-//       }))
-//     }));
-
-//     res.status(200).json({
-//       status: "success",
-//       data: groupedData
-//     });
-//   } catch (error) {
-//     console.error("Error fetching completion entries:", error);
-//     res.status(500).json({
-//       status: "error",
-//       message: "Failed to fetch completion entries",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// Fetch PO reckoner totals by site
-
 
 exports.getCompletionEntriesBySite = async (req, res) => {
   const { siteId, descId } = req.params;
@@ -598,7 +480,7 @@ exports.getPoTotalBudget = async (req, res) => {
   }
 };
 
-// Check if budget exists for site_id and desc_id
+
 exports.getPoBudget = async (req, res) => {
   const { site_id, desc_id } = req.query;
 
@@ -611,15 +493,15 @@ exports.getPoBudget = async (req, res) => {
   }
 
   try {
-    const [budget] = await db.query(
-      `SELECT id, site_id, desc_id, total_po_value, total_budget_value, created_at, updated_at 
+    const budget = await db.query(
+      `SELECT id, site_id, desc_id, total_po_value, total_budget_value, projection_id, created_at, updated_at 
        FROM po_budget 
        WHERE site_id = ? AND desc_id = ?`,
       [site_id, desc_id]
     );
     res.status(200).json({
       success: true,
-      data: budget.length > 0 ? budget[0] : null,
+      data: budget,  // Return the full array of budgets (one per projection_id)
     });
   } catch (error) {
     console.error("Error searching PO budget:", error);
@@ -631,47 +513,57 @@ exports.getPoBudget = async (req, res) => {
   }
 };
 
-// Save budget details to po_budget table
 exports.savePoBudget = async (req, res) => {
-  const { site_id, desc_id, total_po_value, total_budget_value } = req.body;
+  const { site_id, desc_id, total_po_value, total_budget_value, projection_id } = req.body;
 
   // Validate input
-  if (!site_id || !desc_id || !total_po_value || !total_budget_value) {
+  if (!site_id || !desc_id || !total_po_value || !total_budget_value || !projection_id) {
     return res.status(400).json({
       success: false,
-      message: "Missing required fields: site_id, desc_id, total_po_value, total_budget_value",
+      message: "Missing required fields: site_id, desc_id, total_po_value, total_budget_value, projection_id",
+    });
+  }
+
+  // Parse projection_id to integer
+  const parsedProjectionId = parseInt(projection_id, 10);
+  if (isNaN(parsedProjectionId)) {
+    return res.status(400).json({
+      success: false,
+      message: "projection_id must be a valid integer",
     });
   }
 
   try {
-    // Check if a record already exists for the site_id and desc_id
+    // Check if a record already exists for the site_id, desc_id, and projection_id
     const [existing] = await db.query(
-      `SELECT id FROM po_budget WHERE site_id = ? AND desc_id = ?`,
-      [site_id, desc_id]
+      `SELECT id, projection_id FROM po_budget WHERE site_id = ? AND desc_id = ? AND projection_id = ?`,
+      [site_id, desc_id, parsedProjectionId]
     );
 
     if (existing.length > 0) {
-      // Update existing record
+      // Update existing record (projection_id remains unchanged)
       await db.query(
         `UPDATE po_budget 
          SET total_po_value = ?, total_budget_value = ?, updated_at = CURRENT_TIMESTAMP 
-         WHERE site_id = ? AND desc_id = ?`,
-        [total_po_value, total_budget_value, site_id, desc_id]
+         WHERE site_id = ? AND desc_id = ? AND projection_id = ?`,
+        [total_po_value, total_budget_value, site_id, desc_id, parsedProjectionId]
       );
       return res.status(200).json({
         success: true,
-        message: "Budget updated successfully",
+        message: "Budget updated successfully (projection_id unchanged)",
+        data: { projection_id: parsedProjectionId },
       });
     } else {
-      // Insert new record
+      // Insert new record with the provided projection_id
       await db.query(
-        `INSERT INTO po_budget (site_id, desc_id, total_po_value, total_budget_value) 
-         VALUES (?, ?, ?, ?)`,
-        [site_id, desc_id, total_po_value, total_budget_value]
+        `INSERT INTO po_budget (site_id, desc_id, total_po_value, total_budget_value, projection_id) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [site_id, desc_id, total_po_value, total_budget_value, parsedProjectionId]
       );
       return res.status(201).json({
         success: true,
         message: "Budget saved successfully",
+        data: { projection_id: parsedProjectionId },
       });
     }
   } catch (error) {
@@ -683,7 +575,6 @@ exports.savePoBudget = async (req, res) => {
     });
   }
 };
-
 exports.getOverheads = async (req, res) => {
   const { po_budget_id } = req.query;
 
@@ -1461,5 +1352,104 @@ exports.materialgraph = async (req, res) => {
     });
   }
 };
+
+
+
+// NEW: saveLabourOverhead (moved from routes)
+exports.saveLabourOverhead = async (req, res) => {
+  console.log(`[${new Date().toISOString()}] Endpoint triggered`);
+  const {
+    site_id, desc_id, calculation_type, no_of_labours, total_shifts,
+    rate_per_shift, total_cost, overhead_type, labourBudgetPercentage, projection_id
+  } = req.body;
+
+  console.log(`[${new Date().toISOString()}] Request Body:`, req.body);
+
+  if (!site_id || !desc_id || !calculation_type || !rate_per_shift || !total_cost || !projection_id) {
+    return res.status(400).json({ success: false, message: 'Missing required fields' });
+  }
+
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Step 1: Get overhead_type_id
+    console.log(`[${new Date().toISOString()}] Querying overhead for expense_name: ${overhead_type}`);
+    const [overheadRows] = await connection.query(
+      'SELECT id FROM overhead WHERE expense_name = ? LIMIT 1',
+      [overhead_type]
+    );
+    console.log(`[${new Date().toISOString()}] Overhead query result:`, overheadRows);
+
+    if (overheadRows.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: 'Invalid overhead type' });
+    }
+    const overhead_type_id = overheadRows[0].id;
+
+    // Step 2: Insert into labour_overhead (add projection_id for tracking)
+    console.log(`[${new Date().toISOString()}] Inserting into labour_overhead`);
+    await connection.query(
+      'INSERT INTO labour_overhead (site_id, desc_id, calculation_type, no_of_labours, total_shifts, rate_per_shift, total_cost, overhead_type, projection_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [site_id, desc_id, calculation_type, no_of_labours || null, total_shifts || null, rate_per_shift, total_cost, overhead_type_id, projection_id]
+    );
+    console.log(`[${new Date().toISOString()}] Labour overhead inserted`);
+
+    // Step 3: Find last projection_id and ensure uniqueness (but since projection_id is provided, use it directly)
+    // Note: Assuming projection_allocated has unique on (site_id, desc_id, overhead_type_id, projection_id)
+
+    // Step 4: Insert into projection_allocated
+    console.log(`[${new Date().toISOString()}] Inserting into projection_allocated`);
+    await connection.query(
+      'INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE total_cost = ?, budget_percentage = ?',
+      [site_id, desc_id, overhead_type_id, projection_id, total_cost, labourBudgetPercentage || 0, total_cost, labourBudgetPercentage || 0]
+    );
+    console.log(`[${new Date().toISOString()}] Projection allocated inserted`);
+
+    await connection.commit();
+    return res.json({ success: true, message: 'Labour overhead saved successfully' });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error(`[${new Date().toISOString()}] Error saving labour overhead:`, err);
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// NEW: finalProjectionSubmission (stub; extend to save summary to a new table if needed)
+exports.finalProjectionSubmission = async (req, res) => {
+  const { site_id, desc_id, projection_id, projection_data } = req.body;
+
+  if (!site_id || !desc_id || !projection_id || !projection_data) {
+    return res.status(400).json({ success: false, message: 'Missing required fields' });
+  }
+
+  try {
+    // Stub: Log the submission (extend: INSERT INTO projection_summary ...)
+    console.log(`Final Submission for Projection ${projection_id}:`, { site_id, desc_id, projection_data });
+
+    // Optional: Save to DB (example)
+    // await db.query(
+    //   'INSERT INTO projection_summary (site_id, desc_id, projection_id, summary_data) VALUES (?, ?, ?, ?)',
+    //   [site_id, desc_id, projection_id, JSON.stringify(projection_data)]
+    // );
+
+    res.status(200).json({
+      success: true,
+      message: `Projection ${projection_id} submitted successfully`,
+      data: { projection_id }
+    });
+  } catch (error) {
+    console.error("Error in final projection submission:", error);
+    res.status(500).json({ success: false, message: "Failed to submit projection" });
+  }
+};
+
+
+
+
+
 
 module.exports = exports;

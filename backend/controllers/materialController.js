@@ -264,238 +264,6 @@ exports.fetchEmployees = async (req, res) => {
 };
 
 
-// exports.assignInchargeToSite = async (req, res) => {
-//   try {
-//     const assignments = Array.isArray(req.body) ? req.body : [req.body];
-
-//     if (assignments.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'At least one incharge assignment is required'
-//       });
-//     }
-
-//     const insertedIds = [];
-//     for (const { from_date, to_date, pd_id, site_id, emp_id, desc_id } of assignments) {
-//       if (!from_date || !to_date || !pd_id || !site_id || !emp_id) {
-//         return res.status(400).json({
-//           status: 'error',
-//           message: 'Missing required fields: from_date, to_date, pd_id, site_id, and emp_id are required'
-//         });
-//       }
-
-//       if (!/^\d{4}-\d{2}-\d{2}$/.test(from_date) || !/^\d{4}-\d{2}-\d{2}$/.test(to_date)) {
-//         return res.status(400).json({
-//           status: 'error',
-//           message: 'Invalid date format: from_date and to_date must be in YYYY-MM-DD format'
-//         });
-//       }
-
-//       const fromDate = new Date(from_date);
-//       const toDate = new Date(to_date);
-//       if (toDate < fromDate) {
-//         return res.status(400).json({
-//           status: 'error',
-//           message: 'to_date must be after from_date'
-//         });
-//       }
-
-//       const [employee] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
-//       if (employee.length === 0) {
-//         return res.status(400).json({
-//           status: 'error',
-//           message: `Invalid emp_id: ${emp_id} does not exist in employee_master`
-//         });
-//       }
-
-//       if (desc_id) {
-//         const [desc] = await db.query('SELECT desc_id FROM work_descriptions WHERE desc_id = ?', [desc_id]);
-//         if (desc.length === 0) {
-//           return res.status(400).json({
-//             status: 'error',
-//             message: `Invalid desc_id: ${desc_id} does not exist in work_descriptions`
-//           });
-//         }
-//       }
-
-//       const [result] = await db.query(
-//         'INSERT INTO siteincharge_assign (from_date, to_date, pd_id, site_id, desc_id, emp_id) VALUES (?, ?, ?, ?, ?, ?)',
-//         [from_date, to_date, pd_id, site_id, desc_id || null, emp_id]
-//       );
-//       insertedIds.push(result.insertId);
-//     }
-
-//     res.status(201).json({
-//       status: 'success',
-//       message: 'Incharges assigned to site successfully',
-//       data: { insertedIds }
-//     });
-//   } catch (error) {
-//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid pd_id, site_id, desc_id, or emp_id: referenced record does not exist'
-//       });
-//     }
-//     res.status(500).json({
-//       status: 'error',
-//       message: 'Internal server error',
-//       error: error.message
-//     });
-//   }
-// };
-
-
-
-// exports.addEmployee = async (req, res) => {
-//   try {
-//     const {
-//       emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//       company, dept_id, emp_type_id, designation_id, branch,
-//       mobile, company_email, current_address, permanent_address,
-//       esic_number, pf_number // Added new fields
-//     } = req.body;
-
-//     // Check for missing required fields
-//     if (
-//       !emp_id || !full_name || !gender_id || !date_of_birth || !date_of_joining ||
-//       !status_id || !company || !dept_id || !emp_type_id || !designation_id ||
-//       !branch || !mobile || !company_email || !current_address || !permanent_address
-//     ) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'All required fields (except ESIC and PF numbers) must be provided',
-//       });
-//     }
-
-//     // Validate date format (YYYY-MM-DD)
-//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-//     if (!dateRegex.test(date_of_birth) || !dateRegex.test(date_of_joining)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid date format: date_of_birth and date_of_joining must be in YYYY-MM-DD format',
-//       });
-//     }
-
-//     // Validate mobile (allow +91 optional, 10 digits)
-//     const mobileRegex = /^(?:\+91)?\d{10}$/;
-//     if (!mobileRegex.test(mobile)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid mobile number: must be 10 digits, with optional +91 prefix',
-//       });
-//     }
-
-//     // Validate email
-//     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-//     if (!emailRegex.test(company_email)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid email format',
-//       });
-//     }
-
-//     // Check for duplicates
-//     const [existingEmpId] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
-//     if (existingEmpId.length > 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Employee ID already exists',
-//       });
-//     }
-
-//     const [existingEmail] = await db.query('SELECT company_email FROM employee_master WHERE company_email = ?', [company_email]);
-//     if (existingEmail.length > 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Company email already exists',
-//       });
-//     }
-
-//     // Validate foreign keys
-//     const [gender] = await db.query('SELECT id FROM emp_gender WHERE id = ?', [gender_id]);
-//     if (gender.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid gender_id: gender does not exist',
-//       });
-//     }
-
-//     const [department] = await db.query('SELECT id FROM emp_department WHERE id = ?', [dept_id]);
-//     if (department.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid dept_id: department does not exist',
-//       });
-//     }
-
-//     const [empType] = await db.query('SELECT id FROM employment_type WHERE id = ?', [emp_type_id]);
-//     if (empType.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid emp_type_id: employment type does not exist',
-//       });
-//     }
-
-//     const [designation] = await db.query('SELECT id FROM emp_designation WHERE id = ?', [designation_id]);
-//     if (designation.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid designation_id: designation does not exist',
-//       });
-//     }
-
-//     const [status] = await db.query('SELECT id FROM emp_status WHERE id = ?', [status_id]);
-//     if (status.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid status_id: status does not exist',
-//       });
-//     }
-
-//     // Insert employee
-//     const [result] = await db.query(
-//       `INSERT INTO employee_master (
-//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//         company, dept_id, emp_type_id, designation_id, branch,
-//         mobile, company_email, current_address, permanent_address,
-//         esic_number, pf_number
-//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-//       [
-//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//         company, dept_id, emp_type_id, designation_id, branch,
-//         mobile, company_email, current_address, permanent_address,
-//         esic_number || null, pf_number || null // Handle optional fields
-//       ]
-//     );
-
-//     res.status(201).json({
-//       status: 'success',
-//       message: 'Employee added successfully',
-//       data: { emp_id, full_name, designation_id, status_id },
-//     });
-//   } catch (error) {
-//     console.error('Error adding employee:', error.message, error.stack);
-//     if (error.code === 'ER_DUP_ENTRY') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Employee ID or email already exists',
-//       });
-//     }
-//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid foreign key: one of gender_id, dept_id, emp_type_id, designation_id, or status_id does not exist',
-//       });
-//     }
-//     res.status(500).json({
-//       status: 'error',
-//       message: 'Failed to add employee due to server error',
-//       error: error.message,
-//     });
-//   }
-// };
-
 exports.assignInchargeToSite = async (req, res) => {
   try {
     const assignments = Array.isArray(req.body) ? req.body : [req.body];
@@ -616,167 +384,6 @@ exports.assignInchargeToSite = async (req, res) => {
     });
   }
 };
-
-// exports.addEmployee = async (req, res) => {
-//   try {
-//     const {
-//       emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//       company, dept_id, emp_type_id, designation_id, branch,
-//       mobile, company_email, current_address, permanent_address,
-//       esic_number, pf_number, approved_salary // Added new field
-//     } = req.body;
-
-//     // Check for missing required fields
-//     if (
-//       !emp_id || !full_name || !gender_id || !date_of_birth || !date_of_joining ||
-//       !status_id || !company || !dept_id || !emp_type_id || !designation_id ||
-//       !branch || !mobile || !company_email || !current_address || !permanent_address ||
-//       !approved_salary // Added to required check
-//     ) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'All required fields (except ESIC and PF numbers) must be provided',
-//       });
-//     }
-
-//     // Validate date format (YYYY-MM-DD)
-//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-//     if (!dateRegex.test(date_of_birth) || !dateRegex.test(date_of_joining)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid date format: date_of_birth and date_of_joining must be in YYYY-MM-DD format',
-//       });
-//     }
-
-//     // Validate mobile (allow +91 optional, 10 digits)
-//     const mobileRegex = /^(?:\+91)?\d{10}$/;
-//     if (!mobileRegex.test(mobile)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid mobile number: must be 10 digits, with optional +91 prefix',
-//       });
-//     }
-
-//     // Validate email
-//     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-//     if (!emailRegex.test(company_email)) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid email format',
-//       });
-//     }
-
-//     // Validate approved_salary (positive number, up to 2 decimal places)
-//     const salaryRegex = /^\d+(\.\d{1,2})?$/;
-//     if (!salaryRegex.test(approved_salary) || parseFloat(approved_salary) <= 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid approved_salary: must be a positive number with up to 2 decimal places',
-//       });
-//     }
-
-//     // Check for duplicates
-//     const [existingEmpId] = await db.query('SELECT emp_id FROM employee_master WHERE emp_id = ?', [emp_id]);
-//     if (existingEmpId.length > 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Employee ID already exists',
-//       });
-//     }
-
-//     const [existingEmail] = await db.query('SELECT company_email FROM employee_master WHERE company_email = ?', [company_email]);
-//     if (existingEmail.length > 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Company email already exists',
-//       });
-//     }
-
-//     // Validate foreign keys
-//     const [gender] = await db.query('SELECT id FROM emp_gender WHERE id = ?', [gender_id]);
-//     if (gender.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid gender_id: gender does not exist',
-//       });
-//     }
-
-//     const [department] = await db.query('SELECT id FROM emp_department WHERE id = ?', [dept_id]);
-//     if (department.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid dept_id: department does not exist',
-//       });
-//     }
-
-//     const [empType] = await db.query('SELECT id FROM employment_type WHERE id = ?', [emp_type_id]);
-//     if (empType.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid emp_type_id: employment type does not exist',
-//       });
-//     }
-
-//     const [designation] = await db.query('SELECT id FROM emp_designation WHERE id = ?', [designation_id]);
-//     if (designation.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid designation_id: designation does not exist',
-//       });
-//     }
-
-//     const [status] = await db.query('SELECT id FROM emp_status WHERE id = ?', [status_id]);
-//     if (status.length === 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid status_id: status does not exist',
-//       });
-//     }
-
-//     // Insert employee
-//     const [result] = await db.query(
-//       `INSERT INTO employee_master (
-//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//         company, dept_id, emp_type_id, designation_id, branch,
-//         mobile, company_email, current_address, permanent_address,
-//         esic_number, pf_number, approved_salary
-//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-//       [
-//         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
-//         company, dept_id, emp_type_id, designation_id, branch,
-//         mobile, company_email, current_address, permanent_address,
-//         esic_number || null, pf_number || null, parseFloat(approved_salary) // Handle optional fields and convert salary to float
-//       ]
-//     );
-
-//     res.status(201).json({
-//       status: 'success',
-//       message: 'Employee added successfully',
-//       data: { emp_id, full_name, designation_id, status_id, approved_salary },
-//     });
-//   } catch (error) {
-//     console.error('Error adding employee:', error.message, error.stack);
-//     if (error.code === 'ER_DUP_ENTRY') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Employee ID or email already exists',
-//       });
-//     }
-//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid foreign key: one of gender_id, dept_id, emp_type_id, designation_id, or status_id does not exist',
-//       });
-//     }
-//     res.status(500).json({
-//       status: 'error',
-//       message: 'Failed to add employee due to server error',
-//       error: error.message,
-//     });
-//   }
-// };
-
-
 
 
 exports.addEmployee = async (req, res) => {
@@ -1235,34 +842,54 @@ exports.addDesignation = async (req, res) => {
   }
 };
 
+// Get assigned materials with projection_id
 exports.getAssignedMaterials = async (req, res) => {
   try {
-    const [rows] = await db.query(`
+    const { site_id, desc_id, projection_id } = req.query;
+    
+    console.log('Fetching assigned materials:', { site_id, desc_id, projection_id });
+    
+    if (!site_id || !desc_id) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'site_id and desc_id are required',
+      });
+    }
+
+    let query = `
       SELECT 
         ma.id,
-        ma.pd_id,
-        p.project_name,
+        ma.item_id, 
+        ma.uom_id, 
+        ma.quantity, 
+        ma.comp_ratio_a, 
+        ma.comp_ratio_b, 
+        ma.comp_ratio_c, 
+        ma.rate,
+        ma.projection_id,
         ma.site_id,
-        s.site_name,
-        s.po_number,
-        ma.item_id,
-        m.item_name,
-        ma.uom_id,
-        u.uom_name,
-        ma.quantity,
-        ma.created_at,
-        ma.projection_id
+        ma.desc_id,
+        mm.item_name,
+        um.uom_name
       FROM material_assign ma
-      LEFT JOIN project_details p ON ma.pd_id = p.pd_id
-      LEFT JOIN site_details s ON ma.site_id = s.site_id
-      LEFT JOIN material_master m ON ma.item_id = m.item_id
-      LEFT JOIN uom_master u ON ma.uom_id = u.uom_id
-      ORDER BY ma.created_at DESC
-    `);
+      LEFT JOIN material_master mm ON ma.item_id = mm.item_id
+      LEFT JOIN uom_master um ON ma.uom_id = um.uom_id
+      WHERE ma.site_id = ? AND ma.desc_id = ?
+    `;
+    
+    const params = [site_id, desc_id];
+    
+    if (projection_id) {
+      query += ' AND ma.projection_id = ?';
+      params.push(projection_id);
+    }
 
+    query += ' ORDER BY ma.id DESC';
+
+    const [rows] = await db.query(query, params);
+    
     res.status(200).json({
       status: 'success',
-      message: 'Assigned materials fetched successfully',
       data: rows,
     });
   } catch (error) {
@@ -1372,6 +999,7 @@ exports.assignMaterial = async (req, res) => {
     const validationErrors = [];
     assignments.forEach((assignment, index) => {
       const {
+        id, // New: for update
         pd_id,
         site_id,
         item_id,
@@ -1384,7 +1012,8 @@ exports.assignMaterial = async (req, res) => {
         rate,
         materialTotalCost,
         materialBudgetPercentage,
-        created_by
+        created_by,
+        projection_id // Ensure projection_id is validated
       } = assignment;
 
       if (!pd_id || typeof pd_id !== "string" || pd_id.trim() === "") {
@@ -1420,7 +1049,13 @@ exports.assignMaterial = async (req, res) => {
       if (!created_by || typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
         validationErrors.push(`Assignment ${index + 1}: created_by is required and must be a non-empty string with maximum length of 30 characters`);
       }
-
+      if (!projection_id || isNaN(projection_id)) {
+        validationErrors.push(`Assignment ${index + 1}: projection_id is required and must be a valid number`);
+      }
+      // For updates, validate id
+      if (id && (isNaN(id) || id <= 0)) {
+        validationErrors.push(`Assignment ${index + 1}: id must be a positive integer for updates`);
+      }
     });
 
     if (validationErrors.length > 0) {
@@ -1451,24 +1086,16 @@ exports.assignMaterial = async (req, res) => {
       await connection.rollback();
       return res.status(400).json({
         status: "error",
-        message: "Invalid overhead type: 'material' not found",
+        message: "Invalid overhead type: 'materials' not found",
       });
     }
     const overhead_type_id = overheadRows[0].id;
 
-    // Step 3: Find last projection_id
-    const [projectionRows] = await connection.query(
-      "SELECT MAX(projection_id) AS lastProjectionId FROM projection_allocated WHERE site_id = ? AND desc_id = ? AND overhead_type_id = ?",
-      [site_id, desc_id, overhead_type_id]
-    );
-    const nextProjectionId = (projectionRows[0]?.lastProjectionId || 0) + 1;
+    let insertedIds = [];
+    let updatedIds = [];
 
-    console.log('Next Projection ID:', nextProjectionId);
-
-
-    // Step 2: Insert into material_assign
-    const insertedIds = [];
-    for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by } of assignments) {
+    // Process each assignment (insert or update)
+    for (const { id, pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, projection_id } of assignments) {
       const parsed_desc_id = parseInt(desc_id);
       if (isNaN(parsed_desc_id)) {
         await connection.rollback();
@@ -1477,25 +1104,58 @@ exports.assignMaterial = async (req, res) => {
           message: `Invalid desc_id: must be convertible to integer`,
         });
       }
-      console.log('Projection ID being used:', nextProjectionId);
-      const [result] = await connection.query(
-        "INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, created_at, projection_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(),?)",
-        [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, nextProjectionId]
-      );
-      insertedIds.push(result.insertId);
+
+      if (id) {
+        // Update existing
+        const [updateResult] = await connection.query(
+          `UPDATE material_assign 
+           SET pd_id = ?, site_id = ?, item_id = ?, uom_id = ?, quantity = ?, desc_id = ?, comp_ratio_a = ?, comp_ratio_b = ?, comp_ratio_c = ?, rate = ?, projection_id = ?, updated_at = CURRENT_TIMESTAMP 
+           WHERE id = ?`,
+          [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a || null, comp_ratio_b || null, comp_ratio_c || null, rate, projection_id, id]
+        );
+        if (updateResult.affectedRows === 0) {
+          await connection.rollback();
+          return res.status(404).json({ status: "error", message: `Assignment with id ${id} not found` });
+        }
+        updatedIds.push(id);
+      } else {
+        // Insert new
+        const [insertResult] = await connection.query(
+          `INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_by, created_at, projection_id) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+          [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a || null, comp_ratio_b || null, comp_ratio_c || null, rate, created_by, projection_id]
+        );
+        insertedIds.push(insertResult.insertId);
+      }
     }
 
-    // Step 4: Insert into projection_allocated
+    // Update projection_allocated with recalculated total (always recalculate for the projection_id from first assignment)
+    const firstProjectionId = assignments[0].projection_id;
+    const [matSum] = await connection.query(
+      `SELECT SUM(quantity * rate) AS total_cost FROM material_assign 
+       WHERE site_id = ? AND desc_id = ? AND projection_id = ?`,
+      [site_id, desc_id, firstProjectionId]
+    );
+    const total_cost = parseFloat(matSum[0].total_cost) || 0;
+    const [budgetRows] = await connection.query(
+      `SELECT total_budget_value FROM po_budget WHERE site_id = ? AND desc_id = ? AND projection_id = ?`,
+      [site_id, desc_id, firstProjectionId]
+    );
+    const budget_value = parseFloat(budgetRows[0]?.total_budget_value) || 0;
+    const budget_percentage = budget_value > 0 ? (total_cost / budget_value * 100) : 0;
+
     await connection.query(
-      "INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage) VALUES (?, ?, ?, ?, ?, ?)",
-      [site_id, desc_id, overhead_type_id, nextProjectionId, materialTotalCost, materialBudgetPercentage]
+      `INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+       ON DUPLICATE KEY UPDATE total_cost = ?, budget_percentage = ?, updated_at = CURRENT_TIMESTAMP`,
+      [site_id, desc_id, overhead_type_id, firstProjectionId, total_cost, budget_percentage, total_cost, budget_percentage]
     );
 
     await connection.commit();
     res.status(201).json({
       status: "success",
-      message: "Materials assigned and projection allocated successfully",
-      data: { insertedIds },
+      message: `Materials ${insertedIds.length > 0 ? 'assigned' : 'updated'} successfully`,
+      data: { insertedIds, updatedIds },
     });
   } catch (error) {
     if (connection) await connection.rollback();
@@ -1515,8 +1175,6 @@ exports.assignMaterial = async (req, res) => {
     if (connection) connection.release();
   }
 };
-
-
 exports.checkDescAssigned = async (req, res) => {
   try {
     const { site_id, desc_id } = req.query;
@@ -2470,5 +2128,322 @@ exports.saveMasterDcNo = async (req, res) => {
   } catch (error) {
     console.error("Error saving master DC No:", error);
     return res.status(500).json({ status: "error", message: "Internal server error" });
+  }
+};
+
+
+
+
+
+// Get single material assignment by ID - Updated to use req.query.assignment_id
+exports.getMaterialAssignmentById = async (req, res) => {
+  const { assignment_id } = req.query; // Changed from req.params
+
+  console.log('Fetching assignment with ID:', assignment_id);
+
+  if (!assignment_id || assignment_id === 'undefined' || isNaN(assignment_id)) {
+    console.log('Invalid assignment_id provided:', assignment_id);
+    return res.status(400).json({ 
+      status: "error", 
+      message: "assignment_id is required and must be a valid number" 
+    });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT ma.*, mm.item_name, um.uom_name 
+       FROM material_assign ma
+       LEFT JOIN material_master mm ON ma.item_id = mm.item_id
+       LEFT JOIN uom_master um ON ma.uom_id = um.uom_id
+       WHERE ma.id = ?`,
+      [parseInt(assignment_id)]
+    );
+
+    if (rows.length === 0) {
+      console.log('Assignment not found for ID:', assignment_id);
+      return res.status(404).json({ 
+        status: "error", 
+        message: "Assignment not found" 
+      });
+    }
+
+    console.log('Fetched assignment:', rows[0].id);
+    res.status(200).json({
+      status: "success",
+      data: rows[0],
+    });
+  } catch (error) {
+    console.error("Error fetching material assignment:", error);
+    res.status(500).json({ 
+      status: "error", 
+      message: "Failed to fetch assignment",
+      error: error.message 
+    });
+  }
+};
+// Update material assignment - Updated to use req.body.assignment_id
+exports.updateMaterialAssignment = async (req, res) => {
+  const { assignment_id } = req.body; // Changed from req.params
+  const { item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, projection_id } = req.body;
+
+  console.log('Updating assignment ID:', assignment_id, 'with data:', { item_id, uom_id, quantity, rate, projection_id });
+
+  if (!assignment_id || assignment_id === 'undefined' || isNaN(assignment_id)) {
+    console.log('Invalid assignment_id for update:', assignment_id);
+    return res.status(400).json({ 
+      status: "error", 
+      message: "assignment_id is required and must be a valid number" 
+    });
+  }
+
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Check if assignment has dispatches (prevent update if dispatched)
+    const [dispatchCheck] = await connection.query(
+      'SELECT COUNT(*) as dispatch_count FROM material_dispatch WHERE material_assign_id = ?',
+      [assignment_id]
+    );
+    if (dispatchCheck[0].dispatch_count > 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "Cannot update assignment that has already been dispatched"
+      });
+    }
+
+    // Validate inputs
+    const validationErrors = [];
+    if (!item_id || item_id === "N/A") {
+      validationErrors.push("Valid item_id is required");
+    }
+    if (!Number.isInteger(uom_id) || uom_id <= 0) {
+      validationErrors.push("Valid uom_id is required");
+    }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      validationErrors.push("Valid quantity is required");
+    }
+    const parsedRate = parseFloat(rate);
+    if (isNaN(parsedRate) || parsedRate < 0) {
+      validationErrors.push("Valid rate is required (non-negative number)");
+    }
+    const parsedProjectionId = parseInt(projection_id);
+    if (isNaN(parsedProjectionId) || parsedProjectionId <= 0) {
+      validationErrors.push("Valid projection_id is required");
+    }
+
+    if (validationErrors.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ 
+        status: "error", 
+        message: validationErrors.join(", ") 
+      });
+    }
+
+    // Get site_id and desc_id for recalculation
+    const [assignRows] = await connection.query(
+      'SELECT site_id, desc_id FROM material_assign WHERE id = ?',
+      [assignment_id]
+    );
+    
+    if (assignRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ 
+        status: "error", 
+        message: "Assignment not found" 
+      });
+    }
+    
+    const { site_id, desc_id } = assignRows[0];
+
+    // Update the assignment
+    const [result] = await connection.query(
+      `UPDATE material_assign 
+       SET item_id = ?, uom_id = ?, quantity = ?, comp_ratio_a = ?, comp_ratio_b = ?, comp_ratio_c = ?, rate = ?, projection_id = ? 
+       WHERE id = ?`,
+      [item_id, uom_id, quantity, comp_ratio_a || null, comp_ratio_b || null, comp_ratio_c || null, parsedRate, parsedProjectionId, assignment_id]
+    );
+
+    if (result.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ 
+        status: "error", 
+        message: "Assignment not found" 
+      });
+    }
+
+    // Recalculate and update projection_allocated
+    const [overheadRows] = await connection.query(
+      'SELECT id FROM overhead WHERE expense_name = "materials" LIMIT 1'
+    );
+    
+    if (overheadRows.length > 0) {
+      const overhead_type_id = overheadRows[0].id;
+      
+      const [matSum] = await connection.query(
+        'SELECT SUM(quantity * rate) AS total_cost FROM material_assign WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
+        [site_id, desc_id, parsedProjectionId]
+      );
+      
+      const total_cost = parseFloat(matSum[0].total_cost) || 0;
+      
+      const [budgetRows] = await connection.query(
+        'SELECT total_budget_value FROM po_budget WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
+        [site_id, desc_id, parsedProjectionId]
+      );
+      
+      const budget_value = parseFloat(budgetRows[0]?.total_budget_value) || 0;
+      const budget_percentage = budget_value > 0 ? (total_cost / budget_value * 100) : 0;
+
+      await connection.query(
+        `INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+         ON DUPLICATE KEY UPDATE total_cost = ?, budget_percentage = ?, updated_at = CURRENT_TIMESTAMP`,
+        [site_id, desc_id, overhead_type_id, parsedProjectionId, total_cost, budget_percentage, total_cost, budget_percentage]
+      );
+    }
+
+    await connection.commit();
+    
+    console.log('Assignment updated successfully:', assignment_id);
+    res.status(200).json({
+      status: "success",
+      message: "Assignment updated successfully",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Error updating material assignment:", error);
+    
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid reference: item_id, uom_id, or projection_id does not exist",
+      });
+    }
+    
+    res.status(500).json({ 
+      status: "error", 
+      message: "Failed to update assignment",
+      error: error.message 
+    });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Delete material assignment - Updated to use req.body.assignment_id
+exports.deleteMaterialAssignment = async (req, res) => {
+  const { assignment_id } = req.body; // Changed from req.params
+
+  console.log('Deleting assignment ID:', assignment_id);
+
+  if (!assignment_id || assignment_id === 'undefined' || isNaN(assignment_id)) {
+    console.log('Invalid assignment_id for delete:', assignment_id);
+    return res.status(400).json({ 
+      status: "error", 
+      message: "assignment_id is required and must be a valid number" 
+    });
+  }
+
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Check if assignment has dispatches (prevent delete if dispatched)
+    const [dispatchCheck] = await connection.query(
+      'SELECT COUNT(*) as dispatch_count FROM material_dispatch WHERE material_assign_id = ?',
+      [assignment_id]
+    );
+    if (dispatchCheck[0].dispatch_count > 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "Cannot delete assignment that has already been dispatched"
+      });
+    }
+
+    // Get assignment details for recalculation
+    const [assignRows] = await connection.query(
+      'SELECT site_id, desc_id, projection_id FROM material_assign WHERE id = ?',
+      [assignment_id]
+    );
+    
+    if (assignRows.length === 0) {
+      await connection.rollback();
+      console.log('Assignment not found for delete:', assignment_id);
+      return res.status(404).json({ 
+        status: "error", 
+        message: "Assignment not found" 
+      });
+    }
+    
+    const { site_id, desc_id, projection_id } = assignRows[0];
+    const parsedProjectionId = parseInt(projection_id);
+
+    // Delete the assignment
+    const [deleteResult] = await connection.query(
+      'DELETE FROM material_assign WHERE id = ?', 
+      [assignment_id]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(404).json({ 
+        status: "error", 
+        message: "Assignment not found" 
+      });
+    }
+
+    // Recalculate projection_allocated
+    const [overheadRows] = await connection.query(
+      'SELECT id FROM overhead WHERE expense_name = "materials" LIMIT 1'
+    );
+    
+    if (overheadRows.length > 0) {
+      const overhead_type_id = overheadRows[0].id;
+      
+      const [matSum] = await connection.query(
+        'SELECT SUM(quantity * rate) AS total_cost FROM material_assign WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
+        [site_id, desc_id, parsedProjectionId]
+      );
+      
+      const total_cost = parseFloat(matSum[0].total_cost) || 0;
+      
+      const [budgetRows] = await connection.query(
+        'SELECT total_budget_value FROM po_budget WHERE site_id = ? AND desc_id = ? AND projection_id = ?',
+        [site_id, desc_id, parsedProjectionId]
+      );
+      
+      const budget_value = parseFloat(budgetRows[0]?.total_budget_value) || 0;
+      const budget_percentage = budget_value > 0 ? (total_cost / budget_value * 100) : 0;
+
+      await connection.query(
+        `INSERT INTO projection_allocated (site_id, desc_id, overhead_type_id, projection_id, total_cost, budget_percentage, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+         ON DUPLICATE KEY UPDATE total_cost = ?, budget_percentage = ?, updated_at = CURRENT_TIMESTAMP`,
+        [site_id, desc_id, overhead_type_id, parsedProjectionId, total_cost, budget_percentage, total_cost, budget_percentage]
+      );
+    }
+
+    await connection.commit();
+    
+    console.log('Assignment deleted successfully:', assignment_id);
+    res.status(200).json({
+      status: "success",
+      message: "Assignment deleted successfully",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Error deleting material assignment:", error);
+    res.status(500).json({ 
+      status: "error", 
+      message: "Failed to delete assignment",
+      error: error.message 
+    });
+  } finally {
+    if (connection) connection.release();
   }
 };

@@ -12,6 +12,7 @@ const SiteInchargeRoutes = require("./routes/SiteInchargeRoutes")
 const adminRoutes = require("./routes/adminRoutes")
 const supplyRoutes = require("./routes/supplyRoutes")
 const notificationRoutes = require("./routes/notificationRoutes")
+const projectionRoutes = require("./routes/projectionRoutes")
 
 const app = express();
 
@@ -44,6 +45,7 @@ const startServer = async () => {
         app.use("/admin",adminRoutes)
         app.use("/supply", supplyRoutes)
         app.use("/notification", notificationRoutes)
+        app.use("/projection", projectionRoutes)
 
         
         app.listen(process.env.PORT || 5000, () => 
