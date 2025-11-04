@@ -753,6 +753,18 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -822,7 +834,7 @@ const MaterialPlanning = ({
     }
   }, []);
 
-  // Fetch assigned materials with projection_id - FIXED with useCallback and proper deps
+  // Fetch assigned materials with projection_id
   const fetchAssignedMaterials = useCallback(async (site_id, desc_id, proj_id) => {
     if (!site_id || !desc_id || !proj_id) return;
     
@@ -874,9 +886,8 @@ const MaterialPlanning = ({
     } finally {
       setLoading((prev) => ({ ...prev, assignedMaterials: false }));
     }
-  }, []); // Empty deps since params are passed; avoids loop
+  }, [projectionId]); // Add projectionId to deps if it changes
 
-  // FIXED: Proper useEffect dependencies to prevent infinite loops
   useEffect(() => {
     fetchMaterials();
     fetchUoms();
@@ -886,7 +897,7 @@ const MaterialPlanning = ({
     if (selectedSite?.value && selectedWorkDesc?.value && projectionId) {
       fetchAssignedMaterials(selectedSite.value, selectedWorkDesc.value, projectionId);
     }
-  }, [selectedSite?.value, selectedWorkDesc?.value, projectionId]); // Removed fetchAssignedMaterials from deps since it's stable
+  }, [selectedSite?.value, selectedWorkDesc?.value, projectionId, fetchAssignedMaterials]);
 
   // Calculate total cost for a single material
   const calculateTotalCost = useCallback((mat) => {
@@ -920,7 +931,7 @@ const MaterialPlanning = ({
     return bv > 0 ? (parseFloat(overallCost) / bv) * 100 : 0;
   }, [overallCost, projectionBudgetValue]);
 
-  // FIXED: Update local states without causing re-renders
+  // Update local states without causing re-renders
   useEffect(() => {
     setMaterialTotalCost(parseFloat(overallCost) || 0);
     setMaterialBudgetPercentage(overallPercentage);
@@ -1060,18 +1071,7 @@ const MaterialPlanning = ({
     }
   }, [fetchMaterials]);
 
-  // FIXED: Validate assignment before editing
-  const isValidAssignment = useCallback((assignment) => {
-    return assignment && 
-           assignment.id && 
-           assignment.item_id && 
-           assignment.uom_id && 
-           assignment.quantity > 0 &&
-           !isNaN(assignment.rate) && 
-           assignment.rate >= 0;
-  }, []);
-
-  // Handle Edit for existing assignment - FIXED VERSION
+  // Updated handleEditAssignment - Relaxed validation to allow opening modal even if ID missing
   const handleEditAssignment = useCallback(async (assignment) => {
     if (isSubmitted) {
       Swal.fire({
@@ -1084,46 +1084,33 @@ const MaterialPlanning = ({
       return;
     }
 
-    console.log("Editing assignment:", assignment);
-    
-    if (!assignment || !isValidAssignment(assignment)) {
-      console.error("Invalid assignment object:", assignment);
+    if (!assignment) {
+      console.error("Invalid assignment object");
       setError("Invalid assignment data for editing.");
       Swal.fire({
         icon: "error",
         title: "Invalid Assignment",
-        text: "Cannot edit invalid assignment data.",
+        text: "Cannot edit invalid assignment data. Please refresh and try again.",
         timer: 2000,
         showConfirmButton: false,
       });
       return;
     }
 
-    try {
-      // FIXED: Fetch full single assignment details via query param
-      const response = await axios.get(`http://103.118.158.127/api/material/assigned-materials?assignment_id=${assignment.id}`);
-      const fullAssignment = response.data.data;
-      
-      if (!fullAssignment || !fullAssignment.id) {
-        throw new Error("Failed to fetch assignment details");
-      }
-
-      setEditingAssignment({ 
-        ...fullAssignment, 
-        projection_id: projectionId 
-      });
-    } catch (err) {
-      console.error("Error fetching single assignment:", err);
-      setError(err.response?.data?.message || "Failed to load assignment details.");
-      Swal.fire({
-        icon: "error",
-        title: "Load Failed",
-        text: "Could not load assignment for editing.",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      return;
+    console.log("Editing assignment:", assignment);
+    
+    // Use id or assignment_id, fallback to null if missing
+    const assignmentId = assignment.id || assignment.assignment_id;
+    if (!assignmentId) {
+      console.warn("No ID found for assignment, proceeding with warning. Update may fail.");
     }
+
+    // Use the passed assignment directly - it already includes item_name, uom_name from backend join
+    setEditingAssignment({ 
+      ...assignment, 
+      id: assignmentId,  // Set id for internal use, may be null
+      projection_id: projectionId 
+    });
 
     setShowEditModal(true);
     
@@ -1134,17 +1121,26 @@ const MaterialPlanning = ({
       timer: 1500,
       showConfirmButton: false,
     });
-  }, [isSubmitted, projectionId, isValidAssignment]);
+  }, [isSubmitted, projectionId]);
 
-  // Handle Save in Modal - FIXED VERSION with body assignment_id
   const handleSaveEdit = async () => {
-    if (!editingAssignment) return;
+    if (!editingAssignment) {
+      console.error("Missing editingAssignment");
+      setError("Assignment data is missing. Cannot update.");
+      return;
+    }
+
+    if (!editingAssignment.id) {
+      console.error("Missing assignment ID in editingAssignment:", editingAssignment);
+      setError("Assignment ID is missing. Please refresh the page and try again.");
+      return;
+    }
 
     try {
       setLoading((prev) => ({ ...prev, submitting: true }));
       setError(null);
 
-      // Validation
+      // Validation (same as before)
       const validationErrors = [];
       if (!editingAssignment.item_id || editingAssignment.item_id === "N/A" || editingAssignment.item_id.trim() === "") {
         validationErrors.push("Material required");
@@ -1174,7 +1170,7 @@ const MaterialPlanning = ({
       }
 
       const payload = {
-        assignment_id: editingAssignment.id, // FIXED: Include assignment_id in body
+        assignment_id: editingAssignment.id,  // Uses the set id (from id or assignment_id)
         item_id: editingAssignment.item_id,
         uom_id: parseInt(editingAssignment.uom_id),
         quantity: parseInt(editingAssignment.quantity),
@@ -1183,17 +1179,15 @@ const MaterialPlanning = ({
         comp_ratio_c: editingAssignment.comp_ratio_c ? parseInt(editingAssignment.comp_ratio_c) : null,
         rate: parseFloat(editingAssignment.rate),
         projection_id: projectionId,
-        // Include other required fields if needed, e.g., pd_id, site_id, desc_id from assignment
         pd_id: editingAssignment.pd_id,
         site_id: editingAssignment.site_id,
         desc_id: editingAssignment.desc_id,
-        created_by: atob(encodedUserId), // Assuming from params
+        created_by: atob(encodedUserId),
       };
 
       console.log("Updating assignment with ID:", editingAssignment.id);
       console.log("Payload:", payload);
 
-      // FIXED: PUT with body including assignment_id
       await axios.put("http://103.118.158.127/api/material/assigned-materials", payload);
 
       Swal.fire({
@@ -1211,7 +1205,6 @@ const MaterialPlanning = ({
       setShowEditModal(false);
       setEditingAssignment(null);
       
-      // Refresh the assignments
       await fetchAssignedMaterials(selectedSite.value, selectedWorkDesc.value, projectionId);
       
     } catch (error) {
@@ -1234,7 +1227,7 @@ const MaterialPlanning = ({
     }
   };
 
-  // Handle Delete for existing assignment - FIXED VERSION with body assignment_id
+  // Updated handleDeleteAssignment - Use id or assignment_id
   const handleDeleteAssignment = async (assignmentId) => {
     if (isSubmitted) {
       Swal.fire({
@@ -1249,7 +1242,7 @@ const MaterialPlanning = ({
 
     console.log("Deleting assignment ID:", assignmentId);
 
-    // FIXED: Check if assignmentId is valid
+    // Check if assignmentId is valid
     if (!assignmentId || assignmentId === 'undefined' || isNaN(assignmentId)) {
       console.error("Invalid assignment ID:", assignmentId);
       Swal.fire({
@@ -1275,7 +1268,7 @@ const MaterialPlanning = ({
       try {
         console.log("Sending DELETE request for assignment ID:", assignmentId);
         
-        // FIXED: DELETE with body { assignment_id: id }
+        // DELETE with body { assignment_id: id }
         await axios.delete("http://103.118.158.127/api/material/assigned-materials", { 
           data: { assignment_id: assignmentId } 
         });
@@ -1567,13 +1560,14 @@ const MaterialPlanning = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {existingAssignments.map((mat) => {
+                          {existingAssignments.map((mat, index) => {
                             const { comp_a_qty, comp_b_qty, comp_c_qty } = calculateCompQuantities(mat);
                             const totalCost = calculateTotalCost(mat);
                             const materialName = mat.item_name || materials.find((m) => m.item_id === mat.item_id)?.item_name || mat.item_id;
                             const uomName = mat.uom_name || uoms.find((u) => u.uom_id === mat.uom_id)?.uom_name || "N/A";
+                            const assignmentId = mat.id || mat.assignment_id; // Use id or assignment_id
                             return (
-                              <tr key={mat.id} className="border-t border-gray-200"> {/* FIXED: Unique key */}
+                              <tr key={assignmentId || index} className="border-t border-gray-200">
                                 <td className="px-4 py-2 text-sm text-gray-600">{materialName}</td>
                                 <td className="px-4 py-2 text-sm text-gray-600">{uomName}</td>
                                 <td className="px-4 py-2 text-sm text-gray-600">{mat.quantity}</td>
@@ -1595,7 +1589,7 @@ const MaterialPlanning = ({
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => handleDeleteAssignment(mat.id)}
+                                        onClick={() => handleDeleteAssignment(assignmentId)}
                                         className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
                                         title="Delete"
                                       >
@@ -1621,7 +1615,7 @@ const MaterialPlanning = ({
                     const { comp_a_qty, comp_b_qty, comp_c_qty } = calculateCompQuantities(mat);
                     const totalCost = calculateTotalCost(mat);
                     return (
-                      <div key={matIndex} className="border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm"> {/* Key is index, fine for dynamic */}
+                      <div key={matIndex} className="border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">

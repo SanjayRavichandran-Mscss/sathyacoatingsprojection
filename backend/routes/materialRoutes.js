@@ -46,7 +46,6 @@
                 router.get("/check-desc-assigned", materialController.checkDescAssigned);
         router.post("/add-material", materialController.addMaterial);
         router.get("/materials", materialController.getMaterials);
-router.get('/assigned-materials', materialController.getAssignedMaterials);
 
         router.get("/master-dc-no", materialController.getMasterDcNo);
         router.post("/master-dc-no", materialController.saveMasterDcNo);
@@ -54,7 +53,7 @@ router.get('/assigned-materials', materialController.getAssignedMaterials);
 
 
 // Updated routes to use query/body instead of params
-router.get('/assigned-materials', materialController.getMaterialAssignmentById); // ?assignment_id=...
+router.get('/assigned-materialsbyid', materialController.getMaterialAssignmentById); // ?assignment_id=...
 router.put('/assigned-materials', materialController.updateMaterialAssignment); // ID in body
 router.delete('/assigned-materials', materialController.deleteMaterialAssignment); // ID in body
                 module.exports = router;

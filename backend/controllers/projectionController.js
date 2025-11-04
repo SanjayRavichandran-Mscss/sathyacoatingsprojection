@@ -1305,3 +1305,120 @@ exports.getActualMaterial = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+// Add this function to projectionController.js (particular module only)
+exports.getSubmissionStatuses = async (req, res) => {
+  try {
+    const { site_id, desc_id } = req.query;
+    
+    if (!site_id || !desc_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'site_id and desc_id are required',
+      });
+    }
+
+    // Query to get projection statuses; assumes 'submitted' based on existence of projection_allocated for materials overhead
+    // Adjust if you have a direct 'submitted' flag in po_budget
+    const [rows] = await db.query(
+      `SELECT 
+         pb.projection_id, 
+         pb.id as po_budget_id,
+         CASE 
+           WHEN EXISTS (
+             SELECT 1 FROM projection_allocated pa 
+             WHERE pa.site_id = pb.site_id 
+               AND pa.desc_id = pb.desc_id 
+               AND pa.projection_id = pb.projection_id
+               AND pa.overhead_type_id = (SELECT id FROM overhead WHERE expense_name = 'materials' LIMIT 1)
+           ) THEN 1 
+           ELSE 0 
+         END as submitted
+       FROM po_budget pb
+       WHERE pb.site_id = ? AND pb.desc_id = ? 
+       ORDER BY pb.projection_id`,
+      [site_id, desc_id]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    console.error('Error fetching submission statuses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch submission statuses',
+      error: error.message,
+    });
+  }
+};
+
+
+
+// Add this new function to projectionController.js
+
+exports.checkFinalSubmissionStatus = async (req, res) => {
+  try {
+    const { site_id, desc_id } = req.query;
+    
+    if (!site_id || !desc_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'site_id and desc_id are required',
+      });
+    }
+
+    // Step 1: Fetch all po_budget records for the site and desc
+    const [poBudgetRows] = await db.query(
+      `SELECT id AS po_budget_id, projection_id 
+       FROM po_budget 
+       WHERE site_id = ? AND desc_id = ? 
+       ORDER BY projection_id ASC`,
+      [site_id, desc_id]
+    );
+
+    if (poBudgetRows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    // Step 2: Get all po_budget_ids that have entries in actual_budget (existence means submitted)
+    const submittedPoBudgetIds = new Set();
+    const placeholders = poBudgetRows.map(() => '?').join(',');
+    const [actualRows] = await db.query(
+      `SELECT DISTINCT po_budget_id 
+       FROM actual_budget 
+       WHERE po_budget_id IN (${placeholders})`,
+      poBudgetRows.map(row => row.po_budget_id)
+    );
+    actualRows.forEach(row => {
+      submittedPoBudgetIds.add(row.po_budget_id);
+    });
+
+    // Step 3: Build statuses array - submitted if po_budget_id exists in actual_budget
+    const statuses = poBudgetRows.map(row => ({
+      projection_id: row.projection_id,
+      submitted: submittedPoBudgetIds.has(row.po_budget_id),  // true if submitted (has actual_budget entries)
+      po_budget_id: row.po_budget_id
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: statuses,  // Array of { projection_id, submitted (boolean), po_budget_id }
+    });
+  } catch (error) {
+    console.error('Error checking final submission statuses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check final submission statuses',
+      error: error.message,
+    });
+  }
+};

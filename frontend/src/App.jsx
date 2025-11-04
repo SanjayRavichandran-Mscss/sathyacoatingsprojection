@@ -7,10 +7,8 @@ import MaterialPlanning from './pages/contract/MaterialPlanning';
 import MaterialDispatch from './pages/contract/MaterialDispatch';
 import ClientMasterCreation from './pages/contract/ClientMasterCreation';
 import ProjectList from './pages/contract/ProjectList';
-import POMasterCreation from './pages/contract/POMasterCreation';
 import POMasterMain from './pages/contract/POMasterMain';
 import WorkForcePlanning from './pages/contract/WorkForcePlanning';
-import ProjectProjection from './pages/contract/ProjectProjection';
 import AdditionalCash from './pages/contract/AdditionalCash';
 import DashboardMain from './pages/dashboard/DashBoardMain';
 import EmployeeDetails from './pages/contract/EmployeeDetails';
@@ -25,6 +23,7 @@ import AdditionalExpense from './pages/site-incharge/AdditionalExpense';
 import SupplyClientMasterCreation from './pages/supply/SupplyClientMasterCreation';
 import SupplyMaterialPlanning from './pages/supply/SupplyMaterialPlanning';
 import ProjectProjectionOld from './pages/contract/ProjectProjectionOld';
+import ProjectProjectionNew from './pages/contract/ProjectProjectionNew';
 import SupplyMasterPoCreation from './pages/supply/SupplyMasterPoCreation';
 import SupplyMaterialDispatch from './pages/supply/SupplyMaterialDispatch';
 import SuppliedMaterials from './pages/supply/SuppliedMaterials';
@@ -99,7 +98,8 @@ const App = () => {
               path="/:rolePrefix/contracts/projects/projections/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
-                 <ProjectProjectionOld/>
+                 {/* <ProjectProjectionOld/> */}
+                 <ProjectProjectionNew/>
                 </ProtectedRoute>
               } 
           />
@@ -108,7 +108,8 @@ const App = () => {
               path="/:rolePrefix/contracts/projects/project-planning/:encodedUserId" 
               element={
                 <ProtectedRoute role="admin">
-                 <ProjectProjectionOld />
+                 {/* <ProjectProjectionOld /> */}
+                 <ProjectProjectionNew />
                 </ProtectedRoute>
               } 
           />

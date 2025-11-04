@@ -49,4 +49,11 @@ router.delete('/delete-overhead', projectionController.deleteOverhead);
 // Add this to projectionRoutes.js
 router.get('/actual-material/:siteId/:descId', projectionController.getActualMaterial);
 
+// Updated projectionRoutes.js - Add this line after the existing routes
+router.get('/submission-statuses', projectionController.getSubmissionStatuses);
+
+
+// Add this new route to projectionRoutes.js (after the existing routes)
+
+router.get('/check-final-submission-status', projectionController.checkFinalSubmissionStatus);
 module.exports = router;

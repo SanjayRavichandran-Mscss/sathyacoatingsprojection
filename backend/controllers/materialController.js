@@ -842,152 +842,58 @@ exports.addDesignation = async (req, res) => {
   }
 };
 
-// Get assigned materials with projection_id
 exports.getAssignedMaterials = async (req, res) => {
+  const { site_id, desc_id, projection_id } = req.query;
+
+  console.log('Fetching assignments with params:', { site_id, desc_id, projection_id });
+
+  if (!site_id || !desc_id || !projection_id) {
+    console.log('Invalid parameters provided:', { site_id, desc_id, projection_id });
+    return res.status(400).json({ 
+      status: "error", 
+      message: "site_id, desc_id, and projection_id are required" 
+    });
+  }
+
+  if (isNaN(desc_id) || isNaN(projection_id)) {
+    console.log('Invalid desc_id or projection_id:', { desc_id, projection_id });
+    return res.status(400).json({ 
+      status: "error", 
+      message: "desc_id and projection_id must be valid numbers" 
+    });
+  }
+
   try {
-    const { site_id, desc_id, projection_id } = req.query;
-    
-    console.log('Fetching assigned materials:', { site_id, desc_id, projection_id });
-    
-    if (!site_id || !desc_id) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'site_id and desc_id are required',
-      });
-    }
+    const [rows] = await db.query(
+      `SELECT ma.id, ma.pd_id, ma.site_id, ma.item_id, ma.uom_id, ma.quantity, ma.created_at, 
+              ma.comp_ratio_a, ma.comp_ratio_b, ma.comp_ratio_c, ma.desc_id, ma.rate, ma.created_by, ma.projection_id,
+              mm.item_name, um.uom_name 
+       FROM material_assign ma
+       LEFT JOIN material_master mm ON ma.item_id = mm.item_id
+       LEFT JOIN uom_master um ON ma.uom_id = um.uom_id
+       WHERE ma.site_id = ? AND ma.desc_id = ? AND ma.projection_id = ?`,
+      [site_id, parseInt(desc_id), parseInt(projection_id)]
+    );
 
-    let query = `
-      SELECT 
-        ma.id,
-        ma.item_id, 
-        ma.uom_id, 
-        ma.quantity, 
-        ma.comp_ratio_a, 
-        ma.comp_ratio_b, 
-        ma.comp_ratio_c, 
-        ma.rate,
-        ma.projection_id,
-        ma.site_id,
-        ma.desc_id,
-        mm.item_name,
-        um.uom_name
-      FROM material_assign ma
-      LEFT JOIN material_master mm ON ma.item_id = mm.item_id
-      LEFT JOIN uom_master um ON ma.uom_id = um.uom_id
-      WHERE ma.site_id = ? AND ma.desc_id = ?
-    `;
-    
-    const params = [site_id, desc_id];
-    
-    if (projection_id) {
-      query += ' AND ma.projection_id = ?';
-      params.push(projection_id);
-    }
+    console.log('Fetched assignments count:', rows.length);
 
-    query += ' ORDER BY ma.id DESC';
+    // If only one row, return as object; otherwise array
+    const data = rows.length === 1 ? rows[0] : rows;
 
-    const [rows] = await db.query(query, params);
-    
     res.status(200).json({
-      status: 'success',
-      data: rows,
+      status: "success",
+      data: data,
     });
   } catch (error) {
-    console.error('Error fetching assigned materials:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch assigned materials',
-      error: error.message,
+    console.error("Error fetching material assignments:", error);
+    res.status(500).json({ 
+      status: "error", 
+      message: "Failed to fetch assignments",
+      error: error.message 
     });
   }
 };
 
-
-// exports.assignMaterial = async (req, res) => {
-//   try {
-//     const assignments = Array.isArray(req.body) ? req.body : [req.body];
-
-//     // Validate each assignment
-//     const validationErrors = [];
-//     assignments.forEach((assignment, index) => {
-//       const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate } = assignment;
-
-//       if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
-//         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
-//       }
-//       if (!site_id || typeof site_id !== 'string' || site_id.trim() === '') {
-//         validationErrors.push(`Assignment ${index + 1}: site_id is required and must be a non-empty string`);
-//       }
-//       if (!item_id || typeof item_id !== 'string' || item_id.trim() === '' || item_id === 'N/A') {
-//         validationErrors.push(`Assignment ${index + 1}: item_id is required and must be a valid material ID (not 'N/A')`);
-//       }
-//       if (!Number.isInteger(uom_id) || uom_id <= 0) {
-//         validationErrors.push(`Assignment ${index + 1}: uom_id is required and must be a positive integer`);
-//       }
-//       if (!Number.isInteger(quantity) || quantity <= 0) {
-//         validationErrors.push(`Assignment ${index + 1}: quantity is required and must be a positive integer`);
-//       }
-//       if (!desc_id || typeof desc_id !== 'string' || desc_id.trim() === '') {
-//         validationErrors.push(`Assignment ${index + 1}: desc_id is required and must be a non-empty string`);
-//       }
-//       if (comp_ratio_a !== null && (!Number.isInteger(comp_ratio_a) || comp_ratio_a < 0)) {
-//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_a must be a non-negative integer or null`);
-//       }
-//       if (comp_ratio_b !== null && (!Number.isInteger(comp_ratio_b) || comp_ratio_b < 0)) {
-//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_b must be a non-negative integer or null`);
-//       }
-//       if (comp_ratio_c !== null && (!Number.isInteger(comp_ratio_c) || comp_ratio_c < 0)) {
-//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_c must be a non-negative integer or null`);
-//       }
-//       if (rate === undefined || typeof rate !== 'number' || rate < 0 || isNaN(rate)) {
-//         validationErrors.push(`Assignment ${index + 1}: rate is required and must be a non-negative number`);
-//       }
-//     });
-
-//     if (validationErrors.length > 0) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Validation errors',
-//         errors: validationErrors,
-//       });
-//     }
-
-//     const insertedIds = [];
-//     for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate } of assignments) {
-//       const parsed_desc_id = parseInt(desc_id);
-//       if (isNaN(parsed_desc_id)) {
-//         return res.status(400).json({
-//           status: 'error',
-//           message: `Invalid desc_id: must be convertible to integer`,
-//         });
-//       }
-//       const [result] = await db.query(
-//         'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-//         [pd_id, site_id, item_id, uom_id, quantity, parsed_desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate]
-//       );
-//       insertedIds.push(result.insertId);
-//     }
-
-//     res.status(201).json({
-//       status: 'success',
-//       message: 'Materials assigned successfully',
-//       data: { insertedIds },
-//     });
-//   } catch (error) {
-//     console.error('Error in assignMaterial:', error);
-//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'Invalid reference: pd_id, site_id, item_id, uom_id, or desc_id does not exist in the database',
-//       });
-//     }
-//     res.status(500).json({
-//       status: 'error',
-//       message: 'Internal server error',
-//       error: error.message,
-//     });
-//   }
-// };
 
 
 exports.assignMaterial = async (req, res) => {
@@ -2048,35 +1954,6 @@ exports.getMaterials = async (req, res) => {
 };
 
 
-
-
-
-exports.getAssignedMaterials = async (req, res) => {
-  try {
-    const { site_id, desc_id } = req.query;
-    if (!site_id || !desc_id) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'site_id and desc_id are required',
-      });
-    }
-    const [rows] = await db.query(
-      `SELECT item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c, rate
-       FROM material_assign
-       WHERE site_id = ? AND desc_id = ?`,
-      [site_id, desc_id]
-    );
-    res.json({ status: 'success', data: rows });
-  } catch (error) {
-    console.error('Error fetching assigned materials:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch assigned materials',
-      error: error.message,
-    });
-  }
-};
-
 exports.getMasterDcNo = async (req, res) => {
   try {
     const { company_id } = req.query;
@@ -2181,6 +2058,8 @@ exports.getMaterialAssignmentById = async (req, res) => {
     });
   }
 };
+
+
 // Update material assignment - Updated to use req.body.assignment_id
 exports.updateMaterialAssignment = async (req, res) => {
   const { assignment_id } = req.body; // Changed from req.params
