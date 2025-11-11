@@ -899,7 +899,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
       <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-bold text-gray-800">Admin Notifications</h3>
+          <h3 className="text-lg font-bold text-gray-800">Notifications</h3>
         </div>
         <button
           onClick={onClose}
