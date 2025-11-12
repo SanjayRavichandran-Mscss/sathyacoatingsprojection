@@ -1360,7 +1360,70 @@ exports.getSubmissionStatuses = async (req, res) => {
 
 
 
-// Add this new function to projectionController.js
+
+// exports.checkFinalSubmissionStatus = async (req, res) => {
+//   try {
+//     const { site_id, desc_id } = req.query;
+    
+//     if (!site_id || !desc_id) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'site_id and desc_id are required',
+//       });
+//     }
+
+//     // Step 1: Fetch all po_budget records for the site and desc
+//     const [poBudgetRows] = await db.query(
+//       `SELECT id AS po_budget_id, projection_id 
+//        FROM po_budget 
+//        WHERE site_id = ? AND desc_id = ? 
+//        ORDER BY projection_id ASC`,
+//       [site_id, desc_id]
+//     );
+
+//     if (poBudgetRows.length === 0) {
+//       return res.status(200).json({
+//         success: true,
+//         data: [],
+//       });
+//     }
+
+//     // Step 2: Get all po_budget_ids that have entries in actual_budget (existence means submitted)
+//     const submittedPoBudgetIds = new Set();
+//     const placeholders = poBudgetRows.map(() => '?').join(',');
+//     const [actualRows] = await db.query(
+//       `SELECT DISTINCT po_budget_id 
+//        FROM actual_budget 
+//        WHERE po_budget_id IN (${placeholders})`,
+//       poBudgetRows.map(row => row.po_budget_id)
+//     );
+//     actualRows.forEach(row => {
+//       submittedPoBudgetIds.add(row.po_budget_id);
+//     });
+
+//     // Step 3: Build statuses array - submitted if po_budget_id exists in actual_budget
+//     const statuses = poBudgetRows.map(row => ({
+//       projection_id: row.projection_id,
+//       submitted: submittedPoBudgetIds.has(row.po_budget_id),  // true if submitted (has actual_budget entries)
+//       po_budget_id: row.po_budget_id
+//     }));
+
+//     res.status(200).json({
+//       success: true,
+//       data: statuses,  // Array of { projection_id, submitted (boolean), po_budget_id }
+//     });
+//   } catch (error) {
+//     console.error('Error checking final submission statuses:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to check final submission statuses',
+//       error: error.message,
+//     });
+//   }
+// };
+
+
+
 
 exports.checkFinalSubmissionStatus = async (req, res) => {
   try {
@@ -1409,9 +1472,16 @@ exports.checkFinalSubmissionStatus = async (req, res) => {
       po_budget_id: row.po_budget_id
     }));
 
+    // Step 4: New logic - If the latest projection (last in array) is submitted true, set all previous to true in response only
+    if (statuses.length > 0 && statuses[statuses.length - 1].submitted === true) {
+      statuses.forEach(status => {
+        status.submitted = true;
+      });
+    }
+
     res.status(200).json({
       success: true,
-      data: statuses,  // Array of { projection_id, submitted (boolean), po_budget_id }
+      data: statuses,  // Array with adjusted submitted flags for response only
     });
   } catch (error) {
     console.error('Error checking final submission statuses:', error);

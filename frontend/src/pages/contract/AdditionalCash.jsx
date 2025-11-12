@@ -35,7 +35,7 @@ const AdditionalCash = () => {
     const fetchCompanies = async () => {
       try {
         setLoading((prev) => ({ ...prev, companies: true }));
-        const response = await axios.get("http://103.118.158.127/api/project/companies");
+        const response = await axios.get("http://localhost:5000/project/companies");
         setCompanies(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching companies:", error);
@@ -52,7 +52,7 @@ const AdditionalCash = () => {
     const fetchProjects = async () => {
       try {
         setLoading((prev) => ({ ...prev, projects: true }));
-        const response = await axios.get("http://103.118.158.127/api/project/projects-with-sites");
+        const response = await axios.get("http://localhost:5000/project/projects-with-sites");
         setAllProjects(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -96,7 +96,7 @@ const AdditionalCash = () => {
       const fetchWorkDescriptions = async () => {
         try {
           setLoading((prev) => ({ ...prev, workDescriptions: true }));
-          const response = await axios.get(`http://103.118.158.127/api/expense/work-descriptions/${formData.site_id}`);
+          const response = await axios.get(`http://localhost:5000/expense/work-descriptions/${formData.site_id}`);
           const descs = Array.isArray(response.data.data) ? response.data.data : [];
           // Deduplicate by desc_id
           const uniqueDescs = Array.from(new Map(descs.map((desc) => [desc.desc_id, desc])).values());
@@ -121,7 +121,7 @@ const AdditionalCash = () => {
     const fetchPettyCash = async () => {
       try {
         setLoading((prev) => ({ ...prev, pettyCash: true }));
-        const response = await axios.get("http://103.118.158.127/api/expense/fetch-petty-cash");
+        const response = await axios.get("http://localhost:5000/expense/fetch-petty-cash");
         const records = Array.isArray(response.data.data)
           ? response.data.data.map((record) => ({
               ...record,
@@ -174,12 +174,12 @@ const AdditionalCash = () => {
 
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://103.118.158.127/api/expense/add-petty-cash",
+        "http://localhost:5000/expense/add-petty-cash",
         [{ pd_id, site_id, desc_id, assign_date, amount: parsedAmount }],
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const response = await axios.get("http://103.118.158.127/api/expense/fetch-petty-cash");
+      const response = await axios.get("http://localhost:5000/expense/fetch-petty-cash");
       const records = Array.isArray(response.data.data)
         ? response.data.data.map((record) => ({
             ...record,

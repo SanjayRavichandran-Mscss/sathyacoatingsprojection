@@ -147,7 +147,6 @@ const ProjectProjectionNew = () => {
     [budgetDiff]
   );
   // MaterialPlanning memos
- // MaterialPlanning memos
 const materialsForCurrentDesc = useMemo(() => {
   return materialAssignments[selectedWorkDescription?.value] || [];
 }, [materialAssignments, selectedWorkDescription?.value]);
@@ -201,7 +200,7 @@ const modalTotalCost = useMemo(() => {
   const fetchSubmissionStatuses = useCallback(async () => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/check-final-submission-status", {
+      const response = await axios.get("http://localhost:5000/projection/check-final-submission-status", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
       });
       if (response.data.success) {
@@ -224,7 +223,7 @@ const modalTotalCost = useMemo(() => {
   const fetchAllocatedOverheads = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/allocated", {
+      const response = await axios.get("http://localhost:5000/projection/allocated", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -240,7 +239,7 @@ const modalTotalCost = useMemo(() => {
   const fetchRemainingBudget = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/remaining", {
+      const response = await axios.get("http://localhost:5000/projection/remaining", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -256,7 +255,7 @@ const modalTotalCost = useMemo(() => {
   const fetchMaterials = useCallback(async () => {
     try {
       setMaterialLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://103.118.158.127/api/material/materials");
+      const response = await axios.get("http://localhost:5000/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -269,7 +268,7 @@ const modalTotalCost = useMemo(() => {
   const fetchUoms = useCallback(async () => {
     try {
       setMaterialLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://103.118.158.127/api/material/uom");
+      const response = await axios.get("http://localhost:5000/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -283,7 +282,7 @@ const modalTotalCost = useMemo(() => {
     try {
       setMaterialLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://103.118.158.127/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
+        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -391,7 +390,7 @@ const modalTotalCost = useMemo(() => {
     }
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://103.118.158.127/api/material/add-material", {
+      const response = await axios.post("http://localhost:5000/material/add-material", {
         item_name: inputValue.trim(),
       });
       if (response.data?.status === "success" && response.data?.data?.item_id) {
@@ -542,7 +541,7 @@ const modalTotalCost = useMemo(() => {
       };
       console.log("Updating assignment with ID:", editingAssignment.id);
       console.log("Payload:", payload);
-      await axios.put("http://103.118.158.127/api/material/assigned-materials", payload);
+      await axios.put("http://localhost:5000/material/assigned-materials", payload);
       Swal.fire({
         position: "top-end",
         icon: "success",
@@ -611,7 +610,7 @@ const modalTotalCost = useMemo(() => {
     if (result.isConfirmed) {
       try {
         console.log("Sending DELETE request for assignment ID:", assignmentId);
-        await axios.delete("http://103.118.158.127/api/material/assigned-materials", {
+        await axios.delete("http://localhost:5000/material/assigned-materials", {
           data: { assignment_id: assignmentId }
         });
         await fetchAssignedMaterials(selectedSite.value, selectedWorkDescription.value, projId);
@@ -714,7 +713,7 @@ const modalTotalCost = useMemo(() => {
         setMaterialError("Add at least one material.");
         return;
       }
-      await axios.post("http://103.118.158.127/api/material/assign-material", payload);
+      await axios.post("http://localhost:5000/material/assign-material", payload);
       Swal.fire({
         position: "top-end",
         icon: "success",
@@ -784,11 +783,11 @@ const modalTotalCost = useMemo(() => {
     }
   }, [activeMaterialProjId, handleTotalCostChangeForProjection]);
   // Updated: canAddProjection - check if previous is submitted
-  const canAddProjection = useMemo(() => {
-    if (projections.length === 1) return projections[0].submitted; // First must be submitted
-    const last = projections[projections.length - 1];
-    return last.submitted;
-  }, [projections]);
+const canAddProjection = useMemo(() => {
+  if (projections.length === 0) return false;
+  const last = projections[projections.length - 1];
+  return last.budgetAllocated && last.submitted;
+}, [projections]);
   // Updated default template
   const defaultProjectionTemplate = useCallback((id) => ({
     id,
@@ -821,7 +820,7 @@ const modalTotalCost = useMemo(() => {
   const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://103.118.158.127/api/admin/companies");
+      const response = await axios.get("http://localhost:5000/admin/companies");
       if (response.data.success) {
         const companyOptions = response.data.data.map((company) => ({
           value: company.company_id,
@@ -841,7 +840,7 @@ const modalTotalCost = useMemo(() => {
   const fetchProjects = useCallback(async (companyId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.127/api/admin/projects/${companyId}`);
+      const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
       if (response.data.success) {
         const projectOptions = response.data.data.map((project) => ({
           value: project.pd_id,
@@ -861,7 +860,7 @@ const modalTotalCost = useMemo(() => {
   const fetchSites = useCallback(async (projectId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.127/api/admin/sites/${projectId}`);
+      const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
       if (response.data.success) {
         const siteOptions = response.data.data.map((site) => ({
           value: site.site_id,
@@ -882,7 +881,7 @@ const modalTotalCost = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.127/api/admin/work-descriptions-by-site/${siteId}`
+        `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
       );
       if (response.data.success) {
         const descOptions = response.data.data.map((desc) => ({
@@ -904,7 +903,7 @@ const modalTotalCost = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.127/api/projection/po-total-budget/${siteId}/${descId}`
+        `http://localhost:5000/projection/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -924,7 +923,7 @@ const modalTotalCost = useMemo(() => {
   }, []);
   const checkBudgetExists = useCallback(async (siteId, descId) => {
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/saved-budgets", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success && response.data.data.length > 0) {
@@ -951,7 +950,7 @@ const modalTotalCost = useMemo(() => {
   const fetchAllPoBudgets = useCallback(async (siteId, descId) => {
     if (!siteId || !descId) return;
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/saved-budgets", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success) {
@@ -1014,7 +1013,7 @@ const modalTotalCost = useMemo(() => {
   }, [budgetData, defaultProjectionTemplate]);
   const fetchOverheads = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get("http://103.118.158.127/api/projection/overheads", {
+      const response = await axios.get("http://localhost:5000/projection/overheads", {
         params: po_budget_id ? { po_budget_id } : {},
       });
       if (response.data.success) {
@@ -1029,7 +1028,7 @@ const modalTotalCost = useMemo(() => {
   }, []);
   const fetchActualBudgetEntries = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get(`http://103.118.158.127/api/projection/actual-budget/${po_budget_id}`);
+      const response = await axios.get(`http://localhost:5000/projection/actual-budget/${po_budget_id}`);
       if (response.data.success) {
         const entries = response.data.data || {};
         setActualBudgetEntries(entries);
@@ -1049,7 +1048,7 @@ const modalTotalCost = useMemo(() => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
       const response = await axios.get(
-        `http://103.118.158.127/api/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
+        `http://localhost:5000/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
       );
       if (response.data.success) {
         setMaterialActual(parseFloat(response.data.data.material_used_actual_value) || 0);
@@ -1118,30 +1117,99 @@ const modalTotalCost = useMemo(() => {
   useEffect(() => {
     handleTotalCostChangeForActive(overallCost);
   }, [overallCost, handleTotalCostChangeForActive]);
-  // Projection management functions (unchanged except addNewProjection uses submitted)
-  const addNewProjection = useCallback(() => {
-    if (!canAddProjection) {
-      Swal.fire({
-        icon: "warning",
-        title: "Complete Current Projection",
-        text: "Please submit the current projection before adding a new one.",
-        confirmButtonColor: "#4f46e5",
-      });
-      return;
+
+  // Updated: addNewProjection - checks budgetAllocated first, then API for submitted
+const addNewProjection = useCallback(async () => {
+  if (projections.length === 0) {
+    // Allow first projection implicitly via initial state
+    return;
+  }
+
+  const lastProjection = projections[projections.length - 1];
+
+  // Check 1: Budget Allocated?
+  if (!lastProjection.budgetAllocated) {
+    Swal.fire({
+      icon: "warning",
+      title: "Allocate Budget First",
+      text: `Please allocate the budget for ${lastProjection.name} (Total % field) before adding a new projection.`,
+      confirmButtonColor: "#4f46e5",
+      footer: '<span class="text-xs text-gray-500">Budget allocation is required for cumulative progression.</span>',
+    });
+    return;
+  }
+
+  if (!selectedSite?.value || !selectedWorkDescription?.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Incomplete Selection",
+      text: "Please select a site and work description first.",
+      confirmButtonColor: "#4f46e5",
+    });
+    return;
+  }
+
+  try {
+    const response = await axios.get("http://localhost:5000/projection/check-final-submission-status", {
+      params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
+    });
+
+    if (response.data.success && response.data.data.length > 0) {
+      // Find the last projection from response data
+      const lastStatus = response.data.data.reduce((prev, curr) => 
+        (prev.projection_id || 0) > (curr.projection_id || 0) ? prev : curr
+      );
+      
+      if (lastStatus.submitted) {
+        // Proceed to add new projection
+        const prevProjection = projections[projections.length - 1];
+        const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
+        const initialPerc = prevProjection.budgetAllocated ? prevProjection.budgetPercentage : "0.00";
+        const newProjection = {
+          ...defaultProjectionTemplate(newProjectionId),
+          budgetPercentage: initialPerc,
+          budgetValue: ((parseFloat(initialPerc) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
+          isOpen: false,
+          prevRemainingBudget: prevProjection.remainingBudget || 0,
+          prevRemainingPercentage: prevProjection.remainingPercentage || 0
+        };
+        setProjections(prev => [...prev, newProjection]);
+        Swal.fire({
+          icon: "success",
+          title: "Projection Added",
+          text: `New projection "${newProjection.name}" created successfully!`,
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          background: "#ecfdf5",
+          iconColor: "#10b981",
+        });
+      } else {
+        // Show professional warning
+        Swal.fire({
+          icon: "warning",
+          title: "Finalize Current Projection",
+          text: `Please complete and submit ${lastProjection.name} before adding a new one to ensure accurate cumulative budgeting.`,
+          confirmButtonColor: "#4f46e5",
+          footer: '<span class="text-xs text-gray-500">This maintains the integrity of your projection sequence.</span>',
+        });
+      }
+    } else {
+      // No data, but since budgetAllocated checked, allow if first (edge case)
+      const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
+      const newProjection = defaultProjectionTemplate(newProjectionId);
+      setProjections(prev => [...prev, newProjection]);
     }
-    const prevProjection = projections[projections.length - 1];
-    const newProjectionId = Math.max(...projections.map(p => p.id)) + 1;
-    const initialPerc = prevProjection.budgetAllocated ? prevProjection.budgetPercentage : "0.00";
-    const newProjection = {
-      ...defaultProjectionTemplate(newProjectionId),
-      budgetPercentage: initialPerc,
-      budgetValue: ((parseFloat(initialPerc) / 100) * (budgetData?.total_po_value || 0)).toFixed(2),
-      isOpen: false,
-      prevRemainingBudget: prevProjection.remainingBudget || 0,
-      prevRemainingPercentage: prevProjection.remainingPercentage || 0
-    };
-    setProjections(prev => [...prev, newProjection]);
-  }, [projections, budgetData, defaultProjectionTemplate, canAddProjection]);
+  } catch (error) {
+    console.error("Error checking submission status:", error);
+    Swal.fire({
+      icon: "error",
+      title: "API Error",
+      text: "Failed to check projection status. Please try again.",
+      confirmButtonColor: "#4f46e5",
+    });
+  }
+}, [projections, budgetData, defaultProjectionTemplate, selectedSite, selectedWorkDescription]);
   const toggleProjection = useCallback((projectionId) => {
     setProjections(prev => prev.map(p =>
       p.id === projectionId ? { ...p, isOpen: !p.isOpen } : p
@@ -1350,7 +1418,7 @@ const modalTotalCost = useMemo(() => {
     const projection = projections.find(p => p.id === projectionId);
     if (!projection || !budgetData) return;
     try {
-      const response = await axios.post("http://103.118.158.127/api/projection/save-po-budget", {
+      const response = await axios.post("http://localhost:5000/projection/save-po-budget", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         total_po_value: budgetData.total_po_value,
@@ -1407,8 +1475,7 @@ const modalTotalCost = useMemo(() => {
         projection_id: projectionId // Added projection_id
       };
       console.log("Material Allocation Payload:", payload);
-      const response = await axios.post("http://103.118.158.127/api/projection/save-material-allocation", payload);
- 
+      const response = await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1448,8 +1515,7 @@ const modalTotalCost = useMemo(() => {
         projection_id: projectionId // Added projection_id
       };
       console.log("Labour Overhead Payload:", payload);
-      const response = await axios.post("http://103.118.158.127/api/projection/save-labour-overhead", payload);
- 
+      const response = await axios.post("http://localhost:5000/projection/save-labour-overhead", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1497,7 +1563,7 @@ const modalTotalCost = useMemo(() => {
     });
     if (result.isConfirmed) {
       try {
-        const response = await axios.delete("http://103.118.158.127/api/projection/delete-overhead", {
+        const response = await axios.delete("http://localhost:5000/projection/delete-overhead", {
           data: {
             site_id: selectedSite.value,
             desc_id: selectedWorkDescription.value,
@@ -1550,7 +1616,7 @@ const modalTotalCost = useMemo(() => {
     // If no po_budget_id, save po_budget first
     if (!po_budget_id) {
       try {
-        const saveResponse = await axios.post("http://103.118.158.127/api/projection/save-po-budget", {
+        const saveResponse = await axios.post("http://localhost:5000/projection/save-po-budget", {
           site_id: selectedSite?.value,
           desc_id: selectedWorkDescription?.value,
           total_po_value: budgetData.total_po_value,
@@ -1590,7 +1656,7 @@ const modalTotalCost = useMemo(() => {
     }
     // Removed: Collect entries and call save-actual-budget (now handled in backend final submission with aggregation)
     try {
-      const response = await axios.post("http://103.118.158.127/api/projection/final-projection-submission", {
+      const response = await axios.post("http://localhost:5000/projection/final-projection-submission", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         projection_id: projectionId,
@@ -1681,7 +1747,7 @@ const modalTotalCost = useMemo(() => {
         overhead_type: overheadName,
         projection_id: projectionId, // Added projection_id
       };
-      const response = await axios.post("http://103.118.158.127/api/projection/save-dynamic-overhead-values", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-dynamic-overhead-values", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1735,7 +1801,7 @@ const modalTotalCost = useMemo(() => {
     });
     if (expense_name) {
       try {
-        const response = await axios.post("http://103.118.158.127/api/projection/save-overhead", {
+        const response = await axios.post("http://localhost:5000/projection/save-overhead", {
           expense_name,
         });
         if (response.data.success) {
@@ -1903,7 +1969,7 @@ const modalTotalCost = useMemo(() => {
         if (submissionStatuses[proj.id]?.submitted || proj.submitted) fetchRemainingBudget(proj.id).catch(console.error);
       });
     }
-  }, [selectedSite?.value, selectedWorkDescription?.value, projections.map(p => p.id).join(',')]);
+  }, [selectedSite?.value, selectedWorkDescription?.value, projections.length]);
   // Updated ProjectionAccordion useMemo (add prev remaining display, remove edit/delete in summary, top-right delete only, pre-populate forms with allocated data, no small edit/delete below save)
   const materialOptions = useMemo(() => Array.isArray(materials)
     ? materials.map((material) => ({
@@ -2216,7 +2282,7 @@ const modalTotalCost = useMemo(() => {
                                   </div>
                                 </div>
                               )}
-                         
+                        
                               <div>
                                 <h3 className="text-lg font-semibold text-gray-800 mb-2">New Material Assignments</h3>
                                 {(materialAssignments[selectedWorkDescription.value] || []).map((mat, matIndex) => {
@@ -2603,7 +2669,7 @@ const modalTotalCost = useMemo(() => {
     <div className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-600 bg-clip-text text-transparent mb-2">
             Project Budget Allocation
           </h1>
           <p className="text-gray-600">Manage cumulative projections under PO budgets professionally</p>
@@ -2749,25 +2815,20 @@ const modalTotalCost = useMemo(() => {
         )}
         {budgetData && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Overhead Allocation Projections</h2>
-              <button
-                onClick={addNewProjection}
-                disabled={!canAddProjection}
-                className={`flex items-center px-6 py-3 font-semibold rounded-full transition-all duration-200 ${
-                  canAddProjection
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                <PlusCircle className="mr-2" size={20} />
-                Add New Projection
-              </button>
-            </div>
+      <div className="flex items-center justify-between mb-6">
+  <h2 className="text-2xl font-semibold text-gray-800">Overhead Allocation Projections</h2>
+  <button
+    onClick={addNewProjection}
+    className="flex items-center px-6 py-3 font-semibold rounded-full transition-all duration-200 bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  >
+    <PlusCircle className="mr-2" size={20} />
+    Add New Projection
+  </button>
+</div>
             {ProjectionAccordion}
           </div>
         )}
-   
+  
         {existingBudget && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
