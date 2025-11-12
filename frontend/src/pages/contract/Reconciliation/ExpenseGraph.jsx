@@ -51,7 +51,7 @@ const ExpenseGraph = () => {
       try {
         setLoadingFilters((p) => ({ ...p, companies: true }));
         setError(null);
-        const response = await axios.get("http://localhost:5000/admin/companies");
+        const response = await axios.get("http://103.118.158.33/api/admin/companies");
         const companiesData = response.data.data || [];
         setCompanies(companiesData);
         if (companiesData.length > 0) {
@@ -75,7 +75,7 @@ const ExpenseGraph = () => {
         try {
           setLoadingFilters((p) => ({ ...p, projects: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/projects/${selectedCompany.value}`);
+          const response = await axios.get(`http://103.118.158.33/api/admin/projects/${selectedCompany.value}`);
           const projectsData = response.data.data || [];
           setProjects(projectsData);
           if (projectsData.length > 0) {
@@ -108,7 +108,7 @@ const ExpenseGraph = () => {
         try {
           setLoadingFilters((p) => ({ ...p, sites: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/sites/${selectedProject.value}`);
+          const response = await axios.get(`http://103.118.158.33/api/admin/sites/${selectedProject.value}`);
           const sitesData = response.data.data || [];
           setSites(sitesData);
           if (sitesData.length > 0) {
@@ -139,7 +139,7 @@ const ExpenseGraph = () => {
         try {
           setLoadingFilters((p) => ({ ...p, workDescriptions: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/work-descriptions/${selectedSite.value}`);
+          const response = await axios.get(`http://103.118.158.33/api/admin/work-descriptions/${selectedSite.value}`);
           const descriptionsData = response.data.data || [];
           setWorkDescriptions(descriptionsData);
           if (descriptionsData.length > 0) {
@@ -169,7 +169,7 @@ const ExpenseGraph = () => {
         try {
           setLoadingData(true);
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/expense-details/${selectedSite.value}/${selectedDescription.value}`);
+          const response = await axios.get(`http://103.118.158.33/api/admin/expense-details/${selectedSite.value}/${selectedDescription.value}`);
           setExpenseDetails(response.data.data || null);
         } catch (err) {
           console.error("Failed to load expense data:", err);

@@ -80,10 +80,10 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
       try {
         const token = localStorage.getItem('token');
         const [countsRes, acksRes] = await Promise.all([
-          axios.get('http://localhost:5000/notification/counts', {
+          axios.get('http://103.118.158.33/api/notification/counts', {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:5000/notification/pending-acknowledgements', {
+          axios.get('http://103.118.158.33/api/notification/pending-acknowledgements', {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -121,7 +121,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
       const isEdited = mode === 'edited';
       if (tab === 'acknowledgements') {
         if (isEdited) {
-          res = await axios.get('http://localhost:5000/notification/edited-acknowledgements', {
+          res = await axios.get('http://103.118.158.33/api/notification/edited-acknowledgements', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -131,7 +131,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
             console.log('Fetched edited acknowledgements:', data);
           }
         } else {
-          res = await axios.get('http://localhost:5000/notification/pending-acknowledgements', {
+          res = await axios.get('http://103.118.158.33/api/notification/pending-acknowledgements', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -143,7 +143,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
         }
       } else if (tab === 'usages') {
         if (isEdited) {
-          res = await axios.get('http://localhost:5000/notification/edited-usages', {
+          res = await axios.get('http://103.118.158.33/api/notification/edited-usages', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -153,7 +153,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
             console.log('Fetched edited usages:', data);
           }
         } else {
-          res = await axios.get('http://localhost:5000/notification/pending-usages', {
+          res = await axios.get('http://103.118.158.33/api/notification/pending-usages', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -165,7 +165,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
         }
       } else if (tab === 'expenses') {
         if (isEdited) {
-          res = await axios.get('http://localhost:5000/notification/edited-expenses', {
+          res = await axios.get('http://103.118.158.33/api/notification/edited-expenses', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -175,7 +175,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
             console.log('Fetched edited expenses:', data);
           }
         } else {
-          res = await axios.get('http://localhost:5000/notification/pending-expense-entries', {
+          res = await axios.get('http://103.118.158.33/api/notification/pending-expense-entries', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -187,7 +187,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
         }
       } else if (tab === 'completions') {
         if (isEdited) {
-          res = await axios.get('http://localhost:5000/notification/edited-completion-entries', {
+          res = await axios.get('http://103.118.158.33/api/notification/edited-completion-entries', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -197,7 +197,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
             console.log('Fetched edited completions:', data);
           }
         } else {
-          res = await axios.get('http://localhost:5000/notification/pending-completion-entries', {
+          res = await axios.get('http://103.118.158.33/api/notification/pending-completion-entries', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -209,7 +209,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
         }
       } else if (tab === 'attendance') {
         if (isEdited) {
-          res = await axios.get('http://localhost:5000/notification/edited-attendance-entries', {
+          res = await axios.get('http://103.118.158.33/api/notification/edited-attendance-entries', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {
@@ -221,7 +221,7 @@ const AdminNotifications = ({ onClose, onCountUpdate }) => {
             console.error('Edited attendance fetch failed:', res.data);
           }
         } else {
-          res = await axios.get('http://localhost:5000/notification/pending-attendance-entries', {
+          res = await axios.get('http://103.118.158.33/api/notification/pending-attendance-entries', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (res.data.status === 'success') {

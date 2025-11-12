@@ -33,7 +33,7 @@ const SupplyMasterPoCreation = () => {
     const fetchCompanies = async () => {
       try {
         setLoading((prev) => ({ ...prev, companies: true }));
-        const response = await axios.get("http://localhost:5000/supply/companies");
+        const response = await axios.get("http://103.118.158.33/api/supply/companies");
         setCompanies(response.data || []);
       } catch (err) {
         Swal.fire({
@@ -61,7 +61,7 @@ const SupplyMasterPoCreation = () => {
         try {
           setLoading((prev) => ({ ...prev, sites: true }));
           const response = await axios.get(
-            `http://localhost:5000/supply/sites-by-company/${selectedCompanyId}`
+            `http://103.118.158.33/api/supply/sites-by-company/${selectedCompanyId}`
           );
           setSites(response.data.data || []);
         } catch (err) {
@@ -119,7 +119,7 @@ const SupplyMasterPoCreation = () => {
     setShowProjectModal(false);
     if (selectedCompanyId) {
       axios
-        .get(`http://localhost:5000/supply/sites-by-company/${selectedCompanyId}`)
+        .get(`http://103.118.158.33/api/supply/sites-by-company/${selectedCompanyId}`)
         .then((response) => {
           setSites(response.data.data || []);
         })

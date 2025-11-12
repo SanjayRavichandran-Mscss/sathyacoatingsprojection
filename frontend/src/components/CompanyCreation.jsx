@@ -101,10 +101,10 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statesRes = await axios.get("http://localhost:5000/project/states");
+        const statesRes = await axios.get("http://103.118.158.33/api/project/states");
         setStates(statesRes.data.data.map(s => ({ id: s.id, name: s.state_name })));
         
-        const citiesRes = await axios.get("http://localhost:5000/project/cities");
+        const citiesRes = await axios.get("http://103.118.158.33/api/project/cities");
         setCities(citiesRes.data.data.map(c => ({ id: c.id, name: c.city_name })));
       } catch (err) {
         setError("Failed to load cities and states.");
@@ -119,7 +119,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
 
   const addNewState = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/project/create-state", { state_name: name });
+      const res = await axios.post("http://103.118.158.33/api/project/create-state", { state_name: name });
       const newId = res.data.id;
       setStates(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -131,7 +131,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
 
   const addNewCity = async (name) => {
     try {
-      const res = await axios.post("http://localhost:5000/project/create-city", { city_name: name });
+      const res = await axios.post("http://103.118.158.33/api/project/create-city", { city_name: name });
       const newId = res.data.id;
       setCities(prev => [...prev, { id: newId, name }]);
       return newId;
@@ -155,7 +155,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
     setError(null);
 
     try {
-      await axios.post("http://localhost:5000/project/create-company", formData);
+      await axios.post("http://103.118.158.33/api/project/create-company", formData);
       setFormData({
         company_name: "",
         address: "",

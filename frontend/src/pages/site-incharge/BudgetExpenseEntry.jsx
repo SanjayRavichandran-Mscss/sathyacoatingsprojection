@@ -40,7 +40,7 @@
 //   useEffect(() => {
 //     const callCalculateLabourBudget = async () => {
 //       try {
-//         await axios.get("http://localhost:5000/site-incharge/calculate-labour-budget");
+//         await axios.get("http://103.118.158.33/api/site-incharge/calculate-labour-budget");
 //         // No need to handle response, as data is stored in actual_budget table
 //       } catch (error) {
 //         console.error("Error calling calculate-labour-budget API:", error.message);
@@ -140,7 +140,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await axios.get("http://localhost:5000/project/companies");
+//       const res = await axios.get("http://103.118.158.33/api/project/companies");
 //       setCompanies(res.data || []);
 //     } catch (error) {
 //       setError("Failed to fetch companies");
@@ -150,7 +150,7 @@
 
 //   const fetchProjectsForCompany = async (companyId) => {
 //     try {
-//       const res = await axios.get(`http://localhost:5000/project/projects-with-sites/${companyId}`);
+//       const res = await axios.get(`http://103.118.158.33/api/project/projects-with-sites/${companyId}`);
 //       setProjects(res.data || []);
 //     } catch (error) {
 //       setError("Failed to fetch projects");
@@ -160,7 +160,7 @@
 
 //   const fetchWorkDescriptions = async (siteId) => {
 //     try {
-//       const res = await axios.get(`http://localhost:5000/site-incharge/budget-work-descriptions/${siteId}`);
+//       const res = await axios.get(`http://103.118.158.33/api/site-incharge/budget-work-descriptions/${siteId}`);
 //       setWorkDescOptions(res.data.data || []);
 //     } catch (error) {
 //       setError("Failed to fetch work descriptions");
@@ -172,7 +172,7 @@
 //     setLoading(true);
 //     try {
 //       const response = await axios.get(
-//         `http://localhost:5000/site-incharge/budget-details?site_id=${siteId}`
+//         `http://103.118.158.33/api/site-incharge/budget-details?site_id=${siteId}`
 //       );
 //       setBudgetData(response.data.data || []);
 //       setError(null);
@@ -187,7 +187,7 @@
 //   const fetchExpenseDetails = async (budgetId) => {
 //     try {
 //       const response = await axios.get(
-//         `http://localhost:5000/site-incharge/budget-expense-details?actual_budget_id=${budgetId}&date=${selectedDate}`
+//         `http://103.118.158.33/api/site-incharge/budget-expense-details?actual_budget_id=${budgetId}&date=${selectedDate}`
 //       );
 //       setExpenseDetails(prev => ({
 //         ...prev,
@@ -217,7 +217,7 @@
 //         return;
 //       }
 
-//       const response = await axios.post("http://localhost:5000/site-incharge/save-budget-expense", {
+//       const response = await axios.post("http://103.118.158.33/api/site-incharge/save-budget-expense", {
 //         actual_budget_id: budgetId,
 //         entry_date: selectedDate,
 //         actual_value: inputData.actual_value !== "" ? parseFloat(inputData.actual_value) : null,
@@ -770,7 +770,7 @@ const BudgetExpenseEntry = () => {
   useEffect(() => {
     const callCalculateLabourBudget = async () => {
       try {
-        await axios.get("http://localhost:5000/site-incharge/calculate-labour-budget");
+        await axios.get("http://103.118.158.33/api/site-incharge/calculate-labour-budget");
         // No need to handle response, as data is stored in actual_budget table
       } catch (error) {
         console.error("Error calling calculate-labour-budget API:", error.message);
@@ -873,7 +873,7 @@ const BudgetExpenseEntry = () => {
 
   const fetchCompanies = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/project/companies");
+      const res = await axios.get("http://103.118.158.33/api/project/companies");
       setCompanies(res.data || []);
     } catch (error) {
       setError("Failed to fetch companies");
@@ -883,7 +883,7 @@ const BudgetExpenseEntry = () => {
 
   const fetchProjectsForCompany = async (companyId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/project/projects-with-sites/${companyId}`);
+      const res = await axios.get(`http://103.118.158.33/api/project/projects-with-sites/${companyId}`);
       setProjects(res.data || []);
     } catch (error) {
       setError("Failed to fetch projects");
@@ -893,7 +893,7 @@ const BudgetExpenseEntry = () => {
 
   const fetchWorkDescriptions = async (siteId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/site-incharge/budget-work-descriptions/${siteId}`);
+      const res = await axios.get(`http://103.118.158.33/api/site-incharge/budget-work-descriptions/${siteId}`);
       setWorkDescOptions(res.data.data || []);
     } catch (error) {
       setError("Failed to fetch work descriptions");
@@ -905,7 +905,7 @@ const BudgetExpenseEntry = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:5000/site-incharge/budget-details?site_id=${siteId}`
+        `http://103.118.158.33/api/site-incharge/budget-details?site_id=${siteId}`
       );
       setBudgetData(response.data.data || []);
       setError(null);
@@ -920,7 +920,7 @@ const BudgetExpenseEntry = () => {
   const fetchExpenseDetails = async (budgetId) => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/site-incharge/budget-expense-details?actual_budget_id=${budgetId}&date=${selectedDate}`
+        `http://103.118.158.33/api/site-incharge/budget-expense-details?actual_budget_id=${budgetId}&date=${selectedDate}`
       );
       setExpenseDetails(prev => ({
         ...prev,
@@ -958,10 +958,10 @@ const BudgetExpenseEntry = () => {
       if (isEditing) {
         payload.entry_id = parseInt(isEditing);
         payload.updated_by = parseInt(user_id);
-        response = await axios.put("http://localhost:5000/site-incharge/update-budget-expense-entry", payload);
+        response = await axios.put("http://103.118.158.33/api/site-incharge/update-budget-expense-entry", payload);
       } else {
         payload.created_by = parseInt(user_id);
-        response = await axios.post("http://localhost:5000/site-incharge/save-budget-expense", payload);
+        response = await axios.post("http://103.118.158.33/api/site-incharge/save-budget-expense", payload);
       }
 
       toast.success(response.data.message);
