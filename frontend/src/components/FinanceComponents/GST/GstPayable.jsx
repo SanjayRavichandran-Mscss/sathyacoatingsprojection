@@ -65,7 +65,7 @@
 
 //   const fetchBanks = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       const options = [
 //         { value: null, label: 'All Banks' },
 //         ...res.data.data.map(b => ({
@@ -81,7 +81,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/gst-companies');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/gst-companies');
 //       const options = res.data.data.map(c => ({ value: c.id, label: c.company_name }));
 //       setCompanies(options);
 //     } catch (err) {
@@ -93,7 +93,7 @@
 //     if (!selectedBank?.value) return;
 //     setLoading(true);
 //     try {
-//       const res = await axios.get(`http://localhost:5000/finance/gst-payables?finance_bank_id=${selectedBank.value}`);
+//       const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/gst-payables?finance_bank_id=${selectedBank.value}`);
 //       setList(res.data.data || []);
 //     } catch (err) {
 //       toast.error('Failed to load GST records');
@@ -104,7 +104,7 @@
 
 //   const handleCreateCompany = async (inputValue) => {
 //     try {
-//       const res = await axios.post('http://localhost:5000/finance/create-gst-company', {
+//       const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-gst-company', {
 //         company_name: inputValue.trim(),
 //         created_by: 1
 //       });
@@ -125,7 +125,7 @@
 //     }
 
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-gst-payable', {
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-gst-payable', {
 //         finance_gst_company_id: form.company.value,
 //         month: form.month,
 //         entry_type_id: parseInt(form.entry_type_id),
@@ -161,7 +161,7 @@
 
 //   const saveEdit = async () => {
 //     try {
-//       await axios.put(`http://localhost:5000/finance/update-gst-payable/${editingId}`, {
+//       await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-gst-payable/${editingId}`, {
 //         input_amount: parseFloat(editData.input_amount) || 0,
 //         output_amount: parseFloat(editData.output_amount) || 0,
 //         finance_bank_id: editData.finance_bank_id || null,
@@ -549,7 +549,7 @@ const GstPayable = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       const options = [
         { value: null, label: 'All Banks' },
         ...res.data.data.map(b => ({
@@ -565,7 +565,7 @@ const GstPayable = () => {
 
   const fetchCompanies = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/gst-companies');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/gst-companies');
       const options = res.data.data.map(c => ({ value: c.id, label: c.company_name }));
       setCompanies(options);
     } catch (err) {
@@ -577,7 +577,7 @@ const GstPayable = () => {
     if (!selectedBank?.value) return;
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/finance/gst-payables?finance_bank_id=${selectedBank.value}`);
+      const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/gst-payables?finance_bank_id=${selectedBank.value}`);
       setList(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load GST records');
@@ -593,7 +593,7 @@ const GstPayable = () => {
     }
 
     try {
-      const res = await axios.post('http://localhost:5000/finance/create-gst-company', {
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-gst-company', {
         company_name: inputValue.trim(),
         created_by: currentUserId  // Now uses real user
       });
@@ -618,7 +618,7 @@ const GstPayable = () => {
     }
 
     try {
-      await axios.post('http://localhost:5000/finance/create-gst-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-gst-payable', {
         finance_gst_company_id: form.company.value,
         month: form.month,
         entry_type_id: parseInt(form.entry_type_id),
@@ -659,7 +659,7 @@ const GstPayable = () => {
     }
 
     try {
-      await axios.put(`http://localhost:5000/finance/update-gst-payable/${editingId}`, {
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-gst-payable/${editingId}`, {
         input_amount: parseFloat(editData.input_amount) || 0,
         output_amount: parseFloat(editData.output_amount) || 0,
         finance_bank_id: editData.finance_bank_id || null,

@@ -15,7 +15,7 @@
 //   const [error, setError] = useState(null);
 
 //   const fetchCompanies = () => {
-//     fetch('http://localhost:5000/finance/companies-with-projects')
+//     fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects')
 //       .then((res) => res.json())
 //       .then(({ status, data: fetchedData }) => {
 //         if (status === 'success') {
@@ -32,7 +32,7 @@
 
 //   const fetchSiteIncharges = () => {
 //     if (!selectedProject) return;
-//     fetch(`http://localhost:5000/finance/site-incharges?pd_id=${selectedProject}`)
+//     fetch(`https://scpl.kggeniuslabs.com/api/finance/site-incharges?pd_id=${selectedProject}`)
 //       .then((res) => res.json())
 //       .then(({ status, data: fetchedData }) => {
 //         if (status === 'success') {
@@ -58,7 +58,7 @@
 
 //   const fetchExistingAttendances = () => {
 //     if (!selectedDate || !selectedProject) return;
-//     fetch(`http://localhost:5000/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`)
+//     fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`)
 //       .then((res) => res.json())
 //       .then(({ status, data: fetchedData }) => {
 //         if (status === 'success') {
@@ -188,7 +188,7 @@
 //     }];
 
 //     try {
-//       const response = await fetch('http://localhost:5000/finance/siteincharge-attendance', {
+//       const response = await fetch('https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance', {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json'
@@ -214,7 +214,7 @@
 //   };
 
 //   const viewHistory = async (assignId) => {
-//     fetch(`http://localhost:5000/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}&entry_date=${selectedDate}`)
+//     fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}&entry_date=${selectedDate}`)
 //       .then((res) => res.json())
 //       .then(({ status, data }) => {
 //         if (status === 'success') {
@@ -508,7 +508,7 @@ const SiteInchargeAttendance = () => {
 
   // Fetch companies
   useEffect(() => {
-    fetch('http://localhost:5000/finance/companies-with-projects')
+    fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects')
       .then(res => res.json())
       .then(({ status, data }) => {
         if (status === 'success') {
@@ -548,7 +548,7 @@ const SiteInchargeAttendance = () => {
 
     const controller = new AbortController();
 
-    fetch(`http://localhost:5000/finance/site-incharges?pd_id=${selectedProject}`, {
+    fetch(`https://scpl.kggeniuslabs.com/api/finance/site-incharges?pd_id=${selectedProject}`, {
       signal: controller.signal
     })
       .then(res => {
@@ -595,7 +595,7 @@ const SiteInchargeAttendance = () => {
 
     const controller = new AbortController();
 
-    fetch(`http://localhost:5000/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`, {
+    fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`, {
       signal: controller.signal
     })
       .then(res => res.json())
@@ -668,7 +668,7 @@ const SiteInchargeAttendance = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/finance/siteincharge-attendance', {
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -701,7 +701,7 @@ const SiteInchargeAttendance = () => {
 
   const viewHistory = async (assignId) => {
     try {
-      const res = await fetch(`http://localhost:5000/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}`);
+      const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}`);
       const { status, data } = await res.json();
       if (status === 'success' && data.length > 0) {
         setHistoryModal({ open: true, data, assignId });

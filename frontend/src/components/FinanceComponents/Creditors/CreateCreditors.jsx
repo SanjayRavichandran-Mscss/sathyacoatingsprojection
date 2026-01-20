@@ -57,7 +57,7 @@
 
 //   const loadClients = async () => {
 //     try {
-//       const response = await axios.get('http://localhost:5000/finance/view-creditors-client');
+//       const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
 //       setClients(response.data.data.map(client => ({ value: client.id, label: client.client_name })));
 //     } catch (error) {
 //       console.error('Error loading clients:', error);
@@ -75,7 +75,7 @@
 //         const newClientName = clientInputValue.trim();
 //         if (!newClientName) return;
 
-//         const response = await axios.post('http://localhost:5000/finance/create-creditors-client', {
+//         const response = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-creditors-client', {
 //           client_name: newClientName,
 //           created_by: null,
 //           updated_by: null
@@ -115,7 +115,7 @@
 
 //     setLoading(true);
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-creditors', formData);
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-creditors', formData);
 //       alert('Creditor created successfully!');
 //       onSuccess?.();
 //       // Reset form
@@ -470,7 +470,7 @@ const CreateCreditors = ({ onSuccess }) => {
 
   const loadClients = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/finance/view-creditors-client');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
       setClients(response.data.data.map(client => ({ value: client.id, label: client.client_name })));
     } catch (error) {
       console.error('Error loading clients:', error);
@@ -479,7 +479,7 @@ const CreateCreditors = ({ onSuccess }) => {
 
   const loadBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       if (res.data.status === 'success') {
         setBanks(res.data.data.map(bank => ({
           value: bank.id,
@@ -502,7 +502,7 @@ const CreateCreditors = ({ onSuccess }) => {
       if (!newClientName) return;
 
       try {
-        const response = await axios.post('http://localhost:5000/finance/create-creditors-client', {
+        const response = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-creditors-client', {
           client_name: newClientName,
           created_by: createdBy || null,
         });
@@ -530,7 +530,7 @@ const CreateCreditors = ({ onSuccess }) => {
       const name = bankInputValue.trim();
       if (!name) return;
       try {
-        const res = await axios.post('http://localhost:5000/finance/create-bank-master', {
+        const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-bank-master', {
           bank_name: name,
           available_balance: 0,
           created_by: createdBy || 1
@@ -568,7 +568,7 @@ const CreateCreditors = ({ onSuccess }) => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/finance/create-creditors', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-creditors', {
         ...formData,
         finance_bank_id: formData.finance_bank_id || null,
         created_by: createdBy || '1' // Auto from URL

@@ -22,7 +22,7 @@
 
 //   const fetchData = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/view-billed-debtors');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-billed-debtors');
 //       setData(res.data.data);
 //     } catch (err) {
 //       console.error(err);
@@ -169,7 +169,7 @@
 
 //   const fetchData = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/view-billed-debtors');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-billed-debtors');
 //       setData(res.data.data || []);
 //     } catch (err) {
 //       alert('Failed to load data');
@@ -180,7 +180,7 @@
 
 //   const fetchBanks = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       setBanks(res.data.data.map(b => ({ value: b.id, label: b.bank_name })));
 //     } catch (err) {
 //       console.error('Failed to load banks');
@@ -259,7 +259,7 @@
 //     };
 
 //     // Now sending to body-only route
-//     await axios.put('http://localhost:5000/finance/update-billed-debtors', payload);
+//     await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-billed-debtors', payload);
 
 //     alert('Updated successfully!');
 //     setEditItem(null);
@@ -677,7 +677,7 @@ const ViewBilledDebtors = () => {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/view-billed-debtors');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-billed-debtors');
       setData(res.data.data || []);
     } catch (err) {
       alert('Failed to load data');
@@ -688,7 +688,7 @@ const ViewBilledDebtors = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       setBanks(res.data.data.map(b => ({ value: b.id, label: b.bank_name })));
     } catch (err) {
       console.error('Failed to load banks');
@@ -769,7 +769,7 @@ const ViewBilledDebtors = () => {
         updated_by: currentUserId  // ← Real user from URL
       };
 
-      await axios.put('http://localhost:5000/finance/update-billed-debtors', payload);
+      await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-billed-debtors', payload);
 
       alert('Updated successfully!');
       setEditItem(null);

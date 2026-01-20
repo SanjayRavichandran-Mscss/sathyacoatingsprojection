@@ -20,7 +20,7 @@ const ReceivablesTable = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/finance/overall-receivable');
+        const response = await fetch('https://scpl.kggeniuslabs.com/api/finance/overall-receivable');
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }

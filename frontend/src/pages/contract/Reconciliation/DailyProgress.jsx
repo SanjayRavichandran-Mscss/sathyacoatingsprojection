@@ -33,7 +33,7 @@ const DailyProgress = () => {
       try {
         setLoadingFilters((p) => ({ ...p, companies: true }));
         setError(null);
-        const response = await axios.get("http://localhost:5000/admin/companies");
+        const response = await axios.get("https://scpl.kggeniuslabs.com/api/admin/companies");
         const companiesData = response.data.data || [];
         setCompanies(companiesData);
         if (companiesData.length > 0) {
@@ -57,7 +57,7 @@ const DailyProgress = () => {
         try {
           setLoadingFilters((p) => ({ ...p, projects: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/projects/${selectedCompany.value}`);
+          const response = await axios.get(`https://scpl.kggeniuslabs.com/api/admin/projects/${selectedCompany.value}`);
           const projectsData = response.data.data || [];
           setProjects(projectsData);
           if (projectsData.length > 0) {
@@ -90,7 +90,7 @@ const DailyProgress = () => {
         try {
           setLoadingFilters((p) => ({ ...p, sites: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/sites/${selectedProject.value}`);
+          const response = await axios.get(`https://scpl.kggeniuslabs.com/api/admin/sites/${selectedProject.value}`);
           const sitesData = response.data.data || [];
           setSites(sitesData);
           if (sitesData.length > 0) {
@@ -121,7 +121,7 @@ const DailyProgress = () => {
         try {
           setLoadingFilters((p) => ({ ...p, workDescriptions: true }));
           setError(null);
-          const response = await axios.get(`http://localhost:5000/admin/work-descriptions/${selectedSite.value}`);
+          const response = await axios.get(`https://scpl.kggeniuslabs.com/api/admin/work-descriptions/${selectedSite.value}`);
           const descriptionsData = response.data.data || [];
           setWorkDescriptions(descriptionsData);
           if (descriptionsData.length > 0) {
@@ -152,8 +152,8 @@ const DailyProgress = () => {
           setLoadingData(true);
           setError(null);
           const [completionResponse, poTotalsResponse] = await Promise.all([
-            axios.get(`http://localhost:5000/admin/completion-entries-by-site/${selectedSite.value}/${selectedDescription.value}`),
-            axios.get(`http://localhost:5000/admin/po-reckoner-totals/${selectedSite.value}/${selectedDescription.value}`)
+            axios.get(`https://scpl.kggeniuslabs.com/api/admin/completion-entries-by-site/${selectedSite.value}/${selectedDescription.value}`),
+            axios.get(`https://scpl.kggeniuslabs.com/api/admin/po-reckoner-totals/${selectedSite.value}/${selectedDescription.value}`)
           ]);
           setCompletionEntries(completionResponse.data.data || []);
           setPoTotals(poTotalsResponse.data.data || null);

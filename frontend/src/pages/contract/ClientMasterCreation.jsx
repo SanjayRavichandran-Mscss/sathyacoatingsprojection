@@ -39,7 +39,7 @@ const ClientMasterCreation = () => {
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/project/companies');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/project/companies');
       const data = Array.isArray(response.data) ? response.data : [];
       const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setClients(sortedData);
@@ -57,7 +57,7 @@ const ClientMasterCreation = () => {
 
   const fetchStates = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/project/states');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/project/states');
       setStates(response.data.data || []);
     } catch (error) {
       console.error("Error fetching states:", error);
@@ -66,7 +66,7 @@ const ClientMasterCreation = () => {
 
   const fetchCities = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/project/cities');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/project/cities');
       setCities(response.data.data || []);
     } catch (error) {
       console.error("Error fetching cities:", error);
@@ -159,7 +159,7 @@ const ClientMasterCreation = () => {
       }
 
       // Send update request with company_id in the body
-      await axios.put('http://localhost:5000/project/companies', {
+      await axios.put('https://scpl.kggeniuslabs.com/api/project/companies', {
         company_id: editedData.company_id,
         company_name: editedData.company_name,
         address: editedData.address,

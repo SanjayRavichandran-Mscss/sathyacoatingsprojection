@@ -40,7 +40,7 @@ const PayablesTable = ({ onTotalCalculated }) => {
     const fetchData = async () => {
       try {
         // Single API call for all balances
-        const overallRes = await fetch('http://localhost:5000/finance/overall-payable');
+        const overallRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/overall-payable');
         const overallData = await overallRes.json();
         if (overallData.status === 'success') {
           const d = overallData.data;
@@ -55,7 +55,7 @@ const PayablesTable = ({ onTotalCalculated }) => {
         }
 
         // Fetch Other Payables list for editing
-        const otherRes = await fetch('http://localhost:5000/finance/other-payables');
+        const otherRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/other-payables');
         const otherData = await otherRes.json();
         if (otherData.status === 'success') {
           setOtherPayables(otherData.data.slice(1));
@@ -99,7 +99,7 @@ const PayablesTable = ({ onTotalCalculated }) => {
     if (!newPayableName.trim()) return alert('Please enter payable name');
 
     try {
-      await axios.post('http://localhost:5000/finance/create-other-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-other-payable', {
         payable_name: newPayableName.trim(),
         payable_amount: 0,
         created_by: '1',
@@ -108,7 +108,7 @@ const PayablesTable = ({ onTotalCalculated }) => {
       setNewPayableName('');
       setShowModal(false);
       // Refresh other payables
-      const res = await fetch('http://localhost:5000/finance/other-payables');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/other-payables');
       const data = await res.json();
       if (data.status === 'success') {
         setOverallOther(data.data[0].overall_payable_amount || 0);
@@ -131,14 +131,14 @@ const PayablesTable = ({ onTotalCalculated }) => {
     if (!item) return;
 
     try {
-      await axios.post('http://localhost:5000/finance/create-other-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-other-payable', {
         payable_name: item.payable_name,
         payable_amount: amount,
         updated_by: '1'
       });
       setEditingId(null);
       // Refresh
-      const res = await fetch('http://localhost:5000/finance/other-payables');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/other-payables');
       const data = await res.json();
       if (data.status === 'success') {
         setOverallOther(data.data[0].overall_payable_amount || 0);

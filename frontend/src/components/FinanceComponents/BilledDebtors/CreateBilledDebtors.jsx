@@ -86,28 +86,28 @@
 
 //   const fetchParties = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/parties');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/parties');
 //       setParties(res.data.data || []);
 //     } catch (err) { setErrorMsg('Failed to load parties'); }
 //   };
 
 //   const fetchBanks = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       setBanks(res.data.data || []);
 //     } catch (err) { setErrorMsg('Failed to load banks'); }
 //   };
 
 //   const fetchItems = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/items');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/items');
 //       setItems(res.data.data || []);
 //     } catch (err) { setErrorMsg('Failed to load items'); }
 //   };
 
 //   const fetchUoms = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/uoms');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/uoms');
 //       setUoms(res.data.data || []);
 //     } catch (err) { setErrorMsg('Failed to load UOMs'); }
 //   };
@@ -116,7 +116,7 @@
 //     const trimmed = inputValue.trim();
 //     if (!trimmed) return;
 //     try {
-//       const res = await axios.post('http://localhost:5000/finance/create-party', {
+//       const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-party', {
 //         party_name: trimmed,
 //         created_by: createdBy
 //       });
@@ -133,7 +133,7 @@
 //     const trimmed = inputValue.trim();
 //     if (!trimmed) return;
 //     try {
-//       const res = await axios.post('http://localhost:5000/finance/create-item', {
+//       const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-item', {
 //         item_name: trimmed,
 //         created_by: createdBy
 //       });
@@ -208,7 +208,7 @@
 
 //     setLoading(true);
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-billed-debtors', {
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-billed-debtors', {
 //         ...formData,
 //         finance_bank_id: formData.finance_bank_id,
 //         quantity: parseFloat(formData.quantity) || 0,
@@ -610,28 +610,28 @@ const CreateBilledDebtors = ({ onClose, onSuccess }) => {
 
   const fetchParties = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/parties');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/parties');
       setParties(res.data.data || []);
     } catch (err) { setErrorMsg('Failed to load parties'); }
   };
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       setBanks(res.data.data || []);
     } catch (err) { setErrorMsg('Failed to load banks'); }
   };
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/items');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/items');
       setItems(res.data.data || []);
     } catch (err) { setErrorMsg('Failed to load items'); }
   };
 
   const fetchUoms = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/uoms');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/uoms');
       setUoms(res.data.data || []);
     } catch (err) { setErrorMsg('Failed to load UOMs'); }
   };
@@ -640,7 +640,7 @@ const CreateBilledDebtors = ({ onClose, onSuccess }) => {
     const trimmed = inputValue.trim();
     if (!trimmed || !currentUserId) return;
     try {
-      const res = await axios.post('http://localhost:5000/finance/create-party', {
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-party', {
         party_name: trimmed,
         created_by: currentUserId  // ← Real user
       });
@@ -657,7 +657,7 @@ const CreateBilledDebtors = ({ onClose, onSuccess }) => {
     const trimmed = inputValue.trim();
     if (!trimmed || !currentUserId) return;
     try {
-      const res = await axios.post('http://localhost:5000/finance/create-item', {
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-item', {
         item_name: trimmed,
         created_by: currentUserId  // ← Real user
       });
@@ -736,7 +736,7 @@ const CreateBilledDebtors = ({ onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/finance/create-billed-debtors', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-billed-debtors', {
         ...formData,
         finance_bank_id: formData.finance_bank_id,
         quantity: parseFloat(formData.quantity) || 0,

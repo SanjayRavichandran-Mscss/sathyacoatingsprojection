@@ -47,9 +47,9 @@
 //     const fetchInitial = async () => {
 //       try {
 //         const [compRes, bankRes, catRes] = await Promise.all([
-//           axios.get('http://localhost:5000/finance/companies-with-projects'),
-//           axios.get('http://localhost:5000/finance/bank-masters'),
-//           axios.get('http://localhost:5000/finance/cost-categories')
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories')
 //         ]);
 
 //         if (compRes.data.status === 'success') {
@@ -89,7 +89,7 @@
 //     }
 //     setLoading(true);
 //     try {
-//       const res = await axios.get(`http://localhost:5000/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`);
+//       const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`);
 //       if (res.data.status === 'success') {
 //         setEntries(res.data.data.slice(1)); // skip summary
 //       }
@@ -166,8 +166,8 @@
 
 //     const isNew = modalMode === 'add';
 //     const url = isNew
-//       ? 'http://localhost:5000/finance/create-transport-payable'
-//       : `http://localhost:5000/finance/update-transport-payable/${formData.id}`;
+//       ? 'https://scpl.kggeniuslabs.com/api/finance/create-transport-payable'
+//       : `https://scpl.kggeniuslabs.com/api/finance/update-transport-payable/${formData.id}`;
 
 //     try {
 //       const res = await axios({ method: isNew ? 'POST' : 'PUT', url, data: payload });
@@ -488,10 +488,10 @@ const TransportPayablesModal = ({ onClose, createdBy }) => {
     const fetchInitial = async () => {
       try {
         const [compRes, bankRes, catRes, dcRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/bank-masters'),
-          axios.get('http://localhost:5000/finance/cost-categories'),
-          axios.get('http://localhost:5000/finance/existing-dc-numbers') // Correct endpoint
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/existing-dc-numbers') // Correct endpoint
         ]);
 
         if (compRes.data.status === 'success') {
@@ -547,7 +547,7 @@ const TransportPayablesModal = ({ onClose, createdBy }) => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`
+        `https://scpl.kggeniuslabs.com/api/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`
       );
       if (res.data.status === 'success') {
         setEntries(res.data.data.slice(1)); // Skip summary row
@@ -632,8 +632,8 @@ const TransportPayablesModal = ({ onClose, createdBy }) => {
 
     const isNew = modalMode === 'add';
     const url = isNew
-      ? 'http://localhost:5000/finance/create-transport-payable'
-      : `http://localhost:5000/finance/update-transport-payable/${formData.id}`;
+      ? 'https://scpl.kggeniuslabs.com/api/finance/create-transport-payable'
+      : `https://scpl.kggeniuslabs.com/api/finance/update-transport-payable/${formData.id}`;
 
     try {
       await axios({

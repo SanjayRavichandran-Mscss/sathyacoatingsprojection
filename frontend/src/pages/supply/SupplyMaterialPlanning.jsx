@@ -114,7 +114,7 @@ const SupplyMaterialPlanning = () => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://localhost:5000/supply/companies");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/supply/companies");
       const fetchedCompanies = Array.isArray(response.data) ? response.data : [];
       setCompanies(fetchedCompanies);
     } catch (error) {
@@ -129,7 +129,7 @@ const SupplyMaterialPlanning = () => {
   const fetchProjectsAndSites = async (companyId) => {
     try {
       setLoading((prev) => ({ ...prev, projects: true, sites: true }));
-      const response = await axios.get(`http://localhost:5000/supply/sites-by-company/${companyId}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/supply/sites-by-company/${companyId}`);
       const sitesData = Array.isArray(response.data.data) ? response.data.data : [];
       setAllSites(sitesData);
 
@@ -161,7 +161,7 @@ const SupplyMaterialPlanning = () => {
   const fetchMaterials = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -176,7 +176,7 @@ const SupplyMaterialPlanning = () => {
   const fetchUoms = async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -191,7 +191,7 @@ const SupplyMaterialPlanning = () => {
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       setModalError(null);
-      const response = await axios.get(`http://localhost:5000/supply/assigned-materials?site_id=${site_id}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/supply/assigned-materials?site_id=${site_id}`);
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setAssignedMaterials(assignedMaterials);
     } catch (error) {
@@ -352,7 +352,7 @@ const SupplyMaterialPlanning = () => {
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -479,7 +479,7 @@ const SupplyMaterialPlanning = () => {
         return;
       }
 
-      await axios.post("http://localhost:5000/supply/assign-material", payload);
+      await axios.post("https://scpl.kggeniuslabs.com/api/supply/assign-material", payload);
 
       Swal.fire({
         position: "top-end",

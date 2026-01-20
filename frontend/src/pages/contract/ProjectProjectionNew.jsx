@@ -200,7 +200,7 @@ const modalTotalCost = useMemo(() => {
   const fetchSubmissionStatuses = useCallback(async () => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://localhost:5000/projection/check-final-submission-status", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/check-final-submission-status", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
       });
       if (response.data.success) {
@@ -223,7 +223,7 @@ const modalTotalCost = useMemo(() => {
   const fetchAllocatedOverheads = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://localhost:5000/projection/allocated", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/allocated", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -239,7 +239,7 @@ const modalTotalCost = useMemo(() => {
   const fetchRemainingBudget = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://localhost:5000/projection/remaining", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/remaining", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -255,7 +255,7 @@ const modalTotalCost = useMemo(() => {
   const fetchMaterials = useCallback(async () => {
     try {
       setMaterialLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -268,7 +268,7 @@ const modalTotalCost = useMemo(() => {
   const fetchUoms = useCallback(async () => {
     try {
       setMaterialLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -282,7 +282,7 @@ const modalTotalCost = useMemo(() => {
     try {
       setMaterialLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
+        `https://scpl.kggeniuslabs.com/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -390,7 +390,7 @@ const modalTotalCost = useMemo(() => {
     }
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/material/add-material", {
         item_name: inputValue.trim(),
       });
       if (response.data?.status === "success" && response.data?.data?.item_id) {
@@ -541,7 +541,7 @@ const modalTotalCost = useMemo(() => {
       };
       console.log("Updating assignment with ID:", editingAssignment.id);
       console.log("Payload:", payload);
-      await axios.put("http://localhost:5000/material/assigned-materials", payload);
+      await axios.put("https://scpl.kggeniuslabs.com/api/material/assigned-materials", payload);
       Swal.fire({
         position: "top-end",
         icon: "success",
@@ -610,7 +610,7 @@ const modalTotalCost = useMemo(() => {
     if (result.isConfirmed) {
       try {
         console.log("Sending DELETE request for assignment ID:", assignmentId);
-        await axios.delete("http://localhost:5000/material/assigned-materials", {
+        await axios.delete("https://scpl.kggeniuslabs.com/api/material/assigned-materials", {
           data: { assignment_id: assignmentId }
         });
         await fetchAssignedMaterials(selectedSite.value, selectedWorkDescription.value, projId);
@@ -713,7 +713,7 @@ const modalTotalCost = useMemo(() => {
         setMaterialError("Add at least one material.");
         return;
       }
-      await axios.post("http://localhost:5000/material/assign-material", payload);
+      await axios.post("https://scpl.kggeniuslabs.com/api/material/assign-material", payload);
       Swal.fire({
         position: "top-end",
         icon: "success",
@@ -820,7 +820,7 @@ const canAddProjection = useMemo(() => {
   const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/admin/companies");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/admin/companies");
       if (response.data.success) {
         const companyOptions = response.data.data.map((company) => ({
           value: company.company_id,
@@ -840,7 +840,7 @@ const canAddProjection = useMemo(() => {
   const fetchProjects = useCallback(async (companyId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/admin/projects/${companyId}`);
       if (response.data.success) {
         const projectOptions = response.data.data.map((project) => ({
           value: project.pd_id,
@@ -860,7 +860,7 @@ const canAddProjection = useMemo(() => {
   const fetchSites = useCallback(async (projectId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/admin/sites/${projectId}`);
       if (response.data.success) {
         const siteOptions = response.data.data.map((site) => ({
           value: site.site_id,
@@ -881,7 +881,7 @@ const canAddProjection = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
+        `https://scpl.kggeniuslabs.com/api/admin/work-descriptions-by-site/${siteId}`
       );
       if (response.data.success) {
         const descOptions = response.data.data.map((desc) => ({
@@ -903,7 +903,7 @@ const canAddProjection = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:5000/projection/po-total-budget/${siteId}/${descId}`
+        `https://scpl.kggeniuslabs.com/api/projection/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -923,7 +923,7 @@ const canAddProjection = useMemo(() => {
   }, []);
   const checkBudgetExists = useCallback(async (siteId, descId) => {
     try {
-      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success && response.data.data.length > 0) {
@@ -950,7 +950,7 @@ const canAddProjection = useMemo(() => {
   const fetchAllPoBudgets = useCallback(async (siteId, descId) => {
     if (!siteId || !descId) return;
     try {
-      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success) {
@@ -1013,7 +1013,7 @@ const canAddProjection = useMemo(() => {
   }, [budgetData, defaultProjectionTemplate]);
   const fetchOverheads = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get("http://localhost:5000/projection/overheads", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/overheads", {
         params: po_budget_id ? { po_budget_id } : {},
       });
       if (response.data.success) {
@@ -1028,7 +1028,7 @@ const canAddProjection = useMemo(() => {
   }, []);
   const fetchActualBudgetEntries = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/projection/actual-budget/${po_budget_id}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/projection/actual-budget/${po_budget_id}`);
       if (response.data.success) {
         const entries = response.data.data || {};
         setActualBudgetEntries(entries);
@@ -1048,7 +1048,7 @@ const canAddProjection = useMemo(() => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
       const response = await axios.get(
-        `http://localhost:5000/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
+        `https://scpl.kggeniuslabs.com/api/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
       );
       if (response.data.success) {
         setMaterialActual(parseFloat(response.data.data.material_used_actual_value) || 0);
@@ -1150,7 +1150,7 @@ const addNewProjection = useCallback(async () => {
   }
 
   try {
-    const response = await axios.get("http://localhost:5000/projection/check-final-submission-status", {
+    const response = await axios.get("https://scpl.kggeniuslabs.com/api/projection/check-final-submission-status", {
       params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
     });
 
@@ -1418,7 +1418,7 @@ const addNewProjection = useCallback(async () => {
     const projection = projections.find(p => p.id === projectionId);
     if (!projection || !budgetData) return;
     try {
-      const response = await axios.post("http://localhost:5000/projection/save-po-budget", {
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-po-budget", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         total_po_value: budgetData.total_po_value,
@@ -1475,7 +1475,7 @@ const addNewProjection = useCallback(async () => {
         projection_id: projectionId // Added projection_id
       };
       console.log("Material Allocation Payload:", payload);
-      const response = await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-material-allocation", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1515,7 +1515,7 @@ const addNewProjection = useCallback(async () => {
         projection_id: projectionId // Added projection_id
       };
       console.log("Labour Overhead Payload:", payload);
-      const response = await axios.post("http://localhost:5000/projection/save-labour-overhead", payload);
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-labour-overhead", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1563,7 +1563,7 @@ const addNewProjection = useCallback(async () => {
     });
     if (result.isConfirmed) {
       try {
-        const response = await axios.delete("http://localhost:5000/projection/delete-overhead", {
+        const response = await axios.delete("https://scpl.kggeniuslabs.com/api/projection/delete-overhead", {
           data: {
             site_id: selectedSite.value,
             desc_id: selectedWorkDescription.value,
@@ -1616,7 +1616,7 @@ const addNewProjection = useCallback(async () => {
     // If no po_budget_id, save po_budget first
     if (!po_budget_id) {
       try {
-        const saveResponse = await axios.post("http://localhost:5000/projection/save-po-budget", {
+        const saveResponse = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-po-budget", {
           site_id: selectedSite?.value,
           desc_id: selectedWorkDescription?.value,
           total_po_value: budgetData.total_po_value,
@@ -1656,7 +1656,7 @@ const addNewProjection = useCallback(async () => {
     }
     // Removed: Collect entries and call save-actual-budget (now handled in backend final submission with aggregation)
     try {
-      const response = await axios.post("http://localhost:5000/projection/final-projection-submission", {
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/final-projection-submission", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         projection_id: projectionId,
@@ -1747,7 +1747,7 @@ const addNewProjection = useCallback(async () => {
         overhead_type: overheadName,
         projection_id: projectionId, // Added projection_id
       };
-      const response = await axios.post("http://localhost:5000/projection/save-dynamic-overhead-values", payload);
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-dynamic-overhead-values", payload);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -1801,7 +1801,7 @@ const addNewProjection = useCallback(async () => {
     });
     if (expense_name) {
       try {
-        const response = await axios.post("http://localhost:5000/projection/save-overhead", {
+        const response = await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-overhead", {
           expense_name,
         });
         if (response.data.success) {

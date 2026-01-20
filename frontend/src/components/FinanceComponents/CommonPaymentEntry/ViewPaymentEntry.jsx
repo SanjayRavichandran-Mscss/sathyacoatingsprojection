@@ -118,7 +118,7 @@
 
 //   // API Fetching Logic
 //   useEffect(() => {
-//     const API_URL = 'http://localhost:5000/finance/cpe-data';
+//     const API_URL = 'https://scpl.kggeniuslabs.com/api/finance/cpe-data';
 
 //     const fetchData = async () => {
 //       try {
@@ -696,7 +696,7 @@ const ViewPaymentEntry = () => {
   const [toDate, setToDate] = useState('');
   // API Fetching Logic
   useEffect(() => {
-    const API_URL = 'http://localhost:5000/finance/cpe-data';
+    const API_URL = 'https://scpl.kggeniuslabs.com/api/finance/cpe-data';
     const fetchData = async () => {
       try {
         const response = await fetch(API_URL);

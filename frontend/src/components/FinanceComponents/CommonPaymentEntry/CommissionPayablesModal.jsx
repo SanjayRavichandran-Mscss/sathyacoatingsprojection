@@ -40,10 +40,10 @@ const CommissionPayablesModal = ({ onClose, createdBy }) => {
     const loadData = async () => {
       try {
         const [projRes, bankRes, catRes, personRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/bank-masters'),
-          axios.get('http://localhost:5000/finance/cost-categories'),
-          axios.get('http://localhost:5000/finance/marketing-persons')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/marketing-persons')
         ]);
 
         const allProjects = projRes.data.data.flatMap(c => c.projects?.map(p => ({ pd_id: p.pd_id, project_name: p.project_name })) || []);
@@ -66,7 +66,7 @@ const CommissionPayablesModal = ({ onClose, createdBy }) => {
     }
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/finance/commission-payables?pd_id=${pdId}&bank_id=${bankId}`);
+      const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/commission-payables?pd_id=${pdId}&bank_id=${bankId}`);
       setList(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load records');
@@ -118,7 +118,7 @@ const CommissionPayablesModal = ({ onClose, createdBy }) => {
     };
 
     try {
-      await axios.put(`http://localhost:5000/finance/update-commission-payable/${editingRowId}`, payload);
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-commission-payable/${editingRowId}`, payload);
       toast.success('Updated!');
       cancelEdit();
       loadData();
@@ -140,7 +140,7 @@ const CommissionPayablesModal = ({ onClose, createdBy }) => {
     };
 
     try {
-      await axios.post('http://localhost:5000/finance/create-commission-payable', payload);
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-commission-payable', payload);
       toast.success('Record created!');
       setShowAddModal(false);
       setNewRecord({

@@ -27,7 +27,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/companies-with-projects');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCompanies(data);
@@ -42,7 +42,7 @@
 
 //   const fetchCreditorsClients = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/view-creditors-client');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCreditorsClients(data.map(c => ({ value: c.id, label: c.client_name })));
@@ -54,7 +54,7 @@
 
 //   const fetchCostCategories = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/cost-categories');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCostCategories(data.map(c => ({ value: c.id, label: c.category_name })));
@@ -72,7 +72,7 @@
 //     setLoading(true);
 //     setError(null);
 //     try {
-//       const res = await fetch(`http://localhost:5000/finance/scaffolding-payables?pd_id=${selectedProject}`);
+//       const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/scaffolding-payables?pd_id=${selectedProject}`);
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         const individuals = data.filter(item => item.id !== undefined);
@@ -146,8 +146,8 @@
 
 //     const isNew = editingId === 'new';
 //     const url = isNew
-//       ? 'http://localhost:5000/finance/create-scaffolding-payable'
-//       : `http://localhost:5000/finance/update-scaffolding-payable/${editingId}`;
+//       ? 'https://scpl.kggeniuslabs.com/api/finance/create-scaffolding-payable'
+//       : `https://scpl.kggeniuslabs.com/api/finance/update-scaffolding-payable/${editingId}`;
 
 //     try {
 //       const res = await fetch(url, {
@@ -610,7 +610,7 @@ const ScaffoldingPayable = () => {
   // Fetch Functions
   const fetchCompanies = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/companies-with-projects');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
       const { status, data } = await res.json();
       if (status === 'success') setCompanies(data);
     } catch (err) { console.error('Failed to load companies'); }
@@ -618,7 +618,7 @@ const ScaffoldingPayable = () => {
 
   const fetchCreditorsClients = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/view-creditors-client');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
       const { status, data } = await res.json();
       if (status === 'success') {
         setCreditorsClients(data.map(c => ({ value: c.id, label: c.client_name })));
@@ -628,7 +628,7 @@ const ScaffoldingPayable = () => {
 
   const fetchCostCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/cost-categories');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
       const { status, data } = await res.json();
       if (status === 'success') {
         setCostCategories(data.map(c => ({ value: c.id, label: c.category_name })));
@@ -638,7 +638,7 @@ const ScaffoldingPayable = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/bank-masters');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       const { status, data } = await res.json();
       if (status === 'success') {
         setBankOptions(data.map(b => ({
@@ -653,7 +653,7 @@ const ScaffoldingPayable = () => {
     if (!selectedProject || !selectedBank) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/finance/scaffolding-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`);
+      const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/scaffolding-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`);
       const { status, data } = await res.json();
       if (status === 'success') {
         const [, ...rows] = data || [];
@@ -672,8 +672,8 @@ const ScaffoldingPayable = () => {
 
     const isNew = modalMode === 'add';
     const url = isNew
-      ? 'http://localhost:5000/finance/create-scaffolding-payable'
-      : `http://localhost:5000/finance/update-scaffolding-payable/${currentEntry.id}`;
+      ? 'https://scpl.kggeniuslabs.com/api/finance/create-scaffolding-payable'
+      : `https://scpl.kggeniuslabs.com/api/finance/update-scaffolding-payable/${currentEntry.id}`;
 
     const body = {
       ...payload,

@@ -151,10 +151,10 @@ const ScaffoldingPayablesModal = ({ onClose, createdBy }) => {
     const loadData = async () => {
       try {
         const [compRes, clientRes, catRes, bankRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/view-creditors-client'),
-          axios.get('http://localhost:5000/finance/cost-categories'),
-          axios.get('http://localhost:5000/finance/bank-masters')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
         ]);
 
         setCompanies(compRes.data.data || []);
@@ -182,7 +182,7 @@ const ScaffoldingPayablesModal = ({ onClose, createdBy }) => {
     if (!selectedProject || !selectedBank) return;
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/finance/scaffolding-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`);
+      const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/scaffolding-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`);
       if (res.data.status === 'success') {
         setEntries(res.data.data.slice(1));
       }
@@ -197,8 +197,8 @@ const ScaffoldingPayablesModal = ({ onClose, createdBy }) => {
   const handleSave = async (payload) => {
     const isNew = modalMode === 'add';
     const url = isNew
-      ? 'http://localhost:5000/finance/create-scaffolding-payable'
-      : `http://localhost:5000/finance/update-scaffolding-payable/${currentEntry.id}`;
+      ? 'https://scpl.kggeniuslabs.com/api/finance/create-scaffolding-payable'
+      : `https://scpl.kggeniuslabs.com/api/finance/update-scaffolding-payable/${currentEntry.id}`;
 
     try {
       await axios({ method: isNew ? 'POST' : 'PUT', url, data: { ...payload, pd_id: selectedProject, finance_bank_id: selectedBank.value, created_by: createdBy, updated_by: createdBy } });
