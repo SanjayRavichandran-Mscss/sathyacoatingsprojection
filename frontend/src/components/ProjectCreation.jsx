@@ -53,12 +53,12 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         reckonerTypesResponse,
         employeesResponse,
       ] = await Promise.all([
-        axios.get(`http://103.118.158.33/api/project/companies/${companyId}`),
-        axios.get("http://103.118.158.33/api/project/site-incharges"),
-        axios.get(`http://103.118.158.33/api/project/projects/${companyId}`),
-        axios.get(`http://103.118.158.33/api/project/locations`),
-        axios.get(`http://103.118.158.33/api/project/reckoner-types`),
-        axios.get("http://103.118.158.33/api/material/employees"),
+        axios.get(`http://localhost:5000/project/companies/${companyId}`),
+        axios.get("http://localhost:5000/project/site-incharges"),
+        axios.get(`http://localhost:5000/project/projects/${companyId}`),
+        axios.get(`http://localhost:5000/project/locations`),
+        axios.get(`http://localhost:5000/project/reckoner-types`),
+        axios.get("http://localhost:5000/material/employees"),
       ]);
 
       setCompanyName(companyResponse.data.company_name || "Unknown Company");
@@ -88,7 +88,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         if (!isCustomPoNumber) {
           try {
             const response = await axios.get(
-              `http://103.118.158.33/api/project/next-po-number/${formData.reckoner_type_id}`
+              `http://localhost:5000/project/next-po-number/${formData.reckoner_type_id}`
             );
             setFormData((prev) => ({ ...prev, po_number: response.data.po_number }));
           } catch (error) {
@@ -237,7 +237,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
       };
 
       // Submit data
-      const response = await axios.post("http://103.118.158.33/api/project/create-project-site", projectData);
+      const response = await axios.post("http://localhost:5000/project/create-project-site", projectData);
 
       // Reset form and show success
       setFormData({

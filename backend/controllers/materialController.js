@@ -4,7 +4,7 @@ exports.test = async (req, res) => {
   try {
     res.status(200).json({
       status: 'success',
-      message: 'Test API is working',
+      message: 'Material Test API is working',
       data: null
     });
   } catch (error) {

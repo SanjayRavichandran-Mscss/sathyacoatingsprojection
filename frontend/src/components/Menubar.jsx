@@ -20,7 +20,7 @@
   //   const fetchCount = async () => {
   //     try {
   //       const token = localStorage.getItem('token');
-  //       const res = await axios.get('http://103.118.158.33/api/notification/counts', {
+  //       const res = await axios.get('http://localhost:5000/notification/counts', {
   //         headers: { Authorization: `Bearer ${token}` }
   //       });
   //       if (res.data.status === 'success') {
@@ -52,7 +52,7 @@
 
   //   const handleLogout = async () => {
   //     try {
-  //       await axios.post('http://103.118.158.33/api/auth/logout');
+  //       await axios.post('http://localhost:5000/auth/logout');
   //       localStorage.removeItem('token');
   //       localStorage.removeItem('encodedUserId');
   //       localStorage.removeItem('loginTime');
@@ -203,7 +203,7 @@ const Menubar = ({ onMobileMenuToggle }) => {
   const fetchCount = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://103.118.158.33/api/notification/counts', {
+      const res = await axios.get('http://localhost:5000/notification/counts', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.status === 'success') {
@@ -235,7 +235,7 @@ const Menubar = ({ onMobileMenuToggle }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://103.118.158.33/api/auth/logout');
+      await axios.post('http://localhost:5000/auth/logout');
       localStorage.removeItem('token');
       localStorage.removeItem('encodedUserId');
       localStorage.removeItem('loginTime');

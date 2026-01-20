@@ -135,7 +135,7 @@ const expenseChartData = useMemo(() => {
   const fetchSubmissionStatuses = useCallback(async () => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/submission-statuses", {
+      const response = await axios.get("http://localhost:5000/projection/submission-statuses", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value },
       });
       if (response.data.success) {
@@ -159,7 +159,7 @@ const expenseChartData = useMemo(() => {
   const fetchAllocatedOverheads = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/allocated", {
+      const response = await axios.get("http://localhost:5000/projection/allocated", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -176,7 +176,7 @@ const expenseChartData = useMemo(() => {
   const fetchRemainingBudget = useCallback(async (projId) => {
     if (!selectedSite?.value || !selectedWorkDescription?.value) return;
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/remaining", {
+      const response = await axios.get("http://localhost:5000/projection/remaining", {
         params: { site_id: selectedSite.value, desc_id: selectedWorkDescription.value, projection_id: projId },
       });
       if (response.data.success) {
@@ -229,7 +229,7 @@ const expenseChartData = useMemo(() => {
   const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://103.118.158.33/api/admin/companies");
+      const response = await axios.get("http://localhost:5000/admin/companies");
       if (response.data.success) {
         const companyOptions = response.data.data.map((company) => ({
           value: company.company_id,
@@ -250,7 +250,7 @@ const expenseChartData = useMemo(() => {
   const fetchProjects = useCallback(async (companyId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.33/api/admin/projects/${companyId}`);
+      const response = await axios.get(`http://localhost:5000/admin/projects/${companyId}`);
       if (response.data.success) {
         const projectOptions = response.data.data.map((project) => ({
           value: project.pd_id,
@@ -271,7 +271,7 @@ const expenseChartData = useMemo(() => {
   const fetchSites = useCallback(async (projectId) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://103.118.158.33/api/admin/sites/${projectId}`);
+      const response = await axios.get(`http://localhost:5000/admin/sites/${projectId}`);
       if (response.data.success) {
         const siteOptions = response.data.data.map((site) => ({
           value: site.site_id,
@@ -293,7 +293,7 @@ const expenseChartData = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.33/api/admin/work-descriptions-by-site/${siteId}`
+        `http://localhost:5000/admin/work-descriptions-by-site/${siteId}`
       );
       if (response.data.success) {
         const descOptions = response.data.data.map((desc) => ({
@@ -316,7 +316,7 @@ const expenseChartData = useMemo(() => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://103.118.158.33/api/projection/po-total-budget/${siteId}/${descId}`
+        `http://localhost:5000/projection/po-total-budget/${siteId}/${descId}`
       );
       if (response.data.success) {
         setBudgetData({
@@ -337,7 +337,7 @@ const expenseChartData = useMemo(() => {
 
   const checkBudgetExists = useCallback(async (siteId, descId) => {
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/saved-budgets", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success && response.data.data.length > 0) {
@@ -365,7 +365,7 @@ const expenseChartData = useMemo(() => {
   const fetchAllPoBudgets = useCallback(async (siteId, descId) => {
     if (!siteId || !descId) return;
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/saved-budgets", {
+      const response = await axios.get("http://localhost:5000/projection/saved-budgets", {
         params: { site_id: siteId, desc_id: descId },
       });
       if (response.data.success) {
@@ -432,7 +432,7 @@ const expenseChartData = useMemo(() => {
 
   const fetchOverheads = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get("http://103.118.158.33/api/projection/overheads", {
+      const response = await axios.get("http://localhost:5000/projection/overheads", {
         params: po_budget_id ? { po_budget_id } : {},
       });
       if (response.data.success) {
@@ -448,7 +448,7 @@ const expenseChartData = useMemo(() => {
 
   const fetchActualBudgetEntries = useCallback(async (po_budget_id) => {
     try {
-      const response = await axios.get(`http://103.118.158.33/api/projection/actual-budget/${po_budget_id}`);
+      const response = await axios.get(`http://localhost:5000/projection/actual-budget/${po_budget_id}`);
       if (response.data.success) {
         const entries = response.data.data || {};
         setActualBudgetEntries(entries);
@@ -471,7 +471,7 @@ const fetchMaterialActual = useCallback(async () => {
   if (!selectedSite?.value || !selectedWorkDescription?.value) return;
   try {
     const response = await axios.get(
-      `http://103.118.158.33/api/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
+      `http://localhost:5000/projection/actual-material/${selectedSite.value}/${selectedWorkDescription.value}`
     );
     if (response.data.success) {
       setMaterialActual(parseFloat(response.data.data.material_used_actual_value) || 0);
@@ -771,7 +771,7 @@ const calculateRemainingBudget = useCallback((projection) => {
     const projection = projections.find(p => p.id === projectionId);
     if (!projection || !budgetData) return;
     try {
-      const response = await axios.post("http://103.118.158.33/api/projection/save-po-budget", {
+      const response = await axios.post("http://localhost:5000/projection/save-po-budget", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         total_po_value: budgetData.total_po_value,
@@ -832,7 +832,7 @@ const calculateRemainingBudget = useCallback((projection) => {
 
       console.log("Material Allocation Payload:", payload);
 
-      const response = await axios.post("http://103.118.158.33/api/projection/save-material-allocation", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -877,7 +877,7 @@ const calculateRemainingBudget = useCallback((projection) => {
 
       console.log("Labour Overhead Payload:", payload);
 
-      const response = await axios.post("http://103.118.158.33/api/projection/save-labour-overhead", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-labour-overhead", payload);
       
       if (response.data.success) {
         Swal.fire({
@@ -931,7 +931,7 @@ const calculateRemainingBudget = useCallback((projection) => {
     });
     if (result.isConfirmed) {
       try {
-        const response = await axios.delete("http://103.118.158.33/api/projection/delete-overhead", {
+        const response = await axios.delete("http://localhost:5000/projection/delete-overhead", {
           data: { 
             site_id: selectedSite.value,
             desc_id: selectedWorkDescription.value,
@@ -986,7 +986,7 @@ const calculateRemainingBudget = useCallback((projection) => {
     // If no po_budget_id, save po_budget first
     if (!po_budget_id) {
       try {
-        const saveResponse = await axios.post("http://103.118.158.33/api/projection/save-po-budget", {
+        const saveResponse = await axios.post("http://localhost:5000/projection/save-po-budget", {
           site_id: selectedSite?.value,
           desc_id: selectedWorkDescription?.value,
           total_po_value: budgetData.total_po_value,
@@ -1028,7 +1028,7 @@ const calculateRemainingBudget = useCallback((projection) => {
     // Removed: Collect entries and call save-actual-budget (now handled in backend final submission with aggregation)
 
     try {
-      const response = await axios.post("http://103.118.158.33/api/projection/final-projection-submission", {
+      const response = await axios.post("http://localhost:5000/projection/final-projection-submission", {
         site_id: selectedSite?.value,
         desc_id: selectedWorkDescription?.value,
         projection_id: projectionId,
@@ -1126,7 +1126,7 @@ const calculateRemainingBudget = useCallback((projection) => {
         projection_id: projectionId,  // Added projection_id
       };
 
-      const response = await axios.post("http://103.118.158.33/api/projection/save-dynamic-overhead-values", payload);
+      const response = await axios.post("http://localhost:5000/projection/save-dynamic-overhead-values", payload);
 
       if (response.data.success) {
         Swal.fire({
@@ -1185,7 +1185,7 @@ const calculateRemainingBudget = useCallback((projection) => {
 
     if (expense_name) {
       try {
-        const response = await axios.post("http://103.118.158.33/api/projection/save-overhead", {
+        const response = await axios.post("http://localhost:5000/projection/save-overhead", {
           expense_name,
         });
         if (response.data.success) {

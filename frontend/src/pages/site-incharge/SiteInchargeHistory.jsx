@@ -62,12 +62,12 @@ const SiteInchargeHistory = () => {
             assignmentResponse,
             attendanceResponse
           ] = await Promise.all([
-            axios.get(`http://103.118.158.33/api/site-incharge/acknowledgements-by-incharge/${userId}`),
-            axios.get(`http://103.118.158.33/api/site-incharge/material-usage-by-incharge/${userId}`),
-            axios.get(`http://103.118.158.33/api/site-incharge/expense-by-incharge/${userId}`),
-            axios.get(`http://103.118.158.33/api/site-incharge/completion-by-incharge/${userId}`),
-            axios.get(`http://103.118.158.33/api/site-incharge/labour-assignment-by-incharge/${userId}`),
-            axios.get(`http://103.118.158.33/api/site-incharge/labour-attendance-by-incharge/${userId}`)
+            axios.get(`http://localhost:5000/site-incharge/acknowledgements-by-incharge/${userId}`),
+            axios.get(`http://localhost:5000/site-incharge/material-usage-by-incharge/${userId}`),
+            axios.get(`http://localhost:5000/site-incharge/expense-by-incharge/${userId}`),
+            axios.get(`http://localhost:5000/site-incharge/completion-by-incharge/${userId}`),
+            axios.get(`http://localhost:5000/site-incharge/labour-assignment-by-incharge/${userId}`),
+            axios.get(`http://localhost:5000/site-incharge/labour-attendance-by-incharge/${userId}`)
           ]);
 
           setAckHistoryData(ackResponse.data.data || []);

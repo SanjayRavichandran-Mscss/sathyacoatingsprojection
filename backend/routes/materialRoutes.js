@@ -56,4 +56,4 @@
 router.get('/assigned-materialsbyid', materialController.getMaterialAssignmentById); // ?assignment_id=...
 router.put('/assigned-materials', materialController.updateMaterialAssignment); // ID in body
 router.delete('/assigned-materials', materialController.deleteMaterialAssignment); // ID in body
-                module.exports = router;
+ module.exports = router;

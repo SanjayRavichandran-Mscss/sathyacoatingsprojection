@@ -65,7 +65,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
       (async () => {
         try {
           setLoading((l) => ({ ...l, genders: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/material/genders");
+          const { data } = await axios.get("http://localhost:5000/material/genders");
           setGenders(data.data || []);
         } catch (error) {
           console.error("Error fetching genders:", error);
@@ -76,7 +76,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, departments: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/material/departments");
+          const { data } = await axios.get("http://localhost:5000/material/departments");
           setDepartments(data.data || []);
         } catch (error) {
           console.error("Error fetching departments:", error);
@@ -87,7 +87,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, employmentTypes: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/material/employment-types");
+          const { data } = await axios.get("http://localhost:5000/material/employment-types");
           setEmploymentTypes(data.data || []);
         } catch (error) {
           console.error("Error fetching employment types:", error);
@@ -98,7 +98,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, designations: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/material/designations");
+          const { data } = await axios.get("http://localhost:5000/material/designations");
           setDesignations(data.data || []);
         } catch (error) {
           console.error("Error fetching designations:", error);
@@ -109,7 +109,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, statuses: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/material/statuses");
+          const { data } = await axios.get("http://localhost:5000/material/statuses");
           setStatuses(data.data || []);
         } catch (error) {
           console.error("Error fetching statuses:", error);
@@ -120,7 +120,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
         try {
           setLoading((l) => ({ ...l, contractors: true }));
-          const { data } = await axios.get("http://103.118.158.33/api/admin/contractors");
+          const { data } = await axios.get("http://localhost:5000/admin/contractors");
           setContractors(data.data || []);
         } catch (error) {
           console.error("Error fetching contractors:", error);
@@ -191,7 +191,7 @@ const AddTemporaryEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveT
 
       if (saveToDatabase) {
         console.log("Submitting payload to API:", labourData);
-        const response = await axios.post("http://103.118.158.33/api/admin/add-labour", labourData);
+        const response = await axios.post("http://localhost:5000/admin/add-labour", labourData);
         console.log("API response:", response.data);
         labourData = response.data.data;
         designation = designations.find((d) => d.id === parseInt(labourData.designation_id))?.designation || "";

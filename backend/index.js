@@ -13,6 +13,8 @@ const adminRoutes = require("./routes/adminRoutes")
 const supplyRoutes = require("./routes/supplyRoutes")
 const notificationRoutes = require("./routes/notificationRoutes")
 const projectionRoutes = require("./routes/projectionRoutes")
+const financeRoutes = require("./routes/financeRoutes")
+const resourceRoutes = require("./routes/resourceRoutes")
 
 const app = express();
 
@@ -46,6 +48,8 @@ const startServer = async () => {
         app.use("/supply", supplyRoutes)
         app.use("/notification", notificationRoutes)
         app.use("/projection", projectionRoutes)
+        app.use("/finance", financeRoutes)
+        app.use("/resource", resourceRoutes)
 
         
         app.listen(process.env.PORT || 5000, () => 
