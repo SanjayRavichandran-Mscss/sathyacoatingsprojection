@@ -1005,133 +1005,6 @@ exports.getNextSupplyDcNo = async function (req, res) {
   }
 };
 
-exports.fetchSupplyMaterialDispatchDetails = async (req, res) => {
-  try {
-    const { pd_id, site_id, desc_id } = req.query;
-    
-    let query = `
-      SELECT 
-        smd.id,
-        smd.supply_material_assign_id,
-        smd.dc_no,
-        smd.dispatch_date,
-        smd.dispatch_qty,
-        smd.order_no,
-        c.vendor_code,
-        c.gst_number,
-        smd.master_dc_no,
-        smd.created_at,
-        ma.quantity AS assigned_quantity,
-        ma.comp_ratio_a,
-        ma.comp_ratio_b,
-        ma.comp_ratio_c,
-        ma.desc_id,
-        wd.desc_name,
-        mm.item_id,
-        pd.project_name,
-        sd.site_name,
-        sd.po_number,
-        mm.item_name,
-        um.uom_name,
-        COALESCE(
-          (SELECT JSON_ARRAYAGG(
-            JSON_OBJECT(
-              'id', stm.id,
-              'destination', COALESCE(stm.destination, ''),
-              'booking_expense', COALESCE(stm.booking_expense, 0),
-              'travel_expense', COALESCE(stm.travel_expense, 0),
-              'dispatch_id', stm.dispatch_id,
-              'created_at', stm.created_at,
-              'vehicle', JSON_OBJECT(
-                'id', COALESCE(vm.id, 0),
-                'vehicle_name', COALESCE(vm.vehicle_name, ''),
-                'vehicle_model', COALESCE(vm.vehicle_model, ''),
-                'vehicle_number', COALESCE(vm.vehicle_number, '')
-              ),
-              'driver', JSON_OBJECT(
-                'id', COALESCE(dm.id, 0),
-                'driver_name', COALESCE(dm.driver_name, ''),
-                'driver_mobile', COALESCE(dm.driver_mobile, ''),
-                'driver_address', COALESCE(dm.driver_address, '')
-              ),
-              'provider', JSON_OBJECT(
-                'id', COALESCE(pm.id, 0),
-                'provider_name', COALESCE(pm.provider_name, ''),
-                'address', COALESCE(pm.address, ''),
-                'mobile', COALESCE(pm.mobile, ''),
-                'transport_type_id', COALESCE(pm.transport_type_id, 0)
-              )
-            )
-          )
-          FROM supply_transport_master stm
-          LEFT JOIN vehicle_master vm ON stm.vehicle_id = vm.id
-          LEFT JOIN driver_master dm ON stm.driver_id = dm.id
-          LEFT JOIN provider_master pm ON stm.provider_id = pm.id
-          WHERE stm.dispatch_id = smd.id),
-          JSON_ARRAY()
-        ) AS transport_details
-      FROM supply_material_dispatch smd
-      JOIN material_assign ma ON smd.material_assign_id = ma.id
-      JOIN project_details pd ON ma.pd_id = pd.pd_id
-      JOIN site_details sd ON ma.site_id = sd.site_id
-      JOIN material_master mm ON ma.item_id = mm.item_id
-      JOIN uom_master um ON ma.uom_id = um.uom_id
-      LEFT JOIN work_descriptions wd ON ma.desc_id = wd.desc_id
-      LEFT JOIN company c ON pd.company_id = c.company_id
-    `;
-    const queryParams = [];
-
-    if (pd_id && site_id && desc_id) {
-      query += ' WHERE ma.pd_id = ? AND ma.site_id = ? AND ma.desc_id = ?';
-      queryParams.push(pd_id, site_id, desc_id);
-    } else {
-      return res.status(400).json({
-        status: 'error',
-        message: 'pd_id, site_id, and desc_id are required',
-      });
-    }
-
-    const [rows] = await db.query(query, queryParams);
-
-    // Fetch order_date from po_reckoner table
-    const [poRows] = await db.query(
-      `
-      SELECT created_at AS order_date
-      FROM po_reckoner
-      WHERE site_id = ?
-      LIMIT 1
-      `,
-      [site_id]
-    );
-
-    const order_date = poRows.length > 0 ? poRows[0].order_date : null;
-
-    // Format data
-    const formattedData = rows.map(row => ({
-      ...row,
-      order_date: order_date ? order_date.toISOString() : null,
-      transport_details: row.transport_details ? row.transport_details : [],
-      vendor_code: row.vendor_code || 'N/A',
-      gst_number: row.gst_number || 'N/A',
-      desc_name: row.desc_name || 'N/A',
-      item_id: row.item_id || 'N/A',
-    }));
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Supply material dispatch details fetched successfully',
-      data: formattedData,
-    });
-  } catch (error) {
-    console.error('Fetch supply dispatch details error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Internal server error',
-      error: error.message,
-      sqlMessage: error.sqlMessage || 'No SQL message available',
-    });
-  }
-};
 
 exports.getSupplyTransportTypes = async function(req, res) {
   try {
@@ -1215,20 +1088,143 @@ exports.getMasterDcNo = async (req, res) => {
 
 
 // Fetch supply dispatched materials
+// exports.fetchSupplyMaterialDispatchDetails = async (req, res) => {
+//   try {
+//     const { site_id } = req.query;
+
+//     if (!site_id) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'site_id is required',
+//       });
+//     }
+
+//     // Query to fetch dispatched materials with related data
+//     const [dispatches] = await db.query(
+//       `
+//       SELECT 
+//         smd.id, smd.dc_no, smd.dispatch_date, smd.order_no, smd.vendor_code, 
+//         smd.dispatch_qty, smd.dispatch_cost, smd.created_at,
+//         sma.pd_id, sma.site_id, sma.item_id, sma.quantity AS assigned_quantity,
+//         sma.supply_cost_per_uom, sma.supply_cost,
+//         mm.item_name, um.uom_name,
+//         stm.destination, stm.travel_expense, stm.booking_expense,
+//         vm.vehicle_number, dm.driver_name, dm.driver_mobile
+//       FROM supply_material_dispatch smd
+//       INNER JOIN supply_material_assign sma ON smd.supply_material_assign_id = sma.id
+//       INNER JOIN material_master mm ON sma.item_id = mm.item_id
+//       INNER JOIN uom_master um ON sma.uom_id = um.uom_id
+//       LEFT JOIN supply_transport_master stm ON smd.id = stm.supply_dispatch_id
+//       LEFT JOIN vehicle_master vm ON stm.vehicle_id = vm.id
+//       LEFT JOIN driver_master dm ON stm.driver_id = dm.id
+//       WHERE sma.site_id = ?
+//       ORDER BY smd.dispatch_date DESC
+//       `,
+//       [site_id]
+//     );
+
+//     // Group dispatches by dc_no and dispatch_date
+//     const dispatchGroupsMap = dispatches.reduce((acc, dispatch) => {
+//       const key = `${dispatch.dc_no}-${dispatch.dispatch_date}`;
+//       if (!acc[key]) {
+//         acc[key] = {
+//           dc_no: dispatch.dc_no,
+//           dispatch_date: dispatch.dispatch_date,
+//           created_at: dispatch.created_at,
+//           materials: [],
+//         };
+//       }
+//       acc[key].materials.push({
+//         id: dispatch.id,
+//         dc_no: dispatch.dc_no,
+//         dispatch_date: dispatch.dispatch_date,
+//         order_no: dispatch.order_no,
+//         vendor_code: dispatch.vendor_code,
+//         dispatch_qty: dispatch.dispatch_qty,
+//         dispatch_cost: dispatch.dispatch_cost,
+//         created_at: dispatch.created_at,
+//         item_name: dispatch.item_name,
+//         assigned_quantity: dispatch.assigned_quantity,
+//         supply_cost_per_uom: dispatch.supply_cost_per_uom,
+//         supply_cost: dispatch.supply_cost,
+//         uom_name: dispatch.uom_name,
+//         transport_details: [
+//           {
+//             destination: dispatch.destination || null,
+//             travel_expense: dispatch.travel_expense || null,
+//             booking_expense: dispatch.booking_expense || null,
+//             vehicle: dispatch.vehicle_number ? { vehicle_number: dispatch.vehicle_number } : null,
+//             driver: dispatch.driver_name
+//               ? { driver_name: dispatch.driver_name, driver_mobile: dispatch.driver_mobile }
+//               : null,
+//           },
+//         ],
+//       });
+//       return acc;
+//     }, {});
+
+//     const groupedDispatches = Object.values(dispatchGroupsMap);
+
+//     return res.status(200).json({
+//       status: 'success',
+//       data: groupedDispatches,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching supply dispatched materials:', error);
+//     return res.status(500).json({
+//       status: 'error',
+//       message: 'Failed to fetch dispatched materials',
+//       error: error.message,
+//       sqlMessage: error.sqlMessage || 'No SQL message available',
+//     });
+//   }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 exports.fetchSupplyMaterialDispatchDetails = async (req, res) => {
   try {
-    const { site_id } = req.query;
-
-    if (!site_id) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'site_id is required',
-      });
-    }
-
-    // Query to fetch dispatched materials with related data
-    const [dispatches] = await db.query(
-      `
+    // Query to fetch ALL dispatched materials with related data (NO WHERE clause)
+    const [dispatches] = await db.query(`
       SELECT 
         smd.id, smd.dc_no, smd.dispatch_date, smd.order_no, smd.vendor_code, 
         smd.dispatch_qty, smd.dispatch_cost, smd.created_at,
@@ -1244,13 +1240,10 @@ exports.fetchSupplyMaterialDispatchDetails = async (req, res) => {
       LEFT JOIN supply_transport_master stm ON smd.id = stm.supply_dispatch_id
       LEFT JOIN vehicle_master vm ON stm.vehicle_id = vm.id
       LEFT JOIN driver_master dm ON stm.driver_id = dm.id
-      WHERE sma.site_id = ?
       ORDER BY smd.dispatch_date DESC
-      `,
-      [site_id]
-    );
+    `);
 
-    // Group dispatches by dc_no and dispatch_date
+    // Group dispatches by dc_no and dispatch_date (EXACT SAME LOGIC)
     const dispatchGroupsMap = dispatches.reduce((acc, dispatch) => {
       const key = `${dispatch.dc_no}-${dispatch.dispatch_date}`;
       if (!acc[key]) {
@@ -1306,3 +1299,4 @@ exports.fetchSupplyMaterialDispatchDetails = async (req, res) => {
     });
   }
 };
+

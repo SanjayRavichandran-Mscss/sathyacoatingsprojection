@@ -1,96 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import html2pdf from 'html2pdf.js';
 
-const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], onClose }) => {
-  // State to store API data
-  const [inchargeData, setInchargeData] = useState(null);
+const DispatchResourceReport = ({ dispatchData = {}, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Use dynamic dispatch details
-  const dispatchDetails = {
-    recipient_name: commonDispatchDetails.recipient_name || 'N/A',
-    recipient_phone: commonDispatchDetails.recipient_phone || 'N/A',
-    recipient_department: commonDispatchDetails.recipient_department || 'N/A',
-    recipient_company: commonDispatchDetails.recipient_company || 'N/A',
-    recipient_address: commonDispatchDetails.destination || 'N/A',
-    recipient_gstin: commonDispatchDetails.gst_number || 'N/A',
-    dc_no: commonDispatchDetails.dc_no || 'N/A',
-    dispatch_date: commonDispatchDetails.dispatch_date || 'N/A',
-    order_no: commonDispatchDetails.order_no || 'N/A',
-    order_date: commonDispatchDetails.order_date
-      ? new Date(commonDispatchDetails.order_date).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }).split('/').join('.')
-      : 'N/A',
-    vendor_code: commonDispatchDetails.vendor_code || 'N/A',
-    approximate_value: commonDispatchDetails.approximate_value || 'N/A'
-  };
+  // Use the passed dispatch data (single dispatch object)
+  const {
+    consumable_name = 'N/A',
+    quantity = 'N/A',
+    current_site = 'N/A',
+    destination_site = 'N/A',
+    dispatch_date = 'N/A',
+    vehicle_name_model = 'N/A',
+    vehicle_number = 'N/A',
+    driver_name = 'N/A',
+    driver_mobile = 'N/A',
+    transport_amount = 0,
+    created_at = null,
+    created_by_name = 'System',
+  } = dispatchData;
 
-  // Get created_at from materials for DC Date
-  const createdAt = dispatchedMaterials.length > 0 ? dispatchedMaterials[0].created_at : null;
-  const dc_date = createdAt ? new Date(createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
-  const dispatch_date_display = dispatchDetails.dispatch_date !== 'N/A' ? dispatchDetails.dispatch_date : 'N/A';
+  // Format dates (same style as DispatchReport)
+  const dispatchDateDisplay = dispatch_date !== 'N/A'
+    ? new Date(dispatch_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'N/A';
 
-  // Fetch incharge data from API
-  useEffect(() => {
-    const fetchInchargeData = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/material/assigned-incharges');
-        const result = await response.json();
-        if (result.status === 'success') {
-          const dcDate = new Date(dispatchDetails.dispatch_date);
-          const matchingIncharge = result.data.find(item => {
-            const fromDate = new Date(item.from_date);
-            const toDate = new Date(item.to_date);
-            return dcDate >= fromDate && dcDate <= toDate;
-          });
-          setInchargeData(matchingIncharge || null);
-        } else {
-          setError('Failed to fetch incharge data');
-        }
-      } catch (err) {
-        console.log(err);
-        setError('Error fetching data from API');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const dcDate = created_at
+    ? new Date(created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'N/A';
 
-    if (dispatchDetails.dispatch_date !== 'N/A') {
-      fetchInchargeData();
-    } else {
-      setLoading(false);
-      setInchargeData(null);
-    }
-  }, [dispatchDetails.dispatch_date]);
+  // For consistency with your original - we treat it as single "material" (consumable)
+  const materials = [{
+    item_name: consumable_name,
+    quantity: quantity,
+    uom_name: 'Nos', // or fetch from master if you have uom
+    remarks: `From: ${current_site} → To: ${destination_site}`,
+    created_at: created_at,
+  }];
 
-  // Split materials into chunks of 5 per page
-  const materials = dispatchedMaterials;
   const materialsPerPage = 5;
   const materialChunks = [];
   for (let i = 0; i < materials.length; i += materialsPerPage) {
     materialChunks.push(materials.slice(i, i + materialsPerPage));
   }
-
-  // If no materials, still create one page
   if (materialChunks.length === 0) {
     materialChunks.push([]);
   }
 
+  // Download PDF (exact same logic as your DispatchReport)
   const handleDownloadPDF = () => {
-    console.log('Download button clicked');
     const element = document.getElementById('report-content');
     if (!element) {
       console.error('Element with ID "report-content" not found');
       return;
     }
-    console.log('Element found, generating PDF...');
+
     const opt = {
       margin: [0.2, 0.2],
-      filename: `dispatch_report_${dispatchDetails.dc_no}.pdf`,
+      filename: `resource_dispatch_${dispatchData.id || 'report'}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
@@ -119,8 +87,9 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
       },
       pagebreak: { mode: ['css', 'legacy'] }
     };
+
     html2pdf().set(opt).from(element).save().then(() => {
-      console.log('PDF generation complete');
+      console.log('PDF generated successfully');
     }).catch(err => {
       console.error('PDF generation failed:', err);
     });
@@ -129,44 +98,26 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
   const handleCloseModal = () => {
     if (onClose && typeof onClose === 'function') {
       onClose();
-    } else {
-      console.error('onClose is not a function or is undefined');
     }
   };
 
-  // Determine what to display in the address section
+  // Address section - similar to your original (you can customize later)
   const renderAddressSection = () => {
-    if (loading) {
-      return <div>Loading incharge data...</div>;
-    }
-    if (error) {
-      return <div>{error}</div>;
-    }
-    if (!inchargeData) {
-      return <div>No site incharges assigned for this date</div>;
-    }
+    if (loading) return <div>Loading recipient details...</div>;
+    if (error) return <div>{error}</div>;
+
     return (
       <div>
         <span className="address-label">To </span>
-        <span className="recipient-name">{inchargeData.full_name}</span> 
-        <span className="recipient-phone">(PH.No.{inchargeData.mobile})</span><br />
-        {inchargeData.department}<br />
-        {inchargeData.current_address}<br />
-        GSTIN: {dispatchDetails.recipient_gstin}
+        <span className="recipient-name">Site Incharge / Store</span><br />
+        <span className="recipient-phone">(PH.No. —)</span><br />
+        {current_site} → {destination_site}<br />
+        GSTIN: — (Resource Dispatch)
       </div>
     );
   };
 
-  // Helper function to format component ratios
-  const formatComponentRatios = (comp_ratio_a, comp_ratio_b, comp_ratio_c) => {
-    const ratios = [comp_ratio_a, comp_ratio_b];
-    if (comp_ratio_c !== null) {
-      ratios.push(comp_ratio_c);
-    }
-    return ` (${ratios.join(':')})`;
-  };
-
-  // Render page header (repeated on each page)
+  // Page header (same as your DispatchReport)
   const renderPageHeader = () => (
     <div className="page-header">
       <table className="header-table">
@@ -189,7 +140,7 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
           </tr>
           <tr>
             <td colSpan={5} className="document-title">
-              DELIVERY CHALLAN
+              RESOURCE DISPATCH CHALLAN
             </td>
           </tr>
         </tbody>
@@ -197,7 +148,7 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
     </div>
   );
 
-  // Render materials table for a specific chunk
+  // Materials table (adapted for single consumable dispatch)
   const renderMaterialsTable = (materialsChunk, pageIndex) => (
     <table className="materials-table">
       <thead>
@@ -212,55 +163,47 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
       <tbody>
         <tr>
           <td className="empty-cell"></td>
-          <td className="mtf-work-label" colSpan={4}>MTF Work :</td>
+          <td className="mtf-work-label" colSpan={4}>Resource Dispatch :</td>
         </tr>
         {materialsChunk.length > 0 ? materialsChunk.map((material, index) => {
           const globalIndex = pageIndex * materialsPerPage + index + 1;
           return (
-            <tr key={material.id || index}>
+            <tr key={globalIndex}>
               <td className="cell-center">{globalIndex}</td>
               <td className="cell-left">
-                {material.item_name || 'N/A'}{formatComponentRatios(material.comp_ratio_a, material.comp_ratio_b, material.comp_ratio_c)}
-                {material.comp_a_qty !== null && <><br /><span className="component">Comp.A</span></>}
-                {material.comp_b_qty !== null && <><br /><span className="component">Comp.B</span></>}
-                {material.comp_c_qty !== null && <><br /><span className="component">Comp.C</span></>}
+                {material.item_name || consumable_name || 'N/A'}
               </td>
               <td className="cell-left-bold">
-                <span className="highlighted-qty">{material.total_qty || material.dispatch_qty || material.assigned_quantity || '0'}</span>
-                {material.comp_a_qty !== null && <><br /><span className="component-qty">{material.comp_a_qty}</span></>}
-                {material.comp_b_qty !== null && <><br /><span className="component-qty">{material.comp_b_qty}</span></>}
-                {material.comp_c_qty !== null && <><br /><span className="component-qty">{material.comp_c_qty}</span></>}
+                <span className="highlighted-qty">{material.quantity || quantity || '0'}</span>
               </td>
               <td className="cell-left">
-                {material.uom_name || 'N/A'}
-                {material.comp_a_qty !== null && <><br /><span className="component-uom">{material.uom_name || 'N/A'}</span></>}
-                {material.comp_b_qty !== null && <><br /><span className="component-uom">{material.uom_name || 'N/A'}</span></>}
-                {material.comp_c_qty !== null && <><br /><span className="component-uom">{material.uom_name || 'N/A'}</span></>}
+                {material.uom_name || 'Nos'}
               </td>
               <td className="cell-left">
-                {material.comp_a_remarks && <>{material.comp_a_remarks}<br /></>}
-                {material.comp_b_remarks && <>{material.comp_b_remarks}<br /></>}
-                {material.comp_c_remarks && <>{material.comp_c_remarks}<br /></>}
+                From: {current_site || '—'}<br />
+                To: {destination_site || '—'}<br />
+                Vehicle: {vehicle_name_model || '—'} ({vehicle_number || '—'})<br />
+                Driver: {driver_name || '—'} ({driver_mobile || '—'})
               </td>
             </tr>
           );
         }) : (
           <tr>
-            <td colSpan={5} className="cell-left">No materials available</td>
+            <td colSpan={5} className="cell-left">No dispatch details available</td>
           </tr>
         )}
       </tbody>
     </table>
   );
 
-  // Render footer section as part of the main table
+  // Footer (same as your original)
   const renderFooterSection = (isLastPage) => (
     <table className="footer-section-table">
       <tbody>
         {isLastPage && (
           <tr>
             <td colSpan={5} className="returnable-note">
-              The above materials sent for our works contract purpose on returnable basis
+              The above resource sent for our project purpose on returnable / non-returnable basis
             </td>
           </tr>
         )}
@@ -296,16 +239,16 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
               Cancel
             </button>
           </div>
+
           <div id="report-content" className="report-content">
             <div className="a4-container">
-              {materialChunks.map((materialsChunk, pageIndex) => (
+              {materialChunks.map((chunk, pageIndex) => (
                 <div key={pageIndex} className="page">
                   {renderPageHeader()}
-                  
-                  {/* Main content table that includes everything */}
+
                   <table className="main-content-table">
                     <tbody>
-                      {/* Address and Details Section - Only on first page */}
+                      {/* Address & Details - only first page */}
                       {pageIndex === 0 && (
                         <tr>
                           <td colSpan={2} className="address-section">
@@ -315,32 +258,28 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
                             <table className="details-table">
                               <tbody>
                                 <tr>
-                                  <td className="details-label">Delivery challan</td>
+                                  <td className="details-label">Dispatch Challan</td>
                                   <td className="details-value"></td>
                                 </tr>
                                 <tr>
-                                  <td className="details-label-bold">DC NO.</td>
-                                  <td className="details-value-bold">{dispatchDetails.dc_no}</td>
+                                  <td className="details-label-bold">Dispatch ID</td>
+                                  <td className="details-value-bold">{dispatchData.id || '—'}</td>
                                 </tr>
                                 <tr>
                                   <td className="details-label-bold">Dispatch Date</td>
-                                  <td className="details-value-bold">{dispatch_date_display}</td>
+                                  <td className="details-value-bold">{dispatchDateDisplay}</td>
                                 </tr>
                                 <tr>
                                   <td className="details-label-bold">DC Date</td>
-                                  <td className="details-value-bold">{dc_date}</td>
+                                  <td className="details-value-bold">{dcDate}</td>
                                 </tr>
                                 <tr>
-                                  <td className="details-label-bold">Your Order No.</td>
-                                  <td className="details-value">{dispatchDetails.order_no}</td>
+                                  <td className="details-label-bold">From Site</td>
+                                  <td className="details-value">{current_site}</td>
                                 </tr>
                                 <tr>
-                                  <td className="details-label-bold">Your order date</td>
-                                  <td className="details-value">{dispatchDetails.order_date}</td>
-                                </tr>
-                                <tr>
-                                  <td className="details-label-bold">Vendor Code</td>
-                                  <td className="details-value">{dispatchDetails.vendor_code}</td>
+                                  <td className="details-label-bold">To Site</td>
+                                  <td className="details-value">{destination_site}</td>
                                 </tr>
                               </tbody>
                             </table>
@@ -348,14 +287,14 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
                         </tr>
                       )}
 
-                      {/* Materials Table Row */}
+                      {/* Materials Table */}
                       <tr>
                         <td colSpan={5} className="materials-container">
-                          {renderMaterialsTable(materialsChunk, pageIndex)}
+                          {renderMaterialsTable(chunk, pageIndex)}
                         </td>
                       </tr>
 
-                      {/* Footer Section - Only on last page */}
+                      {/* Footer - only last page */}
                       {pageIndex === materialChunks.length - 1 && (
                         <tr>
                           <td colSpan={5} className="footer-container">
@@ -375,6 +314,8 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             </div>
           </div>
         </div>
+
+        {/* Same styles as your DispatchReport */}
         <style>{`
           .modal-overlay {
             position: fixed;
@@ -444,7 +385,6 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             border: 1px solid #d1d5db;
           }
           
-          /* A4 Container Styles */
           .a4-container {
             width: 210mm;
             min-height: 297mm;
@@ -465,7 +405,6 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             flex-direction: column;
           }
           
-          /* Remove problematic page-break CSS that was causing blank pages */
           .page + .page {
             margin-top: 2mm;
           }
@@ -623,19 +562,6 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             font-size: 13px;
             height: 45px;
           }
-          .component {
-            padding-left: 8px;
-            font-size: 12px;
-          }
-          .component-qty {
-            padding-left: 8px;
-            display: inline-block;
-            font-size: 12px;
-          }
-          .component-uom {
-            display: inline-block;
-            font-size: 12px;
-          }
           .highlighted-qty {
             background-color: #f8e71c;
             display: inline-block;
@@ -696,7 +622,6 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             margin-top: 4px;
             padding-right: 8px;
             font-size: 13px;
-            font-weight: bold;
           }
           .signature-text {
             font-size: 12px;
@@ -712,7 +637,6 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             font-weight: bold;
           }
           
-          /* Print Styles - Fixed to prevent blank pages */
           @media print {
             .no-print {
               display: none !important;
@@ -756,12 +680,8 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
             .page:last-child {
               page-break-after: auto;
             }
-            thead {
-              display: table-header-group;
-            }
-            tbody {
-              display: table-row-group;
-            }
+            thead { display: table-header-group; }
+            tbody { display: table-row-group; }
           }
           
           @media (max-width: 768px) {
@@ -788,4 +708,4 @@ const DispatchReport = ({ commonDispatchDetails = {}, dispatchedMaterials = [], 
   );
 };
 
-export default DispatchReport;
+export default DispatchResourceReport;

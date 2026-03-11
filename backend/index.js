@@ -51,9 +51,9 @@ const startServer = async () => {
         app.use("/finance", financeRoutes)
         app.use("/resource", resourceRoutes)
 
-        
-        app.listen(process.env.PORT || 5000, () => 
-            console.log(`Server running on port ${process.env.PORT || 5000}`)
+    
+    app.listen(process.env.PORT || 5000, () => 
+    console.log(`Server running on port ${process.env.PORT || 5000}`)
         );
     } catch (error) {
         console.error("Database connection failed", error);
