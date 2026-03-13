@@ -32,8 +32,9 @@
 //   PanelLeftOpen,
 //   FileText,
 //   CreditCard,
-//   // New Icon for Payments
 //   ArrowUpDown,
+//   // New icon for Consumables (you can change to a better one if desired)
+//   Package2,
 // } from 'lucide-react';
 
 // const roleToPrefix = {
@@ -152,19 +153,17 @@
 //       },
 //     ],
 
-//     // FINANCE SECTION – Updated with "Payments" above "Payables"
 //     [financeKey]: [
 //       {
 //         title: 'Finance Management',
 //         icon: IndianRupee,
 //         items: [
-//           { label: 'CFS', to: `/${prefix}/finance/cfs/${encodedUserId}`, icon: FileSpreadsheet },
+//           { label: 'Fund Flow Projection', to: `/${prefix}/finance/cfs/${encodedUserId}`, icon: FileSpreadsheet },
 //           { label: 'Top Sheet', to: `/${prefix}/finance/topsheet/${encodedUserId}`, icon: Landmark },
 //           { label: 'Creditors', to: `/${prefix}/finance/creditors/${encodedUserId}`, icon: Building2 },
 //         ],
 //       },
 
-//       // NEW: Payments Section (Above Payables)
 //       {
 //         title: 'Payments',
 //         icon: ArrowUpDown,
@@ -172,14 +171,13 @@
 //         isOpen: true,
 //         items: [
 //           {
-//             label: 'Common Payment Entry',
+//             label: 'Fund Flow Statement',
 //             to: `/${prefix}/finance/payments/${encodedUserId}`,
 //             icon: Receipt,
 //           },
 //         ],
 //       },
 
-//       // Existing Payables Section
 //       {
 //         title: 'Payables',
 //         icon: Receipt,
@@ -209,12 +207,14 @@
 //       },
 //     ],
 
+//     // UPDATED: Resource Management with Consumables below Employee Details
 //     [resourcesKey]: [
 //       {
 //         title: 'Resources',
 //         icon: SwatchBook,
 //         items: [
 //           { label: 'Employee Details', to: `/${prefix}/resource/employee-details/${encodedUserId}`, icon: IdCardLanyard },
+//           { label: 'Consumables', to: `/${prefix}/resource/consumables/${encodedUserId}`, icon: Package2 },
 //         ],
 //       },
 //     ],
@@ -258,7 +258,6 @@ import {
   User,
   Users,
   ClipboardList,
-  Wrench,
   Hammer,
   Truck,
   Boxes,
@@ -266,26 +265,18 @@ import {
   Layers,
   PanelsTopLeft,
   IdCardLanyard,
-  Coins,
-  Receipt,
-  Calculator,
-  Building2,
-  UsersRound,
-  ScrollText,
-  FileSpreadsheet,
+  Package2,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  FileText,
   Landmark,
   ChartNoAxesCombined,
   BrickWallShield,
   Anvil,
   BanknoteArrowDown,
-  ChevronDown,
-  PanelLeftClose,
-  PanelLeftOpen,
-  FileText,
-  CreditCard,
-  ArrowUpDown,
-  // New icon for Consumables (you can change to a better one if desired)
-  Package2,
+  FileSpreadsheet,     // for Fund Flow Projection
+  Receipt,             // for Fund Flow Statement
 } from 'lucide-react';
 
 const roleToPrefix = {
@@ -312,7 +303,7 @@ const getTopMenus = (role, encodedUserId) => {
 const getSidebarConfig = (role, encodedUserId) => {
   const prefix = roleToPrefix[role] || '';
 
-  // Site Incharge Role
+  // Site Incharge Role – unchanged
   if (role === 'siteincharge') {
     return {
       '/site-incharge': [
@@ -334,11 +325,11 @@ const getSidebarConfig = (role, encodedUserId) => {
     };
   }
 
-  const dashboardKey = `/${prefix}/dashboard`;
-  const contractsKey = `/${prefix}/contracts`;
-  const supplyKey = `/${prefix}/supply`;
-  const financeKey = `/${prefix}/finance`;
-  const resourcesKey = `/${prefix}/resource`;
+  const dashboardKey  = `/${prefix}/dashboard`;
+  const contractsKey  = `/${prefix}/contracts`;
+  const supplyKey     = `/${prefix}/supply`;
+  const financeKey    = `/${prefix}/finance`;
+  const resourcesKey  = `/${prefix}/resource`;
 
   return {
     [dashboardKey]: [
@@ -368,6 +359,14 @@ const getSidebarConfig = (role, encodedUserId) => {
           { label: 'Project Projections', to: `/${prefix}/contracts/projects/projections/${encodedUserId}`, icon: ListCollapse },
           { label: 'Assign Workforce', to: `/${prefix}/contracts/projects/work-force-planning/${encodedUserId}`, icon: Users },
           { label: 'Material Dispatch', to: `/${prefix}/contracts/projects/material-dispatch/${encodedUserId}`, icon: Truck },
+          // ────────────────────────────────────────────────
+          // ADDED: Dispatched Materials (right below Material Dispatch)
+          // ────────────────────────────────────────────────
+          { 
+            label: 'Dispatched Materials', 
+            to: `/${prefix}/contracts/projects/dispatched-materials/${encodedUserId}`, 
+            icon: Package2 
+          },
         ],
       },
       {
@@ -411,54 +410,11 @@ const getSidebarConfig = (role, encodedUserId) => {
         items: [
           { label: 'Fund Flow Projection', to: `/${prefix}/finance/cfs/${encodedUserId}`, icon: FileSpreadsheet },
           { label: 'Top Sheet', to: `/${prefix}/finance/topsheet/${encodedUserId}`, icon: Landmark },
-          { label: 'Creditors', to: `/${prefix}/finance/creditors/${encodedUserId}`, icon: Building2 },
-        ],
-      },
-
-      {
-        title: 'Payments',
-        icon: ArrowUpDown,
-        collapsible: true,
-        isOpen: true,
-        items: [
-          {
-            label: 'Fund Flow Statement',
-            to: `/${prefix}/finance/payments/${encodedUserId}`,
-            icon: Receipt,
-          },
-        ],
-      },
-
-      {
-        title: 'Payables',
-        icon: Receipt,
-        collapsible: true,
-        isOpen: false,
-        items: [
-          { label: 'SiteIncharge Attendance', to: `/${prefix}/finance/salary/${encodedUserId}`, icon: UsersRound },
-          { label: 'Salary Payables', to: `/${prefix}/finance/salary-payables/${encodedUserId}`, icon: FileSpreadsheet },
-          { label: 'Transport', to: `/${prefix}/finance/transport/${encodedUserId}`, icon: Truck },
-          { label: 'Scaffolding', to: `/${prefix}/finance/scaffolding/${encodedUserId}`, icon: Wrench },
-          { label: 'Site Accommodation', to: `/${prefix}/finance/site-accommodation/${encodedUserId}`, icon: Building2 },
-          { label: 'Commission', to: `/${prefix}/finance/commission/${encodedUserId}`, icon: Coins },
-          { label: 'GST', to: `/${prefix}/finance/gst/${encodedUserId}`, icon: Calculator },
-          { label: 'TDS', to: `/${prefix}/finance/tds/${encodedUserId}`, icon: ScrollText },
-          { label: 'Credit Card', to: `/${prefix}/finance/credit-card/${encodedUserId}`, icon: CreditCard },
-        ],
-      },
-
-      {
-        title: 'Receivables',
-        icon: Receipt,
-        collapsible: true,
-        isOpen: false,
-        items: [
-          { label: 'Billed Debtors', to: `/${prefix}/finance/billed-debtors/${encodedUserId}`, icon: FileText },
+          { label: 'Fund Flow Statement', to: `/${prefix}/finance/payments/${encodedUserId}`, icon: Receipt },
         ],
       },
     ],
 
-    // UPDATED: Resource Management with Consumables below Employee Details
     [resourcesKey]: [
       {
         title: 'Resources',

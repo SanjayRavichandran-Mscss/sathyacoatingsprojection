@@ -328,14 +328,14 @@ exports.saveReckonerData = async (req, res) => {
     const { poNumber, siteId, categories, created_by } = req.body;
 
     // Validate required fields
-    if (!poNumber || !siteId || !categories || !created_by) {
-      return errorResponse(res, "PO number, site ID, categories, and created_by are required", 400);
-    }
+    // if (!poNumber || !siteId || !categories || !created_by) {
+    //   return errorResponse(res, "PO number, site ID, categories, and created_by are required", 400);
+    // }
 
-    // Validate created_by format
-    if (typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
-      return errorResponse(res, "Invalid created_by: must be a non-empty string with maximum length of 30 characters", 400);
-    }
+    // // Validate created_by format
+    // if (typeof created_by !== 'string' || created_by.trim() === '' || created_by.length > 30) {
+    //   return errorResponse(res, "Invalid created_by: must be a non-empty string with maximum length of 30 characters", 400);
+    // }
 
     // Optional: Validate created_by against a reference table (e.g., employee_master)
     /*

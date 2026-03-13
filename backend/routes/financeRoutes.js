@@ -27,7 +27,7 @@ router.get("/siteincharge-attendance", financeController.getSiteInchargeAttendan
 router.get("/siteincharge-attendance-history", financeController.getSiteInchargeAttendanceHistory);
 router.get("/salary-payables-summary-by-attendance", financeController.getSiteInchargeSalarySummaryByAttendance);
 
-
+router.get('/salary-transaction-logs', financeController.getSalaryTransactionLogs);
 
 
 // Updated salary payables summary route ( manual paid_amount)
@@ -115,6 +115,16 @@ router.get("/cfs-data", financeController.fetchCFSdata);
 // routes/financeRoutes.js or similar
 router.get("/cpe-data", financeController.fetchCPEdata);
 
+
+
+router.post("/create-custom-payment", financeController.createCustomPayment);
+router.get("/custom-payments", financeController.getCustomPayments);
+router.put("/update-custom-payment/:id", financeController.updateCustomPayment);
+router.delete("/delete-custom-payment/:id", financeController.deleteCustomPayment);
+
+router.get("/custom-categories", financeController.getCustomCategories);
+router.post("/create-custom-category", financeController.createCustomCategory);
+router.get('/custom-payments-by-category', financeController.getCustomPaymentsByCategory);
 
 
 module.exports = router;

@@ -874,6 +874,7 @@ exports.getSiteInchargeSalarySummaryByAttendance = async (req, res) => {
   }
 };
 
+
 exports.getSalaryPayablesSummary = async (req, res) => {
   try {
     const { pd_id, month, bank_id } = req.query;
@@ -888,21 +889,32 @@ exports.getSalaryPayablesSummary = async (req, res) => {
     // Accept both YYYYMM and YYYY-MM
     let cleanMonth = month.toString().replace('-', '');
     if (cleanMonth.length !== 6 || isNaN(cleanMonth)) {
-      return res.status(400).json({ status: 'error', message: 'Invalid month format. Use YYYYMM or YYYY-MM' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid month format. Use YYYYMM or YYYY-MM'
+      });
     }
 
     const year = cleanMonth.substring(0, 4);
     const mon = cleanMonth.substring(4, 6);
+    const startDate = `${year}-${mon}-01`;
 
-    // SAFEST WAY: Use LAST_DAY() function of MySQL
     const sql = `
       SELECT 
         em.emp_id,
         em.full_name,
         em.approved_salary,
-        COALESCE(SUM(fsp.paid_amount), 0) AS total_paid
+        fsp.id AS transaction_id,
+        fsp.entry_date,
+        fsp.paid_amount,
+        fsp.balance AS recorded_balance,
+        fsp.created_at,
+        fsp.created_by,
+        fsp.updated_at,
+        fsp.updated_by
       FROM employee_master em
-      INNER JOIN siteincharge_assign sia ON em.emp_id = sia.emp_id
+      INNER JOIN siteincharge_assign sia 
+        ON em.emp_id = sia.emp_id
       LEFT JOIN finance_salary_payable fsp 
         ON em.emp_id = fsp.emp_id 
         AND sia.pd_id = fsp.pd_id
@@ -910,49 +922,72 @@ exports.getSalaryPayablesSummary = async (req, res) => {
         AND fsp.entry_date >= ?
         AND fsp.entry_date <= LAST_DAY(?)
       WHERE sia.pd_id = ?
-      GROUP BY em.emp_id, em.full_name, em.approved_salary
-      ORDER BY em.full_name ASC
+      ORDER BY em.full_name ASC, fsp.created_at ASC
     `;
-
-    const startDate = `${year}-${mon}-01`;  // e.g., '2025-11-01'
 
     const [rows] = await db.query(sql, [bank_id, startDate, startDate, pd_id]);
 
-    if (rows.length === 0) {
-      return res.json({
-        status: 'success',
-        data: [{
-          overall_approved_salary: 0,
-          overall_total_paid: 0,
-          overall_balance: 0
-        }]
-      });
-    }
+    // Group payments by employee
+    const employeeMap = {};
 
-    const employees = rows.map(row => {
-      const approved = parseFloat(row.approved_salary) || 0;
-      const paid = parseFloat(row.total_paid) || 0;
-      const balance = approved - paid;
+    rows.forEach(row => {
+      const empId = row.emp_id;
 
+      if (!employeeMap[empId]) {
+        employeeMap[empId] = {
+          emp_id: empId,
+          full_name: row.full_name,
+          approved_salary: parseFloat(row.approved_salary || 0),
+          transactions: [],
+          total_paid: 0
+        };
+      }
+
+      if (row.transaction_id) {
+        const transaction = {
+          id: row.transaction_id,
+          entry_date: row.entry_date,
+          paid_amount: parseFloat(row.paid_amount || 0),
+          recorded_balance: parseFloat(row.recorded_balance || 0),
+          created_at: row.created_at,
+          created_by: row.created_by,
+          updated_at: row.updated_at,
+          updated_by: row.updated_by
+        };
+
+        employeeMap[empId].transactions.push(transaction);
+        employeeMap[empId].total_paid += transaction.paid_amount;
+      }
+    });
+
+    const employees = Object.values(employeeMap).map(emp => {
+      const balance = emp.approved_salary - emp.total_paid;
       return {
-        emp_id: row.emp_id,
-        full_name: row.full_name,
-        approved_salary: parseFloat(approved.toFixed(2)),
-        total_paid: parseFloat(paid.toFixed(2)),
-        balance: parseFloat(balance.toFixed(2))
+        emp_id: emp.emp_id,
+        full_name: emp.full_name,
+        approved_salary: Number(emp.approved_salary.toFixed(2)),
+        total_paid: Number(emp.total_paid.toFixed(2)),
+        balance: Number(balance.toFixed(2)),
+        transactions: emp.transactions.map(t => ({
+          ...t,
+          paid_amount: Number(t.paid_amount.toFixed(2)),
+          recorded_balance: Number(t.recorded_balance.toFixed(2))
+        }))
       };
     });
 
     const overall = {
-      overall_approved_salary: parseFloat(employees.reduce((s, e) => s + e.approved_salary, 0).toFixed(2)),
-      overall_total_paid: parseFloat(employees.reduce((s, e) => s + e.total_paid, 0).toFixed(2)),
-      overall_balance: parseFloat(employees.reduce((s, e) => s + e.balance, 0).toFixed(2))
+      overall_approved_salary: Number(employees.reduce((sum, e) => sum + e.approved_salary, 0).toFixed(2)),
+      overall_total_paid: Number(employees.reduce((sum, e) => sum + e.total_paid, 0).toFixed(2)),
+      overall_balance: Number(employees.reduce((sum, e) => sum + e.balance, 0).toFixed(2))
     };
+
+    const responseData = employees.length > 0 ? [overall, ...employees] : [overall];
 
     res.json({
       status: 'success',
-      message: 'Salary summary loaded successfully',
-      data: [overall, ...employees]
+      message: 'Salary payments loaded successfully',
+      data: responseData
     });
 
   } catch (error) {
@@ -965,79 +1000,201 @@ exports.getSalaryPayablesSummary = async (req, res) => {
   }
 };
 
-
-// Update/upsert salary payable (manual paid_amount entry; calculates balance; logs previous to history on update)
 exports.updateSalaryPayable = async (req, res) => {
   try {
-    const { 
-      emp_id, pd_id, entry_date, paid_amount, 
-      finance_bank_id, created_by = 'admin', updated_by = 'admin' 
+    const {
+      emp_id,
+      pd_id,
+      paid_amount,
+      finance_bank_id,
+      entry_date,                // ← now coming from frontend
+      created_by = 'admin',
+      updated_by = created_by
     } = req.body;
 
-    if (!emp_id || !pd_id || !entry_date || paid_amount === undefined || !finance_bank_id) {
+    if (!emp_id || !pd_id || !paid_amount || !finance_bank_id) {
       return res.status(400).json({
         status: 'error',
-        message: 'emp_id, pd_id, entry_date, paid_amount, and finance_bank_id are required'
+        message: 'emp_id, pd_id, paid_amount, finance_bank_id required'
       });
     }
 
-    const [emRows] = await db.query('SELECT approved_salary FROM employee_master WHERE emp_id = ?', [emp_id]);
-    if (emRows.length === 0) {
-      return res.status(404).json({ status: 'error', message: 'Employee not found' });
+    const paid = parseFloat(paid_amount);
+    if (isNaN(paid) || paid <= 0) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'paid_amount must be positive number'
+      });
     }
-    const approvedSalary = parseFloat(emRows[0].approved_salary) || 0;
-    const balance = approvedSalary - parseFloat(paid_amount);
 
-    const [existingRows] = await db.query(
-      'SELECT * FROM finance_salary_payable WHERE emp_id = ? AND pd_id = ? AND entry_date = ?',
-      [emp_id, pd_id, entry_date]
+    // 1. Get approved salary
+    const [emp] = await db.query(
+      'SELECT approved_salary FROM employee_master WHERE emp_id = ?',
+      [emp_id]
     );
 
-    if (existingRows.length > 0) {
-      const existing = existingRows[0];
-      // Log to history
-      await db.query(
-        'INSERT INTO finance_salary_payable_edit_history SET ?',
-        {
-          finance_salary_payable_id: existing.id,
-          emp_id: existing.emp_id,
-          pd_id: existing.pd_id,
-          entry_date: existing.entry_date,
-          paid_amount: existing.paid_amount,
-          balance: existing.balance,
-          finance_bank_id: existing.finance_bank_id,
-          created_by: updated_by
-        }
-      );
-
-      // Update main record
-      await db.query(
-        `UPDATE finance_salary_payable 
-         SET paid_amount = ?, balance = ?, finance_bank_id = ?, updated_at = NOW(), updated_by = ? 
-         WHERE id = ?`,
-        [paid_amount, balance, finance_bank_id, updated_by, existing.id]
-      );
-    } else {
-      // Insert new
-      await db.query(
-        `INSERT INTO finance_salary_payable 
-         (emp_id, pd_id, entry_date, paid_amount, balance, finance_bank_id, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [emp_id, pd_id, entry_date, paid_amount, balance, finance_bank_id, created_by]
-      );
+    if (emp.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Employee not found' });
     }
 
-    res.status(200).json({
+    const approved = parseFloat(emp[0].approved_salary) || 0;
+
+    // 2. Determine entry date
+    let useDate = entry_date && /^\d{4}-\d{2}-\d{2}$/.test(entry_date)
+      ? entry_date
+      : new Date().toISOString().slice(0, 10);
+
+    // 3. Calculate current monthly total paid (for correct balance)
+    const year = useDate.substring(0, 4);
+    const month = useDate.substring(5, 7);
+
+    const [monthSumRow] = await db.query(`
+      SELECT COALESCE(SUM(paid_amount), 0) AS total
+      FROM finance_salary_payable
+      WHERE emp_id = ?
+        AND pd_id = ?
+        AND YEAR(entry_date) = ?
+        AND MONTH(entry_date) = ?
+    `, [emp_id, pd_id, year, month]);
+
+    const alreadyPaidThisMonth = parseFloat(monthSumRow[0].total) || 0;
+    const newMonthlyTotal = alreadyPaidThisMonth + paid;
+    const newBalance = approved - newMonthlyTotal;
+
+    // 4. Insert the new payment record
+    const [insertResult] = await db.query(`
+      INSERT INTO finance_salary_payable
+      (emp_id, pd_id, entry_date, paid_amount, balance, finance_bank_id, created_by, created_at, updated_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+    `, [
+      emp_id,
+      pd_id,
+      useDate,
+      paid,
+      newBalance,           // snapshot of monthly balance at insert time
+      finance_bank_id,
+      created_by,
+      updated_by
+    ]);
+
+    return res.status(201).json({
       status: 'success',
-      message: 'Salary payable updated successfully'
+      message: 'Payment recorded successfully',
+      data: {
+        id: insertResult.insertId,
+        entry_date: useDate,
+        paid_amount: paid,
+        monthly_balance_after: newBalance,
+        total_paid_this_month: newMonthlyTotal
+      }
     });
-  } catch (error) {
-    console.error('Error in updateSalaryPayable:', error);
-    res.status(500).json({ status: 'error', message: 'Internal server error' });
+
+  } catch (err) {
+    console.error('Error in updateSalaryPayable:', err);
+
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({
+        status: 'error',
+        message: 'Duplicate entry error – unique constraint still exists on (emp_id, pd_id, entry_date)',
+        hint: 'Run: ALTER TABLE finance_salary_payable DROP INDEX unique_emp_pd_datetime;'
+      });
+    }
+
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to record payment',
+      error: err.message
+    });
   }
 };
 
-// Get cost categories for dropdown
+
+
+exports.getSalaryTransactionLogs = async (req, res) => {
+  try {
+    let { emp_id, pd_id, month } = req.query;
+
+    if (!emp_id || !pd_id || !month) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'emp_id, pd_id and month are required'
+      });
+    }
+
+    // Trim and normalize
+    emp_id = String(emp_id).trim();
+    pd_id = String(pd_id).trim();
+    month = month.replace(/-/g, ''); // remove any dashes → YYYYMM
+
+    if (month.length !== 6 || isNaN(Number(month))) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'month should be in format YYYYMM or YYYY-MM'
+      });
+    }
+
+    const year = month.substring(0, 4);
+    const mon = month.substring(4, 6);
+
+    const sql = `
+      SELECT 
+        fsp.id,
+        fsp.emp_id,
+        fsp.pd_id,
+        fsp.entry_date,
+        fsp.paid_amount,
+        fsp.finance_bank_id,
+        fsp.balance,
+        fsp.created_at,
+        fsp.created_by,
+        fsp.updated_at,
+        fsp.updated_by,
+        fbm.bank_name AS finance_bank_name
+      FROM finance_salary_payable fsp
+      LEFT JOIN finance_bank_master fbm 
+        ON fsp.finance_bank_id = fbm.id
+      WHERE fsp.emp_id = ?
+        AND fsp.pd_id = ?
+        AND YEAR(fsp.entry_date) = ?
+        AND MONTH(fsp.entry_date) = ?
+      ORDER BY fsp.created_at ASC, fsp.id ASC
+    `;
+
+    const [rows] = await db.query(sql, [emp_id, pd_id, year, mon]);
+
+    // Debug log in server console
+    console.log(`[salary-transaction-logs] emp=${emp_id} pd=${pd_id} month=${year}-${mon} → found ${rows.length} rows`);
+
+    const formatted = rows.map(row => ({
+      id: row.id,
+      entry_date: row.entry_date,
+      paid_amount: Number(row.paid_amount).toFixed(2),
+      balance: Number(row.balance).toFixed(2),
+      created_at: row.created_at,
+      created_by: row.created_by || 'System',
+      updated_at: row.updated_at,
+      updated_by: row.updated_by,
+      finance_bank_id: row.finance_bank_id,
+      finance_bank_name: row.finance_bank_name || 'N/A'   // ← added
+    }));
+
+    res.json({
+      status: 'success',
+      message: `Found ${formatted.length} transaction${formatted.length === 1 ? '' : 's'}`,
+      data: formatted
+    });
+
+  } catch (err) {
+    console.error('Error in getSalaryTransactionLogs:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch transaction logs',
+      error: err.message
+    });
+  }
+};
+
+
 exports.getCostCategories = async (req, res) => {
   try {
     const sql = 'SELECT id, category_name FROM finance_cost_category ORDER BY category_name';
@@ -1100,6 +1257,8 @@ exports.createTransportPayable = async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
+
+
 
 
 // Get all existing distinct DC numbers
@@ -4030,6 +4189,402 @@ exports.fetchCPEdata = async (req, res) => {
         overall_receivable_balance: "0.00",
         net_cash_position: "0.00"
       }
+    });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+// ─── CUSTOM / OTHER PAYMENT ───────────────────────────────────────────────
+
+// Create a new custom payment record
+exports.createCustomPayment = async (req, res) => {
+  try {
+    const {
+      category_name,
+      payment_type,    // NEW required field
+      date,
+      amount,
+      receipt,
+      cash,
+      bank_name,
+      remarks,
+      created_by
+    } = req.body;
+
+    // Required fields validation
+    if (!category_name?.trim()) {
+      return res.status(400).json({ status: 'error', message: 'category_name is required' });
+    }
+
+    if (!payment_type || !['Payable', 'Receivable'].includes(payment_type)) {
+      return res.status(400).json({ status: 'error', message: 'payment_type must be Payable or Receivable' });
+    }
+
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) < 0) {
+      return res.status(400).json({ status: 'error', message: 'amount must be a valid positive number' });
+    }
+
+    if (!created_by) {
+      return res.status(400).json({ status: 'error', message: 'created_by is required' });
+    }
+
+    const parsedAmount = parseFloat(amount);
+    const formattedDate = date ? date.split('T')[0] : null;
+
+    const sql = `
+      INSERT INTO finance_custom_payment_categories 
+      (category_name, payment_type, date, amount, receipt, cash, bank_name, remarks, created_by, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `;
+
+    const [result] = await db.query(sql, [
+      category_name.trim(),
+      payment_type,
+      formattedDate,
+      parsedAmount,
+      receipt?.trim() || null,
+      parseFloat(cash || 0) || null,
+      bank_name?.trim() || null,
+      remarks?.trim() || null,
+      created_by
+    ]);
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Custom payment record created successfully',
+      data: { id: result.insertId }
+    });
+  } catch (error) {
+    console.error('Error in createCustomPayment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create custom payment',
+      error: error.message
+    });
+  }
+};
+
+// Get list of custom payments (filtered by created_by if provided)
+exports.getCustomPayments = async (req, res) => {
+  try {
+    const { created_by } = req.query;
+
+    let sql = `
+      SELECT 
+        id,
+        category_name,
+        payment_type,          -- NEW
+        date,
+        amount,
+        receipt,
+        cash,
+        bank_name,
+        remarks,
+        created_at,
+        created_by
+      FROM finance_custom_payment_categories
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (created_by) {
+      sql += ' AND created_by = ?';
+      params.push(created_by);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    const [rows] = await db.query(sql, params);
+
+    const overall = {
+      total_amount: parseFloat(rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0).toFixed(2)),
+      total_cash: parseFloat(rows.reduce((sum, r) => sum + (parseFloat(r.cash) || 0), 0).toFixed(2))
+    };
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Custom payments retrieved successfully',
+      data: rows,
+      overall
+    });
+  } catch (error) {
+    console.error('Error in getCustomPayments:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch custom payments',
+      error: error.message
+    });
+  }
+};
+
+// Update existing custom payment record
+exports.updateCustomPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      category_name,
+      payment_type,         // NEW
+      date,
+      amount,
+      receipt,
+      cash,
+      bank_name,
+      remarks,
+      updated_by
+    } = req.body;
+
+    if (!id || !updated_by) {
+      return res.status(400).json({ status: 'error', message: 'id and updated_by are required' });
+    }
+
+    // Fetch current record for history
+    const [currentRows] = await db.query(
+      'SELECT * FROM finance_custom_payment_categories WHERE id = ?',
+      [id]
+    );
+
+    if (currentRows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Custom payment record not found' });
+    }
+
+    const current = currentRows[0];
+
+    // Save old version to history (include payment_type)
+    await db.query(`
+      INSERT INTO finance_custom_payment_categories_edit_history
+      (finance_custom_payment_categories_id, category_name, payment_type, date, amount, receipt,
+       cash, bank_name, remarks, edited_by, edited_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `, [
+      id,
+      current.category_name,
+      current.payment_type,
+      current.date,
+      current.amount,
+      current.receipt,
+      current.cash,
+      current.bank_name,
+      current.remarks,
+      updated_by
+    ]);
+
+    // Build dynamic update query
+    const updates = [];
+    const params = [];
+
+    if (category_name !== undefined) {
+      updates.push('category_name = ?');
+      params.push(category_name.trim());
+    }
+    if (payment_type !== undefined && ['Payable', 'Receivable'].includes(payment_type)) {
+      updates.push('payment_type = ?');
+      params.push(payment_type);
+    }
+    if (date !== undefined) {
+      updates.push('date = ?');
+      params.push(date.split('T')[0]);
+    }
+    if (amount !== undefined) {
+      updates.push('amount = ?');
+      params.push(parseFloat(amount));
+    }
+    if (receipt !== undefined) {
+      updates.push('receipt = ?');
+      params.push(receipt.trim() || null);
+    }
+    if (cash !== undefined) {
+      updates.push('cash = ?');
+      params.push(parseFloat(cash) || null);
+    }
+    if (bank_name !== undefined) {
+      updates.push('bank_name = ?');
+      params.push(bank_name.trim() || null);
+    }
+    if (remarks !== undefined) {
+      updates.push('remarks = ?');
+      params.push(remarks.trim() || null);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ status: 'error', message: 'No fields provided to update' });
+    }
+
+    updates.push('updated_by = ?');
+    params.push(updated_by);
+    updates.push('updated_at = NOW()');
+
+    params.push(id);
+
+    const updateSql = `
+      UPDATE finance_custom_payment_categories 
+      SET ${updates.join(', ')}
+      WHERE id = ?
+    `;
+
+    const [result] = await db.query(updateSql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ status: 'error', message: 'Record not found or no changes made' });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Custom payment updated successfully'
+    });
+  } catch (error) {
+    console.error('Error in updateCustomPayment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update custom payment',
+      error: error.message
+    });
+  }
+};
+
+// Delete custom payment record
+exports.deleteCustomPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'id is required' });
+    }
+
+    const [result] = await db.query(
+      'DELETE FROM finance_custom_payment_categories WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ status: 'error', message: 'Custom payment record not found' });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Custom payment record deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error in deleteCustomPayment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to delete custom payment',
+      error: error.message
+    });
+  }
+};
+
+// ─── CUSTOM CATEGORY MANAGEMENT ──────────────────────────────────────────
+
+// Get list of unique custom categories
+exports.getCustomCategories = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT DISTINCT category_name 
+      FROM finance_custom_payment_categories 
+      WHERE category_name IS NOT NULL AND category_name != ''
+      ORDER BY category_name ASC
+    `);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Custom categories retrieved successfully',
+      data: rows
+    });
+  } catch (error) {
+    console.error('Error in getCustomCategories:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch custom categories',
+      error: error.message
+    });
+  }
+};
+
+// Create a new custom category (only category_name)
+exports.createCustomCategory = async (req, res) => {
+  try {
+    const { category_name, created_by } = req.body;
+
+    if (!category_name?.trim()) {
+      return res.status(400).json({ status: 'error', message: 'category_name is required' });
+    }
+
+    const trimmedName = category_name.trim();
+
+    // Check duplicate (case-insensitive)
+    const [exists] = await db.query(
+      'SELECT 1 FROM finance_custom_payment_categories WHERE LOWER(category_name) = LOWER(?) LIMIT 1',
+      [trimmedName]
+    );
+
+    if (exists.length > 0) {
+      return res.status(409).json({ status: 'error', message: 'Category name already exists' });
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO finance_custom_payment_categories (category_name, created_by, created_at) VALUES (?, ?, NOW())',
+      [trimmedName, created_by || null]
+    );
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Custom category created successfully',
+      data: { id: result.insertId, category_name: trimmedName }
+    });
+  } catch (error) {
+    console.error('Error in createCustomCategory:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to create custom category',
+      error: error.message
+    });
+  }
+};
+
+
+
+
+
+
+exports.getCustomPaymentsByCategory = async (req, res) => {
+  try {
+    const { category_name } = req.query;
+
+    if (!category_name?.trim()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'category_name query parameter is required'
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT 
+         id, date, amount, payment_type, receipt, cash, bank_name, remarks, created_at
+       FROM finance_custom_payment_categories 
+       WHERE category_name = ?
+       ORDER BY created_at DESC`,
+      [category_name.trim()]
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: rows
+    });
+  } catch (error) {
+    console.error('Error in getCustomPaymentsByCategory:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch records',
+      error: error.message
     });
   }
 };
