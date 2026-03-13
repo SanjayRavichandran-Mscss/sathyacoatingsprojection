@@ -22,7 +22,7 @@ const CreditorsTable = ({ onTotalCalculated }) => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await fetch('http://localhost:5000/finance/overall-creditors-balance');
+        const response = await fetch('https://scpl.kggeniuslabs.com/api/finance/overall-creditors-balance');
         const result = await response.json();
 
         if (result.status === 'success' && result.data) {

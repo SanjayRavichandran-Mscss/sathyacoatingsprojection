@@ -39,9 +39,9 @@ const SiteAccommodationPayablesModal = ({ onClose, createdBy }) => {
     const loadData = async () => {
       try {
         const [projRes, clientRes, bankRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/view-creditors-client'),
-          axios.get('http://localhost:5000/finance/bank-masters')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
         ]);
 
         const allProjects = projRes.data.data.flatMap(c => c.projects.map(p => ({ pd_id: p.pd_id, project_name: p.project_name })));
@@ -66,7 +66,7 @@ const SiteAccommodationPayablesModal = ({ onClose, createdBy }) => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
+        `https://scpl.kggeniuslabs.com/api/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
       );
       setList(res.data.data || []);
     } catch (err) {
@@ -109,7 +109,7 @@ const SiteAccommodationPayablesModal = ({ onClose, createdBy }) => {
     };
 
     try {
-      await axios.put(`http://localhost:5000/finance/update-site-accommodation-payable/${editingRowId}`, payload);
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-site-accommodation-payable/${editingRowId}`, payload);
       toast.success('Updated successfully');
       cancelEdit();
       loadData();
@@ -138,7 +138,7 @@ const SiteAccommodationPayablesModal = ({ onClose, createdBy }) => {
     };
 
     try {
-      await axios.post('http://localhost:5000/finance/create-site-accommodation-payable', payload);
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-site-accommodation-payable', payload);
       toast.success('Record added!');
       setShowAddForm(false);
       setNewEntry({

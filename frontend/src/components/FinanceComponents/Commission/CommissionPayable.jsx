@@ -69,7 +69,7 @@ const CommissionPayable = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/companies-with-projects');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
       const all = res.data.data.flatMap(c => c.projects?.map(p => ({ pd_id: p.pd_id, project_name: p.project_name })) || []);
       setProjects(all);
     } catch (err) {
@@ -79,7 +79,7 @@ const CommissionPayable = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       setBanks(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load banks');
@@ -88,7 +88,7 @@ const CommissionPayable = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/cost-categories');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
       setCategories(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load categories');
@@ -97,7 +97,7 @@ const CommissionPayable = () => {
 
   const fetchMarketingPersons = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/marketing-persons');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/marketing-persons');
       setPersons(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load persons');
@@ -108,7 +108,7 @@ const CommissionPayable = () => {
     if (!pdId || !bankId) return;
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/commission-payables?pd_id=${pdId}&bank_id=${bankId}`
+        `https://scpl.kggeniuslabs.com/api/finance/commission-payables?pd_id=${pdId}&bank_id=${bankId}`
       );
       setList(res.data.data || []);
     } catch (err) {
@@ -156,7 +156,7 @@ const CommissionPayable = () => {
 
     try {
       await axios.put(
-        `http://localhost:5000/finance/update-commission-payable/${editingRowId}`,
+        `https://scpl.kggeniuslabs.com/api/finance/update-commission-payable/${editingRowId}`,
         payload
       );
       toast.success('Updated successfully! History saved.');
@@ -204,7 +204,7 @@ const CommissionPayable = () => {
     };
 
     try {
-      await axios.post('http://localhost:5000/finance/create-commission-payable', payload);
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-commission-payable', payload);
       toast.success('New record added!');
       setIsModalOpen(false);
       setNewRecord({
