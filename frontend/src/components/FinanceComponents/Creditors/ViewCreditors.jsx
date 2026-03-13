@@ -60,7 +60,7 @@
 
 //   const loadClients = async () => {
 //     try {
-//       const response = await axios.get('http://localhost:5000/finance/view-creditors-client');
+//       const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
 //       setClients(response.data.data.map(client => ({ value: client.id, label: client.client_name })));
 //     } catch (error) {
 //       console.error('Error loading clients:', error);
@@ -70,7 +70,7 @@
 //   const loadCreditors = async () => {
 //     setLoading(true);
 //     try {
-//       const response = await axios.get('http://localhost:5000/finance/view-creditors');
+//       const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors');
 //       const sorted = response.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 //       setCreditors(sorted);
 //       setFilteredCreditors(sorted);
@@ -88,7 +88,7 @@
 //   const handleDelete = async (id) => {
 //     if (!window.confirm('Are you sure you want to delete this creditor entry?')) return;
 //     try {
-//       await axios.delete(`http://localhost:5000/finance/delete-creditors/${id}`);
+//       await axios.delete(`https://scpl.kggeniuslabs.com/api/finance/delete-creditors/${id}`);
 //       loadCreditors();
 //       alert('Creditor deleted successfully');
 //     } catch (error) {
@@ -98,7 +98,7 @@
 
 //   const handleEdit = async (id) => {
 //     try {
-//       const response = await axios.get(`http://localhost:5000/finance/creditors/${id}`);
+//       const response = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/creditors/${id}`);
 //       const data = response.data.data;
 //       setEditData(data);
 //       setEditCreditorType(data.is_gst === 1 ? 'gst' : 'other');
@@ -147,7 +147,7 @@
 //     }
 //     setEditLoading(true);
 //     try {
-//       await axios.put('http://localhost:5000/finance/update-creditors', {
+//       await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-creditors', {
 //         ...editFormData,
 //         is_gst: editCreditorType === 'gst' ? 1 : 0
 //       });
@@ -538,7 +538,7 @@ const ViewCreditors = () => {
 
   const loadClients = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/finance/view-creditors-client');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
       setClients(response.data.data.map(client => ({ value: client.id, label: client.client_name })));
     } catch (error) {
       console.error('Error loading clients:', error);
@@ -548,7 +548,7 @@ const ViewCreditors = () => {
   const loadCreditors = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/finance/view-creditors');
+      const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors');
       const sorted = response.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       setCreditors(sorted);
       setFilteredCreditors(sorted);
@@ -566,7 +566,7 @@ const ViewCreditors = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this creditor entry?')) return;
     try {
-      await axios.delete(`http://localhost:5000/finance/delete-creditors/${id}`);
+      await axios.delete(`https://scpl.kggeniuslabs.com/api/finance/delete-creditors/${id}`);
       loadCreditors();
       alert('Creditor deleted successfully');
     } catch (error) {
@@ -576,7 +576,7 @@ const ViewCreditors = () => {
 
   const handleEdit = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/finance/creditors/${id}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/creditors/${id}`);
       const data = response.data.data;
       setEditData(data);
       setEditCreditorType(data.is_gst === 1 ? 'gst' : 'other');
@@ -626,7 +626,7 @@ const ViewCreditors = () => {
 
     setEditLoading(true);
     try {
-      await axios.put('http://localhost:5000/finance/update-creditors', {
+      await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-creditors', {
         ...editFormData,
         is_gst: editCreditorType === 'gst' ? 1 : 0,
         updated_by: currentUser  // ← Auto-sent from URL

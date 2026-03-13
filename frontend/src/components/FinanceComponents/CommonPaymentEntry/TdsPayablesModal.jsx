@@ -52,8 +52,8 @@
 //     const load = async () => {
 //       try {
 //         const [projRes, bankRes] = await Promise.all([
-//           axios.get('http://localhost:5000/finance/companies-with-projects'),
-//           axios.get('http://localhost:5000/finance/bank-masters')
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
 //         ]);
 
 //         const allProjects = projRes.data.data
@@ -84,7 +84,7 @@
 //     }
 //     setLoading(true);
 //     try {
-//       let url = `http://localhost:5000/finance/tds-payables?pd_id=${pdId}`;
+//       let url = `https://scpl.kggeniuslabs.com/api/finance/tds-payables?pd_id=${pdId}`;
 //       if (selectedBank?.value) url += `&finance_bank_id=${selectedBank.value}`;
 //       const res = await axios.get(url);
 //       setList(res.data.data || []);
@@ -107,7 +107,7 @@
 //     }
 
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-tds-payable', {
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-tds-payable', {
 //         ...form,
 //         pd_id: pdId,
 //         finance_bank_id: selectedBank.value,
@@ -139,7 +139,7 @@
 
 //   const saveEdit = async () => {
 //     try {
-//       await axios.put(`http://localhost:5000/finance/update-tds-payable/${editingId}`, {
+//       await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-tds-payable/${editingId}`, {
 //         ...editData,
 //         updated_by: createdBy
 //       });
@@ -392,8 +392,8 @@ const TdsPayablesModal = ({ onClose, createdBy }) => {
     const load = async () => {
       try {
         const [projRes, bankRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/bank-masters')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
         ]);
 
         const allProjects = projRes.data.data
@@ -420,7 +420,7 @@ const TdsPayablesModal = ({ onClose, createdBy }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      let url = `http://localhost:5000/finance/tds-payables`;
+      let url = `https://scpl.kggeniuslabs.com/api/finance/tds-payables`;
       if (selectedBank?.value) url += `&finance_bank_id=${selectedBank.value}`;
       const res = await axios.get(url);
       setList(res.data.data || []);
@@ -443,7 +443,7 @@ const TdsPayablesModal = ({ onClose, createdBy }) => {
     }
 
     try {
-      await axios.post('http://localhost:5000/finance/create-tds-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-tds-payable', {
         ...form,
         pd_id: null,
         finance_bank_id: selectedBank.value,
@@ -475,7 +475,7 @@ const TdsPayablesModal = ({ onClose, createdBy }) => {
 
   const saveEdit = async () => {
     try {
-      await axios.put(`http://localhost:5000/finance/update-tds-payable/${editingId}`, {
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-tds-payable/${editingId}`, {
         ...editData,
         updated_by: createdBy
       });

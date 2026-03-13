@@ -54,13 +54,13 @@ const Consumables = () => {
       try {
         setLoading(true);
 
-        const consRes = await axios.get('http://localhost:5000/resource/consumables');
+        const consRes = await axios.get('https://scpl.kggeniuslabs.com/api/resource/consumables');
         if (consRes.data?.status === 'success') {
           setMasterConsumables(consRes.data.data || []);
           setFilteredConsumables(consRes.data.data || []);
         }
 
-        const dispRes = await axios.get('http://localhost:5000/resource/dispatches');
+        const dispRes = await axios.get('https://scpl.kggeniuslabs.com/api/resource/dispatches');
         if (dispRes.data?.status === 'success') {
           setDispatches(dispRes.data.data || []);
           setFilteredDispatches(dispRes.data.data || []);
@@ -143,9 +143,9 @@ const Consumables = () => {
         is_multi_use: addForm.usageType === 'multi use' ? 1 : 0,
       };
 
-      await axios.post('http://localhost:5000/resource/consumables', payload);
+      await axios.post('https://scpl.kggeniuslabs.com/api/resource/consumables', payload);
 
-      const refresh = await axios.get('http://localhost:5000/resource/consumables');
+      const refresh = await axios.get('https://scpl.kggeniuslabs.com/api/resource/consumables');
       if (refresh.data?.status === 'success') {
         setMasterConsumables(refresh.data.data || []);
       }
@@ -230,7 +230,7 @@ const Consumables = () => {
         transport_amount: dispatchForm.amount ? Number(dispatchForm.amount) : 0,
       };
 
-      const res = await axios.post('http://localhost:5000/resource/dispatches', payload);
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/resource/dispatches', payload);
 
       if (res.data.status === 'success') {
         Swal.fire({
@@ -246,7 +246,7 @@ const Consumables = () => {
         closeDispatchModal();
 
         // Refresh dispatches
-        const dispRes = await axios.get('http://localhost:5000/resource/dispatches');
+        const dispRes = await axios.get('https://scpl.kggeniuslabs.com/api/resource/dispatches');
         if (dispRes.data?.status === 'success') {
           setDispatches(dispRes.data.data || []);
         }
