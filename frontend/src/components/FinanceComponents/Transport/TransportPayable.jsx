@@ -26,7 +26,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/companies-with-projects');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCompanies(data);
@@ -41,7 +41,7 @@
 
 //   const fetchCostCategories = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/cost-categories');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCostCategories(data.map(cat => ({ value: cat.id, label: cat.category_name })));
@@ -59,7 +59,7 @@
 //     setLoading(true);
 //     setError(null);
 //     try {
-//       const res = await fetch(`http://localhost:5000/finance/transport-payables?pd_id=${selectedProject}`);
+//       const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/transport-payables?pd_id=${selectedProject}`);
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         const individuals = data.filter(item => item.id !== undefined);
@@ -130,8 +130,8 @@
 
 //     const isNew = editingId === 'new';
 //     const url = isNew 
-//       ? 'http://localhost:5000/finance/create-transport-payable'
-//       : `http://localhost:5000/finance/update-transport-payable/${editingId}`;
+//       ? 'https://scpl.kggeniuslabs.com/api/finance/create-transport-payable'
+//       : `https://scpl.kggeniuslabs.com/api/finance/update-transport-payable/${editingId}`;
 
 //     try {
 //       const res = await fetch(url, {
@@ -433,7 +433,7 @@ const TransportPayable = () => {
   // Fetch Data
   const fetchCompanies = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/companies-with-projects');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
       const { status, data } = await res.json();
       if (status === 'success') {
         setCompanies(data);
@@ -446,7 +446,7 @@ const TransportPayable = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/bank-masters');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       const { status, data } = await res.json();
       if (status === 'success') {
         const options = data.map(bank => ({
@@ -462,7 +462,7 @@ const TransportPayable = () => {
 
   const fetchCostCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/finance/cost-categories');
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
       const { status, data } = await res.json();
       if (status === 'success') {
         setCostCategories(data.map(cat => ({ value: cat.id, label: cat.category_name })));
@@ -479,7 +479,7 @@ const TransportPayable = () => {
     }
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`);
+      const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/transport-payables?pd_id=${selectedProject}&bank_id=${selectedBank}`);
       const { status, data } = await res.json();
       if (status === 'success') {
         setEntries(data.slice(1)); // skip summary row
@@ -573,8 +573,8 @@ const TransportPayable = () => {
 
     const isNew = modalMode === 'add';
     const url = isNew
-      ? 'http://localhost:5000/finance/create-transport-payable'
-      : `http://localhost:5000/finance/update-transport-payable/${formData.id}`;
+      ? 'https://scpl.kggeniuslabs.com/api/finance/create-transport-payable'
+      : `https://scpl.kggeniuslabs.com/api/finance/update-transport-payable/${formData.id}`;
 
     try {
       const res = await fetch(url, {

@@ -26,7 +26,7 @@ const SiteInchargeAttendanceModal = ({ onClose, createdBy }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/finance/companies-with-projects')
+    fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects')
       .then(res => res.json())
       .then(({ status, data }) => {
         if (status === 'success') {
@@ -50,7 +50,7 @@ const SiteInchargeAttendanceModal = ({ onClose, createdBy }) => {
     }
 
     setLoading(true);
-    fetch(`http://localhost:5000/finance/site-incharges?pd_id=${selectedProject}`)
+    fetch(`https://scpl.kggeniuslabs.com/api/finance/site-incharges?pd_id=${selectedProject}`)
       .then(res => res.json())
       .then(({ status, data: fetchedData }) => {
         if (status === 'success') {
@@ -69,7 +69,7 @@ const SiteInchargeAttendanceModal = ({ onClose, createdBy }) => {
 
   useEffect(() => {
     if (!selectedProject || !selectedDate) return;
-    fetch(`http://localhost:5000/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`)
+    fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance?pd_id=${selectedProject}&entry_date=${selectedDate}`)
       .then(res => res.json())
       .then(({ status, data }) => {
         if (status === 'success') {
@@ -105,7 +105,7 @@ const SiteInchargeAttendanceModal = ({ onClose, createdBy }) => {
     if (!shift?.trim()) return alert('Shift is required');
 
     try {
-      const res = await fetch('http://localhost:5000/finance/siteincharge-attendance', {
+      const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,7 +124,7 @@ const SiteInchargeAttendanceModal = ({ onClose, createdBy }) => {
 
   const viewHistory = async (assignId) => {
     try {
-      const res = await fetch(`http://localhost:5000/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}`);
+      const res = await fetch(`https://scpl.kggeniuslabs.com/api/finance/siteincharge-attendance-history?siteincharge_assign_id=${assignId}`);
       const { status, data } = await res.json();
       if (status === 'success' && data.length > 0) {
         setHistoryModal({ open: true, data, assignId });

@@ -53,7 +53,7 @@
 
 //   const fetchProjects = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/companies-with-projects');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
 //       const allProjects = res.data.data.flatMap(c => 
 //         (c.projects || []).map(p => ({ pd_id: p.pd_id, project_name: p.project_name }))
 //       );
@@ -65,7 +65,7 @@
 
 //   const fetchClients = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/view-creditors-client');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
 //       setClients(res.data.data || []);
 //     } catch (err) {
 //       toast.error('Failed to load clients');
@@ -74,7 +74,7 @@
 
 //   const fetchBanks = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       const options = res.data.data.map(b => ({
 //         value: b.id,
 //         label: `${b.bank_name} (₹${Number(b.available_balance || 0).toLocaleString('en-IN')})`
@@ -90,7 +90,7 @@
 //     setLoading(true);
 //     try {
 //       const res = await axios.get(
-//         `http://localhost:5000/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
+//         `https://scpl.kggeniuslabs.com/api/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
 //       );
 //       setList(res.data.data || []);
 //     } catch (err) {
@@ -129,7 +129,7 @@
 //     };
 
 //     try {
-//       await axios.put(`http://localhost:5000/finance/update-site-accommodation-payable/${editingRowId}`, payload);
+//       await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-site-accommodation-payable/${editingRowId}`, payload);
 //       toast.success('Updated successfully');
 //       cancelEdit();
 //       loadData();
@@ -158,7 +158,7 @@
 //     };
 
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-site-accommodation-payable', payload);
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-site-accommodation-payable', payload);
 //       toast.success('Record added successfully!');
 //       setShowAddForm(false);
 //       setNewEntry({
@@ -613,7 +613,7 @@ const SiteAccomodationPayable = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/companies-with-projects');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
       const allProjects = res.data.data.flatMap(c => 
         (c.projects || []).map(p => ({ pd_id: p.pd_id, project_name: p.project_name }))
       );
@@ -625,7 +625,7 @@ const SiteAccomodationPayable = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/view-creditors-client');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors-client');
       setClients(res.data.data || []);
     } catch (err) {
       toast.error('Failed to load clients');
@@ -634,7 +634,7 @@ const SiteAccomodationPayable = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       const options = res.data.data.map(b => ({
         value: b.id,
         label: `${b.bank_name} (₹${Number(b.available_balance || 0).toLocaleString('en-IN')})`
@@ -650,7 +650,7 @@ const SiteAccomodationPayable = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
+        `https://scpl.kggeniuslabs.com/api/finance/site-accommodation-payables?pd_id=${selectedProject}&finance_bank_id=${selectedBank.value}`
       );
       setList(res.data.data || []);
     } catch (err) {
@@ -694,7 +694,7 @@ const SiteAccomodationPayable = () => {
     };
 
     try {
-      await axios.put(`http://localhost:5000/finance/update-site-accommodation-payable/${editingRowId}`, payload);
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-site-accommodation-payable/${editingRowId}`, payload);
       toast.success('Updated successfully');
       cancelEdit();
       loadData();
@@ -728,7 +728,7 @@ const SiteAccomodationPayable = () => {
     };
 
     try {
-      await axios.post('http://localhost:5000/finance/create-site-accommodation-payable', payload);
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-site-accommodation-payable', payload);
       toast.success('Record added successfully!');
       setShowAddForm(false);
       setNewEntry({
