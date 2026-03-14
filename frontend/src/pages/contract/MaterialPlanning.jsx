@@ -38,7 +38,7 @@
 //   const fetchMaterials = async () => {
 //     try {
 //       setLoading((prev) => ({ ...prev, materials: true }));
-//       const response = await axios.get("http://localhost:5000/material/materials");
+//       const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/materials");
 //       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
 //     } catch (error) {
 //       console.error("Error fetching materials:", error);
@@ -53,7 +53,7 @@
 //   const fetchUoms = async () => {
 //     try {
 //       setLoading((prev) => ({ ...prev, uoms: true }));
-//       const response = await axios.get("http://localhost:5000/material/uom");
+//       const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/uom");
 //       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
 //     } catch (error) {
 //       console.error("Error fetching UOMs:", error);
@@ -68,7 +68,7 @@
 //     try {
 //       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
 //       const response = await axios.get(
-//         `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
+//         `https://scpl.kggeniuslabs.com/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}`
 //       );
 //       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
 //       setExistingAssignments(assignedMaterials);
@@ -241,7 +241,7 @@
 
 //     try {
 //       setAddingMaterial(true);
-//       const response = await axios.post("http://localhost:5000/material/add-material", {
+//       const response = await axios.post("https://scpl.kggeniuslabs.com/api/material/add-material", {
 //         item_name: inputValue.trim(),
 //       });
 
@@ -390,7 +390,7 @@
 //         return;
 //       }
 
-//       await axios.post("http://localhost:5000/material/assign-material", payload);
+//       await axios.post("https://scpl.kggeniuslabs.com/api/material/assign-material", payload);
 
 //       Swal.fire({
 //         position: "top-end",
@@ -809,7 +809,7 @@ const MaterialPlanning = ({
   const fetchMaterials = useCallback(async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
-      const response = await axios.get("http://localhost:5000/material/materials");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/materials");
       setMaterials(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching materials:", error);
@@ -824,7 +824,7 @@ const MaterialPlanning = ({
   const fetchUoms = useCallback(async () => {
     try {
       setLoading((prev) => ({ ...prev, uoms: true }));
-      const response = await axios.get("http://localhost:5000/material/uom");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/uom");
       setUoms(Array.isArray(response.data?.data) ? response.data.data : []);
     } catch (error) {
       console.error("Error fetching UOMs:", error);
@@ -841,7 +841,7 @@ const MaterialPlanning = ({
     try {
       setLoading((prev) => ({ ...prev, assignedMaterials: true }));
       const response = await axios.get(
-        `http://localhost:5000/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
+        `https://scpl.kggeniuslabs.com/api/material/assigned-materials?site_id=${site_id}&desc_id=${desc_id}&projection_id=${proj_id}`
       );
       const assignedMaterials = Array.isArray(response.data?.data) ? response.data.data : [];
       setExistingAssignments(assignedMaterials);
@@ -1035,7 +1035,7 @@ const MaterialPlanning = ({
 
     try {
       setAddingMaterial(true);
-      const response = await axios.post("http://localhost:5000/material/add-material", {
+      const response = await axios.post("https://scpl.kggeniuslabs.com/api/material/add-material", {
         item_name: inputValue.trim(),
       });
 
@@ -1188,7 +1188,7 @@ const MaterialPlanning = ({
       console.log("Updating assignment with ID:", editingAssignment.id);
       console.log("Payload:", payload);
 
-      await axios.put("http://localhost:5000/material/assigned-materials", payload);
+      await axios.put("https://scpl.kggeniuslabs.com/api/material/assigned-materials", payload);
 
       Swal.fire({
         position: "top-end",
@@ -1269,7 +1269,7 @@ const MaterialPlanning = ({
         console.log("Sending DELETE request for assignment ID:", assignmentId);
         
         // DELETE with body { assignment_id: id }
-        await axios.delete("http://localhost:5000/material/assigned-materials", { 
+        await axios.delete("https://scpl.kggeniuslabs.com/api/material/assigned-materials", { 
           data: { assignment_id: assignmentId } 
         });
         
@@ -1310,7 +1310,7 @@ const MaterialPlanning = ({
         materialBudgetPercentage: overallPercentage,
         projection_id: projectionId,
       };
-      await axios.post("http://localhost:5000/projection/save-material-allocation", payload);
+      await axios.post("https://scpl.kggeniuslabs.com/api/projection/save-material-allocation", payload);
       
       Swal.fire({
         position: "top-end",
@@ -1419,7 +1419,7 @@ const MaterialPlanning = ({
         return;
       }
 
-      await axios.post("http://localhost:5000/material/assign-material", payload);
+      await axios.post("https://scpl.kggeniuslabs.com/api/material/assign-material", payload);
 
       Swal.fire({
         position: "top-end",

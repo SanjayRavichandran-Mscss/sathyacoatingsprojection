@@ -46,9 +46,9 @@ const EmployeeDetails = () => {
   const fetchFilterOptions = async () => {
     try {
       const [designationsRes, statusesRes, employeesRes] = await Promise.all([
-        axios.get("http://localhost:5000/material/designations"),
-        axios.get("http://localhost:5000/material/statuses"),
-        axios.get("http://localhost:5000/material/employees"),
+        axios.get("https://scpl.kggeniuslabs.com/api/material/designations"),
+        axios.get("https://scpl.kggeniuslabs.com/api/material/statuses"),
+        axios.get("https://scpl.kggeniuslabs.com/api/material/employees"),
       ]);
       const designations = designationsRes.data.data.map((d) => d.designation);
       const statuses = statusesRes.data.data.map((s) => s.status);
@@ -75,7 +75,7 @@ const EmployeeDetails = () => {
       if (filters.company) params.company = filters.company;
       if (filters.search) params.search = filters.search;
 
-      const response = await axios.get("http://localhost:5000/material/employees", { params });
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/employees", { params });
       if (response.data.status === "success") {
         setEmployees(response.data.data || []);
         if (response.data.data.length === 0) {
