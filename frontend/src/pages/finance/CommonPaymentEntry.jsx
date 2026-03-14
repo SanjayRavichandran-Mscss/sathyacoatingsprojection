@@ -88,7 +88,7 @@
 //   const loadCreditors = async () => {
 //     setLoading(true);
 //     try {
-//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors');
+//       const res = await axios.get('http://localhost:5000/finance/view-creditors');
 //       setCreditors(res.data.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 //     } catch (err) {
 //       console.error(err);
@@ -331,7 +331,7 @@ const CommonPaymentEntry = () => {
   useEffect(() => {
     const loadCustom = async () => {
       try {
-        const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/custom-categories');
+        const res = await axios.get('http://localhost:5000/finance/custom-categories');
         if (res.data?.status === 'success' && res.data.data) {
           const custom = res.data.data.map(cat => ({
             value: cat.category_name,
@@ -376,7 +376,7 @@ const CommonPaymentEntry = () => {
   const loadCreditors = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors');
+      const res = await axios.get('http://localhost:5000/finance/view-creditors');
       setCreditors(res.data?.data?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) || []);
     } catch (err) {
       console.error('Creditors fetch failed:', err);
@@ -393,7 +393,7 @@ const CommonPaymentEntry = () => {
     setFetchError(null);
 
     try {
-      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/custom-payments-by-category', {
+      const res = await axios.get('http://localhost:5000/finance/custom-payments-by-category', {
         params: { category_name: categoryName.trim() },
       });
 
@@ -430,7 +430,7 @@ const CommonPaymentEntry = () => {
     if (!window.confirm('Delete this record?')) return;
 
     try {
-      await axios.delete(`https://scpl.kggeniuslabs.com/api/finance/delete-custom-payment/${id}`);
+      await axios.delete(`http://localhost:5000/finance/delete-custom-payment/${id}`);
       setCategoryRecords(prev => prev.filter(r => r.id !== id));
       alert('Record deleted successfully');
     } catch (err) {
@@ -444,7 +444,7 @@ const CommonPaymentEntry = () => {
     const trimmed = inputValue.trim();
 
     try {
-      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-custom-category', {
+      const res = await axios.post('http://localhost:5000/finance/create-custom-category', {
         category_name: trimmed,
         created_by: createdBy,
       });
@@ -501,12 +501,12 @@ const CommonPaymentEntry = () => {
 
       let res;
       if (isEditMode && paymentForm.id) {
-        res = await axios.put(`https://scpl.kggeniuslabs.com/api/finance/update-custom-payment/${paymentForm.id}`, {
+        res = await axios.put(`http://localhost:5000/finance/update-custom-payment/${paymentForm.id}`, {
           ...payload,
           updated_by: createdBy,
         });
       } else {
-        res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-custom-payment', payload);
+        res = await axios.post('http://localhost:5000/finance/create-custom-payment', payload);
       }
 
       if (res.data?.status === 'success') {

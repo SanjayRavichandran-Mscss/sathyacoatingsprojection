@@ -127,4 +127,8 @@ router.post("/create-custom-category", financeController.createCustomCategory);
 router.get('/custom-payments-by-category', financeController.getCustomPaymentsByCategory);
 
 
+
+router.get("/salary-payable-transactions", financeController.getSalaryPayableTransactions);
+
+
 module.exports = router;

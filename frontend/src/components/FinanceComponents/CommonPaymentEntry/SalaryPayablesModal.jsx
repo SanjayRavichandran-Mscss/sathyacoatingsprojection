@@ -29,8 +29,8 @@
 //     const fetchData = async () => {
 //       try {
 //         const [compRes, bankRes] = await Promise.all([
-//           axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
-//           axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
+//           axios.get('http://localhost:5000/finance/companies-with-projects'),
+//           axios.get('http://localhost:5000/finance/bank-masters')
 //         ]);
 
 //         if (compRes.data.status === 'success') {
@@ -69,7 +69,7 @@
 //       try {
 //         const month = selectedMonth.replace('-', '');
 //         const res = await axios.get(
-//           `https://scpl.kggeniuslabs.com/api/finance/salary-payables-summary?pd_id=${selectedProject}&month=${month}&bank_id=${selectedBank}`
+//           `http://localhost:5000/finance/salary-payables-summary?pd_id=${selectedProject}&month=${month}&bank_id=${selectedBank}`
 //         );
 
 //         if (res.data.status === 'success' && res.data.data?.length > 1) {
@@ -97,7 +97,7 @@
 //     if (!emp) return;
 
 //     try {
-//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/update-salary-payable', {
+//       await axios.post('http://localhost:5000/finance/update-salary-payable', {
 //         emp_id,
 //         pd_id: selectedProject,
 //         entry_date: `${selectedMonth}-01`,
@@ -339,8 +339,8 @@ const SalaryPayablesModal = ({ onClose, createdBy }) => {
     const fetchInitialData = async () => {
       try {
         const [compRes, bankRes] = await Promise.all([
-          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
-          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
+          axios.get('http://localhost:5000/finance/companies-with-projects'),
+          axios.get('http://localhost:5000/finance/bank-masters')
         ]);
 
         if (compRes.data?.status === 'success' && compRes.data.data) {
@@ -386,7 +386,7 @@ const SalaryPayablesModal = ({ onClose, createdBy }) => {
       try {
         const monthStr = selectedMonth.replace('-', '');
         const res = await axios.get(
-          `https://scpl.kggeniuslabs.com/api/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthStr}&bank_id=${selectedBank}`
+          `http://localhost:5000/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthStr}&bank_id=${selectedBank}`
         );
 
         if (res.data.status === 'success') {
@@ -423,7 +423,7 @@ const SalaryPayablesModal = ({ onClose, createdBy }) => {
       console.log('→ Fetching logs:', { emp_id, pd_id: selectedProject, month: monthStr });
 
       const res = await axios.get(
-        `https://scpl.kggeniuslabs.com/api/finance/salary-transaction-logs?emp_id=${emp_id}&pd_id=${selectedProject}&month=${monthStr}`
+        `http://localhost:5000/finance/salary-transaction-logs?emp_id=${emp_id}&pd_id=${selectedProject}&month=${monthStr}`
       );
 
       console.log('← Logs response:', res.data);
@@ -465,7 +465,7 @@ const SalaryPayablesModal = ({ onClose, createdBy }) => {
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      await axios.post('https://scpl.kggeniuslabs.com/api/finance/update-salary-payable', {
+      await axios.post('http://localhost:5000/finance/update-salary-payable', {
         emp_id,
         pd_id: selectedProject,
         entry_date: today,
@@ -477,7 +477,7 @@ const SalaryPayablesModal = ({ onClose, createdBy }) => {
 
       const monthStr = selectedMonth.replace('-', '');
       const res = await axios.get(
-        `https://scpl.kggeniuslabs.com/api/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthStr}&bank_id=${selectedBank}`
+        `http://localhost:5000/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthStr}&bank_id=${selectedBank}`
       );
 
       if (res.data.status === 'success') {

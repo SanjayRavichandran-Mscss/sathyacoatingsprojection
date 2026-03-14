@@ -60,7 +60,6 @@ exports.getAllConsumables = async (req, res) => {
 
 
 // controllers/resourceController.js (or supplyController.js)
-
 exports.createConsumable = async (req, res) => {
   try {
     const { consumable_name, is_multi_use } = req.body;
@@ -72,9 +71,8 @@ exports.createConsumable = async (req, res) => {
       });
     }
 
-    // Normalize is_multi_use (accept boolean, number 0/1, string "true"/"false")
     let multiUse = 0;
-    if (is_multi_use === true || is_multi_use === 1 || is_multi_use === 'true') {
+    if (is_multi_use === true || is_multi_use === 1 || is_multi_use === 'true' || String(is_multi_use).toLowerCase() === 'yes') {
       multiUse = 1;
     }
 
@@ -87,7 +85,6 @@ exports.createConsumable = async (req, res) => {
 
     const insertId = result.insertId;
 
-    // Return the newly created item in same format as GET
     const [rows] = await db.query(
       `SELECT 
          id,
@@ -124,65 +121,106 @@ exports.createConsumable = async (req, res) => {
   }
 };
 
-
-
-
-
-
-// POST /resource/dispatches
+// POST /resource/dispatches  ── UPDATED ──
 exports.createDispatch = async (req, res) => {
   try {
     const {
       resource_consumable_id,
       quantity,
       dispatch_date,
+      current_site,
+      destination_site,
+      transport_amount = 0,
+
+      // ── NEW FIELDS ──
+      current_incharge_name,
+      current_incharge_mobile,
+      from_address,
+      destination_incharge_name,
+      destination_incharge_mobile,
+      to_address,
+
+      // Optional legacy fields
       vehicle_name_model,
       vehicle_number,
       driver_name,
       driver_mobile,
-      current_site,
-      destination_site,
-      transport_amount = 0
     } = req.body;
 
+    // Required fields validation
     if (!resource_consumable_id || !quantity || !dispatch_date || !current_site || !destination_site) {
-      return res.status(400).json({ status: 'error', message: 'Missing required fields' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'Missing required fields: resource_consumable_id, quantity, dispatch_date, current_site, destination_site'
+      });
     }
 
     const [result] = await db.query(
       `INSERT INTO resource_dispatches (
-        resource_consumable_id, quantity, dispatch_date,
-        vehicle_name_model, vehicle_number, driver_name, driver_mobile,
-        current_site, destination_site, transport_amount,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [
-        resource_consumable_id,
-        quantity,
+        resource_consumable_id, 
+        quantity, 
         dispatch_date,
-        vehicle_name_model || null,
-        vehicle_number || null,
-        driver_name || null,
-        driver_mobile || null,
         current_site,
         destination_site,
-        parseFloat(transport_amount) || 0
+        transport_amount,
+
+        -- New columns
+        current_incharge_name,
+        current_incharge_mobile,
+        from_address,
+        destination_incharge_name,
+        destination_incharge_mobile,
+        to_address,
+
+        -- Legacy optional fields
+        vehicle_name_model,
+        vehicle_number,
+        driver_name,
+        driver_mobile,
+
+        created_at, 
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        resource_consumable_id,
+        quantity.trim(),
+        dispatch_date,
+        current_site.trim(),
+        destination_site.trim(),
+        parseFloat(transport_amount) || 0,
+
+        // New fields (allow null/empty)
+        current_incharge_name?.trim() || null,
+        current_incharge_mobile?.trim() || null,
+        from_address?.trim() || null,
+        destination_incharge_name?.trim() || null,
+        destination_incharge_mobile?.trim() || null,
+        to_address?.trim() || null,
+
+        // Legacy
+        vehicle_name_model?.trim() || null,
+        vehicle_number?.trim() || null,
+        driver_name?.trim() || null,
+        driver_mobile?.trim() || null,
       ]
     );
 
     res.status(201).json({
       status: 'success',
-      message: 'Dispatch recorded',
+      message: 'Dispatch recorded successfully',
       data: { id: result.insertId }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: 'error', message: 'Failed to save dispatch', error: err.message });
+    console.error('Error creating dispatch:', err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to save dispatch',
+      error: err.message
+    });
   }
 };
 
-
-
+// GET /resource/dispatches  ── UPDATED ──
 exports.getDispatches = async (req, res) => {
   try {
     const { consumable_id } = req.query;
@@ -193,17 +231,28 @@ exports.getDispatches = async (req, res) => {
         d.resource_consumable_id,
         d.quantity,
         d.dispatch_date,
+        d.current_site,
+        d.destination_site,
+        d.transport_amount,
+        
+        -- New fields
+        d.current_incharge_name,
+        d.current_incharge_mobile,
+        d.from_address,
+        d.destination_incharge_name,
+        d.destination_incharge_mobile,
+        d.to_address,
+
+        -- Legacy vehicle/driver fields
         d.vehicle_name_model,
         d.vehicle_number,
         d.driver_name,
         d.driver_mobile,
-        d.current_site,
-        d.destination_site,
-        d.transport_amount,
+
         d.created_at,
         d.updated_at,
         
-        -- Joined fields from resource_consumables
+        -- Consumable info
         c.consumable_name,
         CASE 
           WHEN c.is_multi_use = 1 THEN 'multi use'
@@ -218,7 +267,7 @@ exports.getDispatches = async (req, res) => {
 
     if (consumable_id) {
       query += ` WHERE d.resource_consumable_id = ?`;
-      params.push(parseInt(consumable_id));
+      params.push(parseInt(consumable_id, 10));
     }
 
     query += ` ORDER BY d.dispatch_date DESC, d.created_at DESC`;
