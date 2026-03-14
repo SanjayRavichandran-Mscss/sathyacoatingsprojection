@@ -4588,3 +4588,70 @@ exports.getCustomPaymentsByCategory = async (req, res) => {
     });
   }
 };
+
+
+
+ 
+exports.getSalaryPayableTransactions = async (req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        fsp.id,
+        fsp.emp_id,
+        em.full_name,
+        em.mobile,
+        em.approved_salary,
+        fsp.pd_id,
+        COALESCE(pd.project_name, '—') AS project_name,
+        fsp.entry_date,
+        fsp.paid_amount,
+        fsp.finance_bank_id,
+        COALESCE(fbm.bank_name, '—') AS bank_name,
+        fsp.created_at,
+        fsp.created_by,
+        fsp.updated_at,
+        fsp.updated_by
+      FROM finance_salary_payable fsp
+      LEFT JOIN employee_master em 
+        ON fsp.emp_id = em.emp_id
+      LEFT JOIN project_details pd
+        ON fsp.pd_id = pd.pd_id
+      LEFT JOIN finance_bank_master fbm 
+        ON fsp.finance_bank_id = fbm.id
+      ORDER BY fsp.entry_date DESC, fsp.created_at DESC
+    `;
+
+    const [rows] = await db.query(sql);
+
+    // Format numeric fields cleanly
+    const formatted = rows.map(row => ({
+      ...row,
+      paid_amount:    Number(row.paid_amount || 0).toFixed(2),
+      approved_salary: Number(row.approved_salary || 0).toFixed(2),
+    }));
+
+    // Summary (only paid-focused)
+    const totals = {
+      total_records: formatted.length,
+      total_paid:    formatted.reduce((sum, r) => sum + Number(r.paid_amount), 0).toFixed(2),
+      total_approved_salary: formatted.reduce((sum, r) => sum + Number(r.approved_salary), 0).toFixed(2)
+    };
+
+    return res.status(200).json({
+      status: "success",
+      message: formatted.length === 0 
+        ? "No salary payment records found" 
+        : "All salary payment transactions fetched successfully",
+      summary: totals,
+      data: formatted
+    });
+
+  } catch (error) {
+    console.error("Error fetching salary payable transactions:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch salary payment records",
+      error: error.message
+    });
+  }
+};
