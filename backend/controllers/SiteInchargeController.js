@@ -1444,7 +1444,7 @@ exports.getWorkDescriptionsBySite = async (req, res) => {
 
 exports.getEmployeesByDesignation = async (req, res) => {
   try {
-    const designationId = 7; // Fixed designation_id for labour
+    const designationId = 6; // Fixed designation_id for labour
     const [employees] = await db.query(
       `SELECT emp_id, full_name 
        FROM employee_master 

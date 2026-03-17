@@ -2295,22 +2295,24 @@ const addNewProjection = useCallback(async () => {
                                           <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Material #{matIndex + 1}
                                           </label>
-                                          <CreatableSelect
-                                            options={materialOptions}
-                                            value={materialOptions.find((opt) => opt.value === mat.item_id) || null}
-                                            onChange={(opt) => {
-                                              setCurrentDescId(selectedWorkDescription.value);
-                                              setCurrentMatIndex(matIndex);
-                                              handleItemSelect(selectedWorkDescription.value, matIndex, opt);
-                                            }}
-                                            formatCreateLabel={CustomCreateLabel}
-                                            isSearchable
-                                            isClearable
-                                            isDisabled={!isFormEnabled || addingMaterial}
-                                            className="text-sm"
-                                            classNamePrefix="select"
-                                            placeholder="Select or type material..."
-                                          />
+                                  <CreatableSelect
+  options={materialOptions}
+  value={materialOptions.find((opt) => opt.value === mat.item_id) || null}
+  onChange={(opt) => {
+    handleItemSelect(selectedWorkDescription.value, matIndex, opt);
+  }}
+  onCreateOption={(inputValue) => {
+    if (inputValue?.trim()) {
+      handleAddNewMaterial(inputValue.trim(), selectedWorkDescription.value, matIndex);
+    }
+  }}
+  isSearchable
+  isClearable
+  isDisabled={!isFormEnabled || addingMaterial}
+  className="text-sm"
+  classNamePrefix="select"
+  placeholder="Select or type material..."
+/>
                                           <div className="mt-2 space-y-2">
                                             <div className="flex items-center gap-2">
                                               <label className="text-sm text-gray-600 w-28">Comp Ratio A:</label>
