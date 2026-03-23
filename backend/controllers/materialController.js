@@ -1978,33 +1978,89 @@ exports.getMasterDcNo = async (req, res) => {
 };
 
 exports.saveMasterDcNo = async (req, res) => {
-  try {
-    const { company_id, dc_no, created_by } = req.body;
-    if (!company_id || !dc_no || !created_by) {
-      return res.status(400).json({ status: "error", message: "Company ID, Master DC No, and Created By are required" });
-    }
+  const { company_id, dc_no, created_by } = req.body;
 
-    const [existing] = await db.query(
+  // 1. Better validation
+  // if (!company_id || isNaN(company_id)) {
+  //   return res.status(400).json({
+  //     status: "error",
+  //     message: "Valid company_id (number) is required"
+  //   });
+  // }
+
+  if (!dc_no || typeof dc_no !== 'string' || dc_no.trim() === '') {
+    return res.status(400).json({
+      status: "error",
+      message: "Master DC No (dc_no) is required and must be a non-empty string"
+    });
+  }
+
+  if (!created_by || typeof created_by !== 'string' || created_by.trim() === '') {
+    return res.status(400).json({
+      status: "error",
+      message: "created_by is required and must be a non-empty string"
+    });
+  }
+
+  let connection;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Check if record already exists for this company
+    const [existing] = await connection.query(
       "SELECT dc_no FROM master_dc_no WHERE company_id = ?",
       [company_id]
     );
 
     if (existing.length > 0) {
-      await db.query(
-        "UPDATE master_dc_no SET dc_no = ?, created_by = ? WHERE company_id = ?",
-        [dc_no, created_by, company_id]
+      // Update existing record
+      await connection.query(
+        "UPDATE master_dc_no SET dc_no = ?, created_by = ?, updated_at = CURRENT_TIMESTAMP WHERE company_id = ?",
+        [dc_no.trim(), created_by.trim(), company_id]
       );
     } else {
-      await db.query(
-        "INSERT INTO master_dc_no (company_id, dc_no, created_by) VALUES (?, ?, ?)",
-        [company_id, dc_no, created_by]
+      // Insert new record
+      await connection.query(
+        "INSERT INTO master_dc_no (company_id, dc_no, created_by, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+        [company_id, dc_no.trim(), created_by.trim()]
       );
     }
 
-    return res.status(200).json({ status: "success", message: "Master DC No saved successfully" });
+    await connection.commit();
+
+    // Refresh the value in frontend
+    return res.status(200).json({
+      status: "success",
+      message: "Master DC No saved successfully",
+      data: { dc_no: dc_no.trim() }
+    });
+
   } catch (error) {
+    if (connection) await connection.rollback();
     console.error("Error saving master DC No:", error);
-    return res.status(500).json({ status: "error", message: "Internal server error" });
+
+    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid company_id: Company does not exist"
+      });
+    }
+
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        status: "error",
+        message: "Duplicate entry - please check constraints"
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to save Master DC No",
+      error: error.message
+    });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
