@@ -18,7 +18,7 @@ export default function SalaryPayableBreakdown({ onClose }) {
     const fetchSalaryTransactions = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('https://scpl.kggeniuslabs.com/api/finance/salary-payable-transactions');
+        const response = await axios.get('http://localhost:5000/finance/salary-payable-transactions');
         
         if (response.data.status === 'success') {
           setTransactions(response.data.data || []);

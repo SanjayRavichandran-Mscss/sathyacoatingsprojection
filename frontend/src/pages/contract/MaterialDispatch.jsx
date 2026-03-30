@@ -223,7 +223,7 @@ useEffect(() => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/project/companies");
+      const response = await axios.get("http://localhost:5000/project/companies");
       setCompanies(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -242,7 +242,7 @@ useEffect(() => {
     }
     try {
       setLoading((prev) => ({ ...prev, masterDcNo: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/master-dc-no", {
+      const response = await axios.get("http://localhost:5000/material/master-dc-no", {
         params: { company_id: selectedCompany },
       });
       const masterDcNoData = response.data.data?.dc_no || "";
@@ -282,7 +282,7 @@ const saveMasterDcNo = async () => {
     });
 
     const response = await axios.post(
-      "https://scpl.kggeniuslabs.com/api/material/master-dc-no",
+      "http://localhost:5000/material/master-dc-no",
       payload,
       {
         headers: { "Content-Type": "application/json" },
@@ -343,7 +343,7 @@ const saveMasterDcNo = async () => {
   const fetchProjects = async () => {
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/project/projects-with-sites");
+      const response = await axios.get("http://localhost:5000/project/projects-with-sites");
       const projectsData = Array.isArray(response.data) ? response.data : [];
       setAllProjects(projectsData);
       if (projectsData.length > 0 && selectedCompany) {
@@ -366,7 +366,7 @@ const saveMasterDcNo = async () => {
     if (!selectedSite) return;
     try {
       setLoading((prev) => ({ ...prev, dcNo: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/next-dc-no", {
+      const response = await axios.get("http://localhost:5000/material/next-dc-no", {
         params: { site_id: selectedSite },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -394,7 +394,7 @@ const saveMasterDcNo = async () => {
   const fetchWorkDescriptions = async (site_id) => {
     try {
       setLoading((prev) => ({ ...prev, workDescriptions: true }));
-      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/material/work-descriptions?site_id=${site_id}`);
+      const response = await axios.get(`http://localhost:5000/material/work-descriptions?site_id=${site_id}`);
       const descriptions = Array.isArray(response.data?.data) ? response.data.data : [];
       const uniqueDescs = Array.from(new Map(descriptions.map((desc) => [desc.desc_id, desc])).values());
       setWorkDescriptions(uniqueDescs);
@@ -415,7 +415,7 @@ const saveMasterDcNo = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
       setError(null);
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/assignments-with-dispatch", {
+      const response = await axios.get("http://localhost:5000/material/assignments-with-dispatch", {
         params: { pd_id: selectedProject, site_id: selectedSite },
       });
       const materials = response.data.data || [];
@@ -452,7 +452,7 @@ const saveMasterDcNo = async () => {
   const fetchTransportTypes = async () => {
     try {
       setLoading((prev) => ({ ...prev, transportTypes: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/transport-types");
+      const response = await axios.get("http://localhost:5000/material/transport-types");
       setTransportTypes(response.data.data || []);
     } catch (error) {
       console.error("Error fetching transport types:", error);
@@ -466,7 +466,7 @@ const saveMasterDcNo = async () => {
   const fetchProviders = async (transport_type_id) => {
     try {
       setLoading((prev) => ({ ...prev, providers: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/providers", {
+      const response = await axios.get("http://localhost:5000/material/providers", {
         params: { transport_type_id: Number.isInteger(parseInt(transport_type_id)) ? transport_type_id : undefined },
       });
       setProviders(response.data.data || []);
@@ -482,7 +482,7 @@ const saveMasterDcNo = async () => {
   const fetchVehicles = async () => {
     try {
       setLoading((prev) => ({ ...prev, vehicles: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/vehicles");
+      const response = await axios.get("http://localhost:5000/material/vehicles");
       setVehicles(response.data.data || []);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
@@ -496,7 +496,7 @@ const saveMasterDcNo = async () => {
   const fetchDrivers = async () => {
     try {
       setLoading((prev) => ({ ...prev, drivers: true }));
-      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/drivers");
+      const response = await axios.get("http://localhost:5000/material/drivers");
       setDrivers(response.data.data || []);
     } catch (error) {
       console.error("Error fetching drivers:", error);
@@ -829,7 +829,7 @@ const saveMasterDcNo = async () => {
     return filteredMaterials.length > 0;
   };
 
-  // Handle dispatch form submission
+// Handle dispatch form submission - FIXED & UPDATED
 const handleDispatchSubmit = async () => {
   if (!createdBy) {
     setError("User ID not available. Please refresh the page.");
@@ -848,74 +848,89 @@ const handleDispatchSubmit = async () => {
     setLoading((prev) => ({ ...prev, submitting: true }));
     setError(null);
 
-    // Step 1: Save Master DC No first (will throw if fails)
+    // Step 1: Save Master DC No first
     await saveMasterDcNo();
 
-    // Step 2: Prepare dispatch payload (your existing logic)
+    // Step 2: Prepare dispatch payload
     const dispatchPayload = assignedMaterials
-      .filter((assignment) => assignment.desc_id === selectedWorkDesc && assignment.dispatch_status === "not-dispatched")
+      .filter((assignment) => 
+        assignment.desc_id === selectedWorkDesc && 
+        assignment.dispatch_status === "not-dispatched"
+      )
       .map((assignment) => {
         const dispatchQty = dispatchQuantities[assignment.id]?.dispatch_qty || 0;
         const { comp_a_qty, comp_b_qty, comp_c_qty } = calculateComponentQuantities(assignment, dispatchQty);
+
         return {
           material_assign_id: assignment.id,
           desc_id: assignment.desc_id,
-          dc_no: parseInt(dispatchData.dc_no),
+          dc_no: parseInt(dispatchData.dc_no) || 0,
           dispatch_date: dispatchData.dispatch_date,
-          order_no: dispatchData.order_no,
-          vendor_code: dispatchData.vendor_code,
+          order_no: (dispatchData.order_no || "").trim(),
+          vendor_code: (dispatchData.vendor_code || "").trim(),
           dispatch_qty: dispatchQty,
           comp_a_qty,
           comp_b_qty,
           comp_c_qty,
-          comp_a_remarks: comp_a_qty !== null ? remarks[assignment.id]?.comp_a_remarks || null : null,
-          comp_b_remarks: comp_b_qty !== null ? remarks[assignment.id]?.comp_b_remarks || null : null,
-          comp_c_remarks: comp_c_qty !== null ? remarks[assignment.id]?.comp_c_remarks || null : null,
-          master_dc_no: masterDcNo || null,
+          comp_a_remarks: comp_a_qty !== null ? (remarks[assignment.id]?.comp_a_remarks || "").trim() : null,
+          comp_b_remarks: comp_b_qty !== null ? (remarks[assignment.id]?.comp_b_remarks || "").trim() : null,
+          comp_c_remarks: comp_c_qty !== null ? (remarks[assignment.id]?.comp_c_remarks || "").trim() : null,
+          master_dc_no: masterDcNo ? masterDcNo.trim() : null,
         };
       })
       .filter((payload) => payload.dispatch_qty > 0);
 
-    // Step 3: Prepare transport payload (your existing logic with fixes)
+    if (dispatchPayload.length === 0) {
+      throw new Error("Please enter at least one dispatch quantity.");
+    }
+
+    // Step 3: Prepare transport payload (Critical fixes for your backend)
     const transportPayload = {
-      transport_type_id: parseInt(transportData.transport_type_id),
-      provider_id: transportData.provider_id, // number (existing) or string (new name)
-      vehicle_id: transportData.vehicle_id,
-      driver_id: transportData.driver_id,
-      destination: transportData.destination.trim(),
-      booking_expense: transportData.booking_expense ? parseFloat(transportData.booking_expense) : null,
-      travel_expense: parseFloat(transportData.travel_expense),
-      // Extra fields for new creations (backend uses them only when string is sent)
-      provider_address: newEntryData.provider_address || null,
-      provider_mobile: newEntryData.provider_mobile || null,
-      vehicle_model: newEntryData.vehicle_model || null,
-      vehicle_number: newEntryData.vehicle_number || null,
-      driver_mobile: newEntryData.driver_mobile || null,
-      driver_address: newEntryData.driver_address || null,
+      transport_type_id: parseInt(transportData.transport_type_id) || null,
+      provider_id: transportData.provider_id || null,           // can be number or string (new name)
+      vehicle_id: transportData.vehicle_id || null,
+      driver_id: transportData.driver_id || null,
+      destination: (transportData.destination || "").trim(),
+      booking_expense: transportData.booking_expense 
+        ? parseFloat(transportData.booking_expense) 
+        : null,
+      travel_expense: transportData.travel_expense 
+        ? parseFloat(transportData.travel_expense) 
+        : null,
+
+      // Extra fields for new entries (used when provider/vehicle/driver is string)
+      provider_address: (newEntryData.provider_address || "").trim() || null,
+      provider_mobile: (newEntryData.provider_mobile || "").trim() || null,
+      vehicle_model: (newEntryData.vehicle_model || "").trim() || null,
+      vehicle_number: (newEntryData.vehicle_number || "").trim() || null,
+      driver_mobile: (newEntryData.driver_mobile || "").trim() || null,
+      driver_address: (newEntryData.driver_address || "").trim() || null,
     };
 
-    // Step 4: Final payload
+    // Final payload
     const payload = {
       assignments: dispatchPayload,
       transport: transportPayload,
       created_by: createdBy.trim(),
     };
 
-    // Step 5: Make API call
+    console.log("📤 Sending to backend:", JSON.stringify(payload, null, 2)); // For debugging
+
+    // Step 4: API Call
     const response = await axios.post(
-      "https://scpl.kggeniuslabs.com/api/material/add-dispatch",
-      payload
+      "http://localhost:5000/material/add-dispatch",
+      payload,
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 30000,
+      }
     );
 
-    // ─── STRICT SUCCESS CHECK ────────────────────────────────────────────────
     if (response.status !== 201 || response.data?.status !== "success") {
-      throw new Error(
-        response.data?.message ||
-        `Unexpected server response: ${response.status} - ${JSON.stringify(response.data)}`
-      );
+      throw new Error(response.data?.message || "Unexpected server response");
     }
 
-    // ─── SUCCESS ─────────────────────────────────────────────────────────────
+    // Success
     Swal.fire({
       position: "top-end",
       icon: "success",
@@ -927,7 +942,7 @@ const handleDispatchSubmit = async () => {
       iconColor: "#10b981",
     });
 
-    // Reset form states
+    // Reset form
     setDispatchData({ dc_no: "", dispatch_date: "", order_no: "", vendor_code: "" });
     setTransportData({
       transport_type_id: "",
@@ -949,12 +964,13 @@ const handleDispatchSubmit = async () => {
       driver_mobile: "",
       driver_address: "",
     });
+
     setDispatchQuantities({});
     setRemarks({});
     setSelectedWorkDesc("");
     setIsTransportModalOpen(false);
 
-    // Refetch updated data
+    // Refresh data
     await Promise.all([
       fetchAssignedMaterials(),
       fetchWorkDescriptions(selectedSite),
@@ -962,43 +978,39 @@ const handleDispatchSubmit = async () => {
       fetchTransportTypes(),
       fetchVehicles(),
       fetchDrivers(),
-      transportData.transport_type_id && Number.isInteger(parseInt(transportData.transport_type_id))
-        ? fetchProviders(transportData.transport_type_id)
+      transportData.transport_type_id 
+        ? fetchProviders(transportData.transport_type_id) 
         : Promise.resolve(),
     ]);
 
   } catch (error) {
-    console.error("Dispatch process failed:", error);
+    console.error("=== DISPATCH FAILED ===", error);
 
-    let errorMessage = "Failed to dispatch materials or save transport details";
+    let errorMessage = "Failed to dispatch materials";
 
-    if (error.response) {
-      // Server responded with error
-      errorMessage =
-        error.response.data?.message ||
-        error.response.data?.error ||
-        `Server error (${error.response.status}): ${error.response.statusText}`;
-      
-      if (error.response.data?.sqlMessage) {
-        errorMessage += `\nSQL: ${error.response.data.sqlMessage}`;
-      }
+    if (error.response?.data) {
+      const data = error.response.data;
+      console.error("Server Response:", data);
+
+      errorMessage = data.message 
+        || (data.errors && data.errors.join?.(", ")) 
+        || data.error 
+        || `Server error (${error.response.status})`;
+
+      if (data.sqlMessage) errorMessage += `\nSQL: ${data.sqlMessage}`;
     } else if (error.request) {
-      errorMessage = "No response from server. Check if backend is running.";
+      errorMessage = "No response from server. Check VPS connection.";
     } else {
-      errorMessage = error.message || "Unknown error during dispatch";
+      errorMessage = error.message || "Unknown error";
     }
 
     setError(errorMessage);
 
     Swal.fire({
-      position: "top-end",
       icon: "error",
-      title: errorMessage,
-      text: error.response?.data?.sqlMessage || error.stack?.slice(0, 200) || "",
+      title: "Dispatch Failed",
+      text: errorMessage,
       showConfirmButton: true,
-      timer: 8000,
-      toast: false, // bigger dialog for better visibility
-      width: "600px",
     });
   } finally {
     setLoading((prev) => ({ ...prev, submitting: false }));
