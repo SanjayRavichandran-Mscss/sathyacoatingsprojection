@@ -223,7 +223,7 @@ useEffect(() => {
   const fetchCompanies = async () => {
     try {
       setLoading((prev) => ({ ...prev, companies: true }));
-      const response = await axios.get("http://localhost:5000/project/companies");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/project/companies");
       setCompanies(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -242,7 +242,7 @@ useEffect(() => {
     }
     try {
       setLoading((prev) => ({ ...prev, masterDcNo: true }));
-      const response = await axios.get("http://localhost:5000/material/master-dc-no", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/master-dc-no", {
         params: { company_id: selectedCompany },
       });
       const masterDcNoData = response.data.data?.dc_no || "";
@@ -282,7 +282,7 @@ const saveMasterDcNo = async () => {
     });
 
     const response = await axios.post(
-      "http://localhost:5000/material/master-dc-no",
+      "https://scpl.kggeniuslabs.com/api/material/master-dc-no",
       payload,
       {
         headers: { "Content-Type": "application/json" },
@@ -343,7 +343,7 @@ const saveMasterDcNo = async () => {
   const fetchProjects = async () => {
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("http://localhost:5000/project/projects-with-sites");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/project/projects-with-sites");
       const projectsData = Array.isArray(response.data) ? response.data : [];
       setAllProjects(projectsData);
       if (projectsData.length > 0 && selectedCompany) {
@@ -366,7 +366,7 @@ const saveMasterDcNo = async () => {
     if (!selectedSite) return;
     try {
       setLoading((prev) => ({ ...prev, dcNo: true }));
-      const response = await axios.get("http://localhost:5000/material/next-dc-no", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/next-dc-no", {
         params: { site_id: selectedSite },
       });
       if (response.data.status === "success" && response.data.data) {
@@ -394,7 +394,7 @@ const saveMasterDcNo = async () => {
   const fetchWorkDescriptions = async (site_id) => {
     try {
       setLoading((prev) => ({ ...prev, workDescriptions: true }));
-      const response = await axios.get(`http://localhost:5000/material/work-descriptions?site_id=${site_id}`);
+      const response = await axios.get(`https://scpl.kggeniuslabs.com/api/material/work-descriptions?site_id=${site_id}`);
       const descriptions = Array.isArray(response.data?.data) ? response.data.data : [];
       const uniqueDescs = Array.from(new Map(descriptions.map((desc) => [desc.desc_id, desc])).values());
       setWorkDescriptions(uniqueDescs);
@@ -415,7 +415,7 @@ const saveMasterDcNo = async () => {
     try {
       setLoading((prev) => ({ ...prev, materials: true }));
       setError(null);
-      const response = await axios.get("http://localhost:5000/material/assignments-with-dispatch", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/assignments-with-dispatch", {
         params: { pd_id: selectedProject, site_id: selectedSite },
       });
       const materials = response.data.data || [];
@@ -452,7 +452,7 @@ const saveMasterDcNo = async () => {
   const fetchTransportTypes = async () => {
     try {
       setLoading((prev) => ({ ...prev, transportTypes: true }));
-      const response = await axios.get("http://localhost:5000/material/transport-types");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/transport-types");
       setTransportTypes(response.data.data || []);
     } catch (error) {
       console.error("Error fetching transport types:", error);
@@ -466,7 +466,7 @@ const saveMasterDcNo = async () => {
   const fetchProviders = async (transport_type_id) => {
     try {
       setLoading((prev) => ({ ...prev, providers: true }));
-      const response = await axios.get("http://localhost:5000/material/providers", {
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/providers", {
         params: { transport_type_id: Number.isInteger(parseInt(transport_type_id)) ? transport_type_id : undefined },
       });
       setProviders(response.data.data || []);
@@ -482,7 +482,7 @@ const saveMasterDcNo = async () => {
   const fetchVehicles = async () => {
     try {
       setLoading((prev) => ({ ...prev, vehicles: true }));
-      const response = await axios.get("http://localhost:5000/material/vehicles");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/vehicles");
       setVehicles(response.data.data || []);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
@@ -496,7 +496,7 @@ const saveMasterDcNo = async () => {
   const fetchDrivers = async () => {
     try {
       setLoading((prev) => ({ ...prev, drivers: true }));
-      const response = await axios.get("http://localhost:5000/material/drivers");
+      const response = await axios.get("https://scpl.kggeniuslabs.com/api/material/drivers");
       setDrivers(response.data.data || []);
     } catch (error) {
       console.error("Error fetching drivers:", error);
@@ -918,7 +918,7 @@ const handleDispatchSubmit = async () => {
 
     // Step 4: API Call
     const response = await axios.post(
-      "http://localhost:5000/material/add-dispatch",
+      "https://scpl.kggeniuslabs.com/api/material/add-dispatch",
       payload,
       {
         headers: { "Content-Type": "application/json" },

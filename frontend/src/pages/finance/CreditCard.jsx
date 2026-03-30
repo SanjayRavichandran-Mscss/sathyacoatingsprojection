@@ -79,7 +79,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/companies-with-projects');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
 //       const formatted = res.data.data.map(c => ({
 //         value: c.company_id,
 //         label: c.company_name,
@@ -93,7 +93,7 @@
 
 //   const fetchCostCategories = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/cost-categories');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
 //       const cats = res.data.data.map(c => ({ value: c.id, label: c.category_name }));
 //       setCostCategories(cats);
 //     } catch (err) {
@@ -103,7 +103,7 @@
 
 //   const fetchBanks = async () => {
 //     try {
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       const options = [
 //         { value: null, label: 'All Banks' },
 //         ...res.data.data.map(b => ({
@@ -122,7 +122,7 @@
 //     setLoading(true);
 //     try {
 //       const res = await axios.get(
-//         `http://localhost:5000/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
+//         `https://scpl.kggeniuslabs.com/api/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
 //       );
 //       if (res.data.status === 'success' && res.data.data.length > 0) {
 //         setOverallDue(res.data.data[0].overall_amount_due || 0);
@@ -146,7 +146,7 @@
 //     }
 
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-credit-card-payable', {
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-credit-card-payable', {
 //         pd_id: selectedProject.value,
 //         cost_category_id: form.cost_category_id,
 //         due_date: form.due_date || null,
@@ -185,7 +185,7 @@
 //     }
 
 //     try {
-//       await axios.put(`http://localhost:5000/finance/credit-card-payable/${editingItem.id}`, {
+//       await axios.put(`https://scpl.kggeniuslabs.com/api/finance/credit-card-payable/${editingItem.id}`, {
 //         cost_category_id: form.cost_category_id,
 //         finance_bank_id: form.finance_bank_id,
 //         due_date: form.due_date || null,
@@ -587,7 +587,7 @@ const CreditCardPayables = () => {
 
   const fetchCompanies = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/companies-with-projects');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
       const formatted = res.data.data.map(c => ({
         value: c.company_id,
         label: c.company_name,
@@ -601,7 +601,7 @@ const CreditCardPayables = () => {
 
   const fetchCostCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/cost-categories');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories');
       const cats = res.data.data.map(c => ({ value: c.id, label: c.category_name }));
       setCostCategories(cats);
     } catch (err) {
@@ -611,7 +611,7 @@ const CreditCardPayables = () => {
 
   const fetchBanks = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       const options = [
         { value: null, label: 'All Banks' },
         ...res.data.data.map(b => ({
@@ -630,7 +630,7 @@ const CreditCardPayables = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
+        `https://scpl.kggeniuslabs.com/api/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
       );
       if (res.data.status === 'success' && res.data.data.length > 0) {
         setOverallDue(res.data.data[0].overall_amount_due || 0);
@@ -657,7 +657,7 @@ const CreditCardPayables = () => {
     }
 
     try {
-      await axios.post('http://localhost:5000/finance/create-credit-card-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-credit-card-payable', {
         pd_id: selectedProject.value,
         cost_category_id: form.cost_category_id,
         due_date: form.due_date || null,
@@ -699,7 +699,7 @@ const CreditCardPayables = () => {
     }
 
     try {
-      await axios.put(`http://localhost:5000/finance/credit-card-payable/${editingItem.id}`, {
+      await axios.put(`https://scpl.kggeniuslabs.com/api/finance/credit-card-payable/${editingItem.id}`, {
         cost_category_id: form.cost_category_id,
         finance_bank_id: form.finance_bank_id,
         due_date: form.due_date || null,

@@ -24,7 +24,7 @@
 
 //   const fetchCompanies = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/companies-with-projects');
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects');
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
 //         setCompanies(data);
@@ -45,7 +45,7 @@
 //     setError(null);
 //     try {
 //       const res = await fetch(
-//         `http://localhost:5000/finance/salary-payables-summary?pd_id=${selectedProject}&month=${selectedMonth.replace('-', '')}`
+//         `https://scpl.kggeniuslabs.com/api/finance/salary-payables-summary?pd_id=${selectedProject}&month=${selectedMonth.replace('-', '')}`
 //       );
 //       const { status, data } = await res.json();
 //       if (status === 'success') {
@@ -84,7 +84,7 @@
 //     if (!item) return;
 
 //     try {
-//       const res = await fetch('http://localhost:5000/finance/update-salary-payable', {
+//       const res = await fetch('https://scpl.kggeniuslabs.com/api/finance/update-salary-payable', {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
 //         body: JSON.stringify({
@@ -373,8 +373,8 @@ const SalaryPayables = () => {
     const fetchInitial = async () => {
       try {
         const [compRes, bankRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/companies-with-projects'),
-          axios.get('http://localhost:5000/finance/bank-masters')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
         ]);
 
         if (compRes.data.status === 'success') {
@@ -418,7 +418,7 @@ const SalaryPayables = () => {
 
       try {
         const monthClean = selectedMonth.replace('-', '');
-        const url = `http://localhost:5000/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthClean}&bank_id=${selectedBank}`;
+        const url = `https://scpl.kggeniuslabs.com/api/finance/salary-payables-summary?pd_id=${selectedProject}&month=${monthClean}&bank_id=${selectedBank}`;
 
         const res = await axios.get(url);
 
@@ -448,7 +448,7 @@ const SalaryPayables = () => {
     if (!emp || !currentUser) return;
 
     try {
-      await axios.post('http://localhost:5000/finance/update-salary-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/update-salary-payable', {
         emp_id,
         pd_id: selectedProject,
         entry_date: `${selectedMonth}-01`,
