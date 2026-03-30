@@ -59,9 +59,9 @@
 //     const load = async () => {
 //       try {
 //         const [compRes, catRes, bankRes] = await Promise.all([
-//           axios.get('http://localhost:5000/finance/companies-with-projects'),
-//           axios.get('http://localhost:5000/finance/cost-categories'),
-//           axios.get('http://localhost:5000/finance/bank-masters')
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/companies-with-projects'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
 //         ]);
 
 //         const formatted = compRes.data.data.map(c => ({
@@ -97,7 +97,7 @@
 //     setLoading(true);
 //     try {
 //       const res = await axios.get(
-//         `http://localhost:5000/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
+//         `https://scpl.kggeniuslabs.com/api/finance/credit-card-payables?pd_id=${selectedProject.value}&finance_bank_id=${selectedBank.value}`
 //       );
 //       if (res.data.status === 'success' && res.data.data.length > 0) {
 //         setOverallDue(res.data.data[0].overall_amount_due || 0);
@@ -125,7 +125,7 @@
 //     }
 
 //     try {
-//       await axios.post('http://localhost:5000/finance/create-credit-card-payable', {
+//       await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-credit-card-payable', {
 //         pd_id: selectedProject.value,
 //         cost_category_id: form.cost_category_id,
 //         due_date: form.due_date || null,
@@ -165,7 +165,7 @@
 //     }
 
 //     try {
-//       await axios.put(`http://localhost:5000/finance/credit-card-payable/${editingItem.id}`, {
+//       await axios.put(`https://scpl.kggeniuslabs.com/api/finance/credit-card-payable/${editingItem.id}`, {
 //         cost_category_id: form.cost_category_id,
 //         finance_bank_id: form.finance_bank_id,
 //         due_date: form.due_date || null,
@@ -448,8 +448,8 @@ const CreditCardPayablesModal = ({ onClose, createdBy }) => {
     const load = async () => {
       try {
         const [catRes, bankRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/cost-categories'),
-          axios.get('http://localhost:5000/finance/bank-masters')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/cost-categories'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
         ]);
 
         setCostCategories(catRes.data.data.map(c => ({ value: c.id, label: c.category_name })));
@@ -478,7 +478,7 @@ const CreditCardPayablesModal = ({ onClose, createdBy }) => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `http://localhost:5000/finance/credit-card-payables?finance_bank_id=${selectedBank.value}`
+        `https://scpl.kggeniuslabs.com/api/finance/credit-card-payables?finance_bank_id=${selectedBank.value}`
       );
       if (res.data.status === 'success' && res.data.data.length > 0) {
         setOverallDue(res.data.data[0].overall_amount_due || 0);
@@ -506,7 +506,7 @@ const CreditCardPayablesModal = ({ onClose, createdBy }) => {
     }
 
     try {
-      await axios.post('http://localhost:5000/finance/create-credit-card-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-credit-card-payable', {
         cost_category_id: form.cost_category_id,
         due_date: form.due_date || null,
         bill_date: form.bill_date || null,
@@ -546,7 +546,7 @@ const CreditCardPayablesModal = ({ onClose, createdBy }) => {
 
     try {
       // Note: We're not using PUT route, assuming createOrUpdate handles update via id in body
-      await axios.post('http://localhost:5000/finance/create-credit-card-payable', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-credit-card-payable', {
         id: editingItem.id,
         cost_category_id: form.cost_category_id,
         finance_bank_id: form.finance_bank_id,

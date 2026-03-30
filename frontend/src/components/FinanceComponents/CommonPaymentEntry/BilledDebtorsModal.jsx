@@ -73,10 +73,10 @@ const BilledDebtorsModal = ({ onClose, createdBy }) => {
     const load = async () => {
       try {
         const [partyRes, bankRes, itemRes, uomRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/parties'),
-          axios.get('http://localhost:5000/finance/bank-masters'),
-          axios.get('http://localhost:5000/finance/items'),
-          axios.get('http://localhost:5000/finance/uoms')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/parties'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/items'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/uoms')
         ]);
         setParties(partyRes.data.data || []);
         setBanks(bankRes.data.data || []);
@@ -99,7 +99,7 @@ const BilledDebtorsModal = ({ onClose, createdBy }) => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
     try {
-      const res = await axios.post('http://localhost:5000/finance/create-party', {
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-party', {
         party_name: trimmed,
         created_by: createdBy
       });
@@ -116,7 +116,7 @@ const BilledDebtorsModal = ({ onClose, createdBy }) => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
     try {
-      const res = await axios.post('http://localhost:5000/finance/create-item', {
+      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-item', {
         item_name: trimmed,
         created_by: createdBy
       });
@@ -183,7 +183,7 @@ const BilledDebtorsModal = ({ onClose, createdBy }) => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/finance/create-billed-debtors', {
+      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-billed-debtors', {
         ...formData,
         quantity: parseFloat(formData.quantity) || 0,
         rate: parseFloat(formData.rate) || 0,

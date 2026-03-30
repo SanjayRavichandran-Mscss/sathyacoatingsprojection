@@ -29,8 +29,8 @@
 //     const fetchData = async () => {
 //       try {
 //         const [bankRes, cfsRes] = await Promise.all([
-//           axios.get('http://localhost:5000/finance/bank-masters'),
-//           axios.get('http://localhost:5000/finance/cfs-data')
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+//           axios.get('https://scpl.kggeniuslabs.com/api/finance/cfs-data')
 //         ]);
 //         if (bankRes.data.status === 'success') setBanks(bankRes.data.data);
 //         setCfsData(cfsRes.data);
@@ -107,14 +107,14 @@
 //     if (newBal !== oldBal && !editForm.remarks.trim()) return alert('Remarks required when balance changes');
 
 //     try {
-//       await axios.put('http://localhost:5000/finance/update-bank-master', {
+//       await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-bank-master', {
 //         bank_name: editForm.bank_name.trim(),
 //         available_balance: newBal || null,
 //         remarks: editForm.remarks.trim() || null,
 //         updated_by: userId
 //       }, { params: { id: editingBank.id } });
 
-//       const res = await axios.get('http://localhost:5000/finance/bank-masters');
+//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
 //       setBanks(res.data.data);
 //       setShowEditModal(false);
 //     } catch (err) {
@@ -474,8 +474,8 @@ const Bank = () => {
     const fetchData = async () => {
       try {
         const [bankRes, cfsRes] = await Promise.all([
-          axios.get('http://localhost:5000/finance/bank-masters'),
-          axios.get('http://localhost:5000/finance/cfs-data')
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
+          axios.get('https://scpl.kggeniuslabs.com/api/finance/cfs-data')
         ]);
         if (bankRes.data.status === 'success') setBanks(bankRes.data.data);
         setCfsData(cfsRes.data);
@@ -604,14 +604,14 @@ const Bank = () => {
     }
 
     try {
-      await axios.put('http://localhost:5000/finance/update-bank-master', {
+      await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-bank-master', {
         bank_name: editForm.bank_name.trim(),
         available_balance: newBal || null,
         remarks: editForm.remarks.trim() || null,
         updated_by: userId
       }, { params: { id: editingBank.id } });
 
-      const res = await axios.get('http://localhost:5000/finance/bank-masters');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters');
       setBanks(res.data.data);
       setShowEditModal(false);
     } catch (err) {

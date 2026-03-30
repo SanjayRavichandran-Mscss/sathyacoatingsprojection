@@ -97,7 +97,7 @@ const ConsumableDispatch = ({ masterConsumables }) => {
   // Data fetch ────────────────────────────────────────────────
   const fetchDispatches = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/resource/dispatches');
+      const res = await axios.get('https://scpl.kggeniuslabs.com/api/resource/dispatches');
       if (res.data?.status === 'success') {
         const data = res.data.data || [];
         setRawDispatches(data);
@@ -150,7 +150,7 @@ const ConsumableDispatch = ({ masterConsumables }) => {
           driver_mobile: commonForm.driverMobile.trim() || null,
         };
 
-        const res = await axios.post('http://localhost:5000/resource/dispatches', payload);
+        const res = await axios.post('https://scpl.kggeniuslabs.com/api/resource/dispatches', payload);
         if (res.data.status !== 'success') throw new Error('Failed');
       }
 
