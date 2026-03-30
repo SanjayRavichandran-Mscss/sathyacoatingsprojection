@@ -23,7 +23,7 @@ app.use(express.json());
 
 // Configure CORS
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://your-frontend-domain.com","http://192.168.253.187:5173","http://192.168.252.101:5173"], // Allowed frontend origins
+    origin: ["http://localhost:5173", "http://localhost:5174", "https://scpl.kggeniuslabs.com","http://192.168.253.187:5173","http://192.168.252.101:5173"], // Allowed frontend origins
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
     credentials: true, // Allow cookies and authorization headers
@@ -62,3 +62,11 @@ const startServer = async () => {
 };
 
 startServer();
+
+
+
+
+
+
+
+

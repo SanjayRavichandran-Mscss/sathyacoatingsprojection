@@ -117,16 +117,13 @@ router.get("/cpe-data", financeController.fetchCPEdata);
 
 
 
+router.post("/create-custom-category", financeController.createCustomCategory);
+router.get("/custom-categories", financeController.getCustomCategories);
+
 router.post("/create-custom-payment", financeController.createCustomPayment);
-router.get("/custom-payments", financeController.getCustomPayments);
 router.put("/update-custom-payment/:id", financeController.updateCustomPayment);
 router.delete("/delete-custom-payment/:id", financeController.deleteCustomPayment);
-
-router.get("/custom-categories", financeController.getCustomCategories);
-router.post("/create-custom-category", financeController.createCustomCategory);
-router.get('/custom-payments-by-category', financeController.getCustomPaymentsByCategory);
-
-
+router.get("/custom-payments-by-category", financeController.getCustomPaymentsByCategory);
 
 router.get("/salary-payable-transactions", financeController.getSalaryPayableTransactions);
 
