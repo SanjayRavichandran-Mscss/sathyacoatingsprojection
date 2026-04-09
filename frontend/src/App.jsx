@@ -234,13 +234,14 @@ import CreditCard from './pages/finance/CreditCard';
 import BilledDebtors from './pages/finance/BilledDebtors';
 import Cfs from './pages/finance/Cfs';
 import CommonPaymentEntry from './pages/finance/CommonPaymentEntry';
+import PaidReceivedDetails from './pages/finance/PaidReceivedDetails';
+import ContractTopSheet from './pages/contract/ContractTopSheet';
 
 // === RESOURCE PAGES ===
 import EmployeeDetails from './pages/contract/EmployeeDetails';
 
 // New Consumables Page
 import ConsumablesPage from './pages/resource/ConsumablesPage';
-
 const Placeholder = ({ title }) => (
   <div className="p-4">
     <h1 className="text-xl font-semibold">{title}</h1>
@@ -297,7 +298,14 @@ const App = () => {
           <Route path="/:rolePrefix/finance/cfs/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin', 'accounts_team']}><Cfs /></ProtectedRoute>} />
           <Route path="/:rolePrefix/finance/credit-card/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin', 'accounts_team']}><CreditCard /></ProtectedRoute>} />
           <Route path="/:rolePrefix/finance/billed-debtors/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin', 'accounts_team']}><BilledDebtors /></ProtectedRoute>} />
-
+<Route 
+  path="/:rolePrefix/finance/paid-received/:encodedUserId" 
+  element={
+    <ProtectedRoute roles={['admin', 'superadmin', 'accounts_team']}>
+      <PaidReceivedDetails />
+    </ProtectedRoute>
+  } 
+/>
           {/* NEW: Payments Route */}
           <Route 
             path="/:rolePrefix/finance/payments/:encodedUserId" 
@@ -315,6 +323,14 @@ const App = () => {
           <Route path="/:rolePrefix/contracts/projects/dispatched-materials/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin']}><DispatchedMaterials /></ProtectedRoute>} />
 
           {/* Reconciliation */}
+          <Route 
+  path="/:rolePrefix/contracts/reconciliation/top-sheet/:encodedUserId" 
+  element={
+    <ProtectedRoute roles={['admin', 'superadmin', 'accounts_team']}>
+      <ContractTopSheet />
+    </ProtectedRoute>
+  } 
+/>
           <Route path="/:rolePrefix/contracts/reconciliation/overall-progress/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin']}><DashboardCards /></ProtectedRoute>} />
           <Route path="/:rolePrefix/contracts/reconciliation/daily-progress/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin']}><DailyProgress /></ProtectedRoute>} />
           <Route path="/:rolePrefix/contracts/reconciliation/area-completion/:encodedUserId" element={<ProtectedRoute roles={['admin', 'superadmin']}><AreaGraph /></ProtectedRoute>} />

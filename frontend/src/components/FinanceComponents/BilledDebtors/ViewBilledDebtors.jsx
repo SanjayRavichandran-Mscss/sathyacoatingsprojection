@@ -282,7 +282,7 @@
 //         {/* Header */}
 //         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6 flex items-center gap-4">
 //           <Building2 className="w-12 h-12" style={{ color: themeColors.primary }} />
-//           <h1 className="text-3xl font-bold">Billed Debtors Receivables</h1>
+//           <h1 className="text-3xl font-bold">Billed Debtors Received</h1>
 //         </div>
 
 //         {/* Table */}
@@ -794,7 +794,7 @@ const ViewBilledDebtors = () => {
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6 flex items-center gap-4">
           <Building2 className="w-12 h-12" style={{ color: themeColors.primary }} />
-          <h1 className="text-3xl font-bold">Billed Debtors Receivables</h1>
+          <h1 className="text-3xl font-bold">Billed Debtors Received</h1>
         </div>
 
         {/* Table */}

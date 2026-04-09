@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { Building2, Edit3, Calendar, IndianRupee, AlertCircle } from 'lucide-react';
+import { Building2, Edit3, Calendar, IndianRupee, AlertCircle,X,Plus } from 'lucide-react';
 
 const themeColors = {
   primary: '#1e7a6f',

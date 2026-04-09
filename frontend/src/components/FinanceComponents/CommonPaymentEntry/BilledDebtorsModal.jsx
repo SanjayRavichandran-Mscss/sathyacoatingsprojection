@@ -215,7 +215,7 @@ const BilledDebtorsModal = ({ onClose, createdBy }) => {
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Create Billed Debtors Receivable</h2>
+              <h2 className="text-2xl font-bold">Billed Debtors Received</h2>
               <p className="text-sm text-gray-600">Add new receivable with bank details</p>
             </div>
           </div>

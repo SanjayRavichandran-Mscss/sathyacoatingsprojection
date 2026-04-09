@@ -1450,6 +1450,75 @@ exports.finalProjectionSubmission = async (req, res) => {
 
 
 
+// Get Top Sheet Overall Data - Final Version with Category & Subcategory + No Duplicates
+exports.getTopSheetOverall = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        c.company_id,
+        c.company_name,
+        pd.pd_id AS project_id,
+        pd.project_name,
+        sd.site_id,
+        sd.site_name,
+        sd.po_number,
+        wd.desc_id,
+        wd.desc_name,
+        ic.category_id,
+        ic.category_name,
+        isc.subcategory_id,
+        isc.subcategory_name,
+        pr.po_quantity,
+        pr.rate,
+        pr.value AS po_value,
+        COALESCE(SUM(ceh.area_added), 0) AS completed_area,
+        COALESCE(SUM(ceh.value_added), 0) AS completed_value,
+        ROUND(
+          COALESCE(SUM(ceh.area_added), 0) / NULLIF(pr.po_quantity, 0) * 100, 
+          2
+        ) AS completion_percentage
+      FROM company c
+      JOIN project_details pd ON c.company_id = pd.company_id
+      JOIN site_details sd ON pd.pd_id = sd.pd_id
+      JOIN po_reckoner pr ON sd.site_id = pr.site_id
+      JOIN work_descriptions wd ON pr.desc_id = wd.desc_id
+      JOIN item_category ic ON pr.category_id = ic.category_id
+      JOIN item_subcategory isc ON pr.subcategory_id = isc.subcategory_id
+      LEFT JOIN completion_entries_history ceh 
+        ON pr.rec_id = ceh.rec_id
+      GROUP BY 
+        c.company_id,
+        pd.pd_id,
+        sd.site_id,
+        wd.desc_id,
+        ic.category_id,
+        isc.subcategory_id,
+        pr.rec_id
+      ORDER BY c.company_name, pd.project_name, sd.site_name, wd.desc_name, ic.category_name, isc.subcategory_name
+    `);
+
+    // Calculate grand totals from unique records
+    const grandTotalPOValue = rows.reduce((sum, row) => sum + parseFloat(row.po_value || 0), 0);
+    const grandTotalCompletedValue = rows.reduce((sum, row) => sum + parseFloat(row.completed_value || 0), 0);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        records: rows,
+        grand_total_po_value: parseFloat(grandTotalPOValue.toFixed(2)),
+        grand_total_completed_value: parseFloat(grandTotalCompletedValue.toFixed(2)),
+        total_records: rows.length
+      }
+    });
+  } catch (error) {
+    console.error("Error in getTopSheetOverall:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch top sheet overall data",
+      error: error.message
+    });
+  }
+};
 
 
 module.exports = exports;

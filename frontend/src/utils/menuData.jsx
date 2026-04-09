@@ -373,6 +373,11 @@ const getSidebarConfig = (role, encodedUserId) => {
         title: 'Reconciliation',
         icon: PanelsTopLeft,
         items: [
+          { 
+      label: 'Top Sheet', 
+      to: `/${prefix}/contracts/reconciliation/top-sheet/${encodedUserId}`, 
+      icon: FileSpreadsheet 
+    },
           { label: 'Overall Progress', to: `/${prefix}/contracts/reconciliation/overall-progress/${encodedUserId}`, icon: Layers },
           { label: 'Daily Progress', to: `/${prefix}/contracts/reconciliation/daily-progress/${encodedUserId}`, icon: ChartNoAxesCombined },
           { label: 'Area Completion', to: `/${prefix}/contracts/reconciliation/area-completion/${encodedUserId}`, icon: BrickWallShield },
@@ -411,6 +416,11 @@ const getSidebarConfig = (role, encodedUserId) => {
           { label: 'Fund Flow Projection', to: `/${prefix}/finance/cfs/${encodedUserId}`, icon: FileSpreadsheet },
           { label: 'Top Sheet', to: `/${prefix}/finance/topsheet/${encodedUserId}`, icon: Landmark },
           { label: 'Fund Flow Statement', to: `/${prefix}/finance/payments/${encodedUserId}`, icon: Receipt },
+          { 
+        label: 'Paid & Received Details', 
+        to: `/${prefix}/finance/paid-received/${encodedUserId}`, 
+        icon: BanknoteArrowDown 
+      },
         ],
       },
     ],
