@@ -66,6 +66,8 @@ router.post('/save-labour-overhead', adminController.saveLabourOverhead);
 
 router.post('/final-projection-submission', adminController.finalProjectionSubmission);
 
+// Top Sheet - Overall Data without filters
+router.get('/top-sheet-overall', adminController.getTopSheetOverall);
 
 
 module.exports = router;

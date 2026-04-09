@@ -244,7 +244,7 @@
 //               <Building2 className="w-8 h-8 text-white" />
 //             </div>
 //             <div>
-//               <h1 className="text-2xl font-bold">Create Billed Debtors Receivable</h1>
+//               <h1 className="text-2xl font-bold">Billed Debtors Received</h1>
 //               <p className="text-sm text-gray-600">Add new receivable with bank details</p>
 //             </div>
 //           </div>
@@ -772,7 +772,7 @@ const CreateBilledDebtors = ({ onClose, onSuccess }) => {
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Create Billed Debtors Receivable</h1>
+              <h1 className="text-2xl font-bold">Create Billed Debtors Received</h1>
               <p className="text-sm text-gray-600">Add new receivable with bank details</p>
             </div>
           </div>

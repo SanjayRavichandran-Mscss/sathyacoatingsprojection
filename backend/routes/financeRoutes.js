@@ -113,7 +113,7 @@ router.put("/update-bank-master", financeController.updateBankMaster);
 // CFS → Salary Payable - All Records (No Query Params)
 router.get("/cfs-data", financeController.fetchCFSdata);
 // routes/financeRoutes.js or similar
-router.get("/cpe-data", financeController.fetchCPEdata);
+router.get("/cpe-data", financeController.fetchCPEdata);    
 
 
 
@@ -124,8 +124,22 @@ router.post("/create-custom-payment", financeController.createCustomPayment);
 router.put("/update-custom-payment/:id", financeController.updateCustomPayment);
 router.delete("/delete-custom-payment/:id", financeController.deleteCustomPayment);
 router.get("/custom-payments-by-category", financeController.getCustomPaymentsByCategory);
-
+router.get("/all-custom-payments", financeController.getAllCustomPayments);
 router.get("/salary-payable-transactions", financeController.getSalaryPayableTransactions);
 
+
+// Paid & Received Details
+router.get("/paid-received-details", financeController.getPaidReceivedDetails);
+
+router.get("/bank-history/:id", financeController.getBankHistory);
+
+router.get("/paid-received-detailed", financeController.getPaidReceivedDetailed);
+
+// Bill To Be Raise Routes
+router.post("/create-bill-to-be-raise", financeController.createBillToBeRaise);
+router.get("/bill-to-be-raise", financeController.getBillToBeRaise);   // ← For ViewBillToBeRaise component
+router.put("/update-bill-to-be-raise/:id", financeController.updateBillToBeRaise);     // ← NEW
+router.delete("/delete-bill-to-be-raise/:id", financeController.deleteBillToBeRaise); // ← NEW
+router.get("/bill-to-be-raise-summary", financeController.getBillToBeRaiseSummary);
 
 module.exports = router;
