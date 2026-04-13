@@ -24,7 +24,7 @@ const ContractTopSheet = () => {
 
   // Fetch filter options
   useEffect(() => {
-    axios.get('https://scpl.kggeniuslabs.com/api/admin/companies')
+    axios.get('http://localhost:5000/admin/companies')
       .then(res => {
         const formatted = (res.data.data || []).map(c => ({
           value: c.company_id,
@@ -41,7 +41,7 @@ const ContractTopSheet = () => {
       setSelectedProject(null);
       return;
     }
-    axios.get(`https://scpl.kggeniuslabs.com/api/admin/projects/${selectedCompany.value}`)
+    axios.get(`http://localhost:5000/admin/projects/${selectedCompany.value}`)
       .then(res => {
         const formatted = (res.data.data || []).map(p => ({
           value: p.pd_id,
@@ -58,7 +58,7 @@ const ContractTopSheet = () => {
       setSelectedSite(null);
       return;
     }
-    axios.get(`https://scpl.kggeniuslabs.com/api/admin/sites/${selectedProject.value}`)
+    axios.get(`http://localhost:5000/admin/sites/${selectedProject.value}`)
       .then(res => {
         const formatted = (res.data.data || []).map(s => ({
           value: s.site_id,
@@ -75,7 +75,7 @@ const ContractTopSheet = () => {
       setSelectedDescription(null);
       return;
     }
-    axios.get(`https://scpl.kggeniuslabs.com/api/admin/work-descriptions/${selectedSite.value}`)
+    axios.get(`http://localhost:5000/admin/work-descriptions/${selectedSite.value}`)
       .then(res => {
         const formatted = (res.data.data || []).map(d => ({
           value: d.desc_id,
@@ -93,7 +93,7 @@ const ContractTopSheet = () => {
       setError(null);
 
       try {
-        let url = 'https://scpl.kggeniuslabs.com/api/admin/top-sheet-overall';
+        let url = 'http://localhost:5000/admin/top-sheet-overall';
         const params = new URLSearchParams();
 
         if (selectedCompany) params.append('company_id', selectedCompany.value);

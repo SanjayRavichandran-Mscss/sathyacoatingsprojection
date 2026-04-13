@@ -20,7 +20,7 @@
 //   useEffect(() => {
 //     const fetchData = async () => {
 //       try {
-//         const response = await fetch('https://scpl.kggeniuslabs.com/api/finance/overall-receivable');
+//         const response = await fetch('http://localhost:5000/finance/overall-receivable');
 //         if (!response.ok) {
 //           throw new Error('Failed to fetch data');
 //         }
@@ -175,7 +175,7 @@ const ReceivablesTable = () => {
         setError(null);
 
         // Fetch overall receivable (existing)
-        const receivableRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/overall-receivable');
+        const receivableRes = await fetch('http://localhost:5000/finance/overall-receivable');
         if (!receivableRes.ok) throw new Error('Failed to fetch overall receivable');
         const receivableResult = await receivableRes.json();
 
@@ -185,7 +185,7 @@ const ReceivablesTable = () => {
         }
 
         // Fetch Bill To Be Raise Summary (New)
-        const billRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/bill-to-be-raise-summary');
+        const billRes = await fetch('http://localhost:5000/finance/bill-to-be-raise-summary');
         if (!billRes.ok) throw new Error('Failed to fetch bill to be raise summary');
         const billResult = await billRes.json();
 

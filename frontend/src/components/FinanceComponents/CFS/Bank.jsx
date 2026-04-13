@@ -35,12 +35,12 @@ const Bank = () => {
     setLoading(true);
     try {
       // 1. Call paid-received-details (this updates available_balance + gives correct Paid/Received)
-      const paidRes = await axios.get('https://scpl.kggeniuslabs.com/api/finance/paid-received-details');
+      const paidRes = await axios.get('http://localhost:5000/finance/paid-received-details');
       
       // 2. Fetch other data
       const [bankRes, cfsRes] = await Promise.all([
-        axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters'),
-        axios.get('https://scpl.kggeniuslabs.com/api/finance/cfs-data')
+        axios.get('http://localhost:5000/finance/bank-masters'),
+        axios.get('http://localhost:5000/finance/cfs-data')
       ]);
 
       if (bankRes.data.status === 'success') setBanks(bankRes.data.data);
@@ -103,7 +103,7 @@ const Bank = () => {
     setSelectedBank(bank);
     setShowLedger(true);
     try {
-      const res = await axios.get(`https://scpl.kggeniuslabs.com/api/finance/bank-history/${bank.id}`);
+      const res = await axios.get(`http://localhost:5000/finance/bank-history/${bank.id}`);
       setBankHistory(res.data.data || []);
     } catch (err) {
       setBankHistory([]);
@@ -130,7 +130,7 @@ const Bank = () => {
     }
 
     try {
-      await axios.put('https://scpl.kggeniuslabs.com/api/finance/update-bank-master', {
+      await axios.put('http://localhost:5000/finance/update-bank-master', {
         bank_name: editForm.bank_name.trim(),
         opening_balance: addedAmount,
         remarks: editForm.remarks.trim() || `Added ₹${addedAmount.toFixed(2)} to opening balance`,

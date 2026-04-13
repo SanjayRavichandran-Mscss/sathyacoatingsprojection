@@ -18,7 +18,7 @@
 //       setLoading(true);
 //       setError(null);
 
-//       const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/paid-received-detailed', {
+//       const res = await axios.get('http://localhost:5000/finance/paid-received-detailed', {
 //         params: {
 //           from_date: fromDate || undefined,
 //           to_date: toDate || undefined,
@@ -305,7 +305,7 @@ const PaidReceivedDetails = () => {
       setError(null);
 
       // Fetch main paid/received detailed data
-      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/paid-received-detailed', {
+      const res = await axios.get('http://localhost:5000/finance/paid-received-detailed', {
         params: {
           from_date: fromDate || undefined,
           to_date: toDate || undefined,
@@ -313,7 +313,7 @@ const PaidReceivedDetails = () => {
       });
 
       // Fetch ALL Custom Payments
-      const customRes = await axios.get('https://scpl.kggeniuslabs.com/api/finance/all-custom-payments');
+      const customRes = await axios.get('http://localhost:5000/finance/all-custom-payments');
       let customData = [];
       if (customRes.data?.status === 'success') {
         customData = customRes.data.data || [];
