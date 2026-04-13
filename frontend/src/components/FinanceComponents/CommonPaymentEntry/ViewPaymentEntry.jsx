@@ -118,7 +118,7 @@
 
 //   // API Fetching Logic
 //   useEffect(() => {
-//     const API_URL = 'https://scpl.kggeniuslabs.com/api/finance/cpe-data';
+//     const API_URL = 'http://localhost:5000/finance/cpe-data';
 
 //     const fetchData = async () => {
 //       try {
@@ -638,12 +638,12 @@ const ViewPaymentEntry = () => {
     const fetchAllData = async () => {
       try {
         // Fetch main CPE data
-        const cpeRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/cpe-data');
+        const cpeRes = await fetch('http://localhost:5000/finance/cpe-data');
         if (!cpeRes.ok) throw new Error('Failed to fetch cpe-data');
         const cpeResult = await cpeRes.json();
 
         // Fetch ALL Custom Payments
-        const customRes = await fetch('https://scpl.kggeniuslabs.com/api/finance/all-custom-payments');
+        const customRes = await fetch('http://localhost:5000/finance/all-custom-payments');
         let customData = [];
         if (customRes.ok) {
           const customResult = await customRes.json();

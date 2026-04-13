@@ -101,7 +101,7 @@ const CommonPaymentEntry = () => {
 
   // Load Banks
   useEffect(() => {
-    axios.get('https://scpl.kggeniuslabs.com/api/finance/bank-masters')
+    axios.get('http://localhost:5000/finance/bank-masters')
       .then(res => {
         if (res.data?.status === 'success') setBanks(res.data.data || []);
       })
@@ -110,7 +110,7 @@ const CommonPaymentEntry = () => {
 
   // Load Custom Categories
   useEffect(() => {
-    axios.get('https://scpl.kggeniuslabs.com/api/finance/custom-categories')
+    axios.get('http://localhost:5000/finance/custom-categories')
       .then(res => {
         if (res.data?.status === 'success' && res.data.data) {
           const custom = res.data.data.map(cat => ({
@@ -132,7 +132,7 @@ const CommonPaymentEntry = () => {
   useEffect(() => {
     if (selectedCategory?.value === 'bill-to-be-raise') {
       setBillLoading(true);
-      axios.get('https://scpl.kggeniuslabs.com/api/finance/bill-to-be-raise')
+      axios.get('http://localhost:5000/finance/bill-to-be-raise')
         .then(res => {
           if (res.data?.status === 'success') {
             setBillToBeRaiseData(res.data.data || []);
@@ -167,7 +167,7 @@ const CommonPaymentEntry = () => {
 
   const loadCreditors = async () => {
     try {
-      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/view-creditors');
+      const res = await axios.get('http://localhost:5000/finance/view-creditors');
       setCreditors(res.data?.data?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) || []);
     } catch (err) {
       console.error('Creditors fetch failed:', err);
@@ -178,7 +178,7 @@ const CommonPaymentEntry = () => {
     if (!categoryName) return;
     setRecordsLoading(true);
     try {
-      const res = await axios.get('https://scpl.kggeniuslabs.com/api/finance/custom-payments-by-category', {
+      const res = await axios.get('http://localhost:5000/finance/custom-payments-by-category', {
         params: { category_name: categoryName.trim() }
       });
       setCategoryRecords(res.data?.data || []);
@@ -193,7 +193,7 @@ const CommonPaymentEntry = () => {
   const handleCreateCategory = async (inputValue) => {
     if (!inputValue?.trim()) return;
     try {
-      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-custom-category', {
+      const res = await axios.post('http://localhost:5000/finance/create-custom-category', {
         category_name: inputValue.trim(),
         created_by: createdBy || '1'
       });
@@ -262,7 +262,7 @@ const CommonPaymentEntry = () => {
         paymentLines: paymentLines.filter(l => parseFloat(l.paid_receive_amount) > 0)
       };
 
-      const res = await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-custom-payment', payload);
+      const res = await axios.post('http://localhost:5000/finance/create-custom-payment', payload);
 
       if (res.data?.status === 'success') {
         alert('Custom record saved successfully!');

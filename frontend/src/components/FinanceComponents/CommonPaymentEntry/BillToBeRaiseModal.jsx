@@ -23,7 +23,7 @@ const BillToBeRaiseModal = ({ isOpen, onClose, createdBy }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('https://scpl.kggeniuslabs.com/api/finance/create-bill-to-be-raise', {
+      await axios.post('http://localhost:5000/finance/create-bill-to-be-raise', {
         ...formData,
         created_by: createdBy || '1'
       });
